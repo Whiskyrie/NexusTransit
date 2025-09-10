@@ -17,7 +17,13 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "docker:dev": "./scripts/dev.sh up",
+    "docker:dev:tools": "./scripts/dev.sh up --tools",
+    "docker:down": "./scripts/dev.sh down",
+    "docker:logs": "./scripts/dev.sh logs",
+    "docker:clean": "./scripts/dev.sh clean",
+    "docker:build": "./scripts/dev.sh build"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

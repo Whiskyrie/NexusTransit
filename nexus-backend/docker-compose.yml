@@ -1,0 +1,108 @@
+services:
+  # NexusTransit API Service
+  api:
+    build:
+      dockerfile: Dockerfile
+      context: .
+      # Only will build development stage from our dockerfile
+      target: development
+    container_name: nexus-api
+    restart: unless-stopped
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    env_file:
+      - .env
+    environment:
+      # Override DATABASE_URL for container communication
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    # Run a command against the development stage of the image
+    command: pnpm run start:dev
+    ports:
+      - '${API_PORT:-3000}:3000'
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - nexus-network
+
+  # PostgreSQL Database Service
+  postgres:
+    image: postgres:15-alpine
+    container_name: nexus-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - nexus-network
+
+  # Redis Cache Service
+  redis:
+    image: redis:7-alpine
+    container_name: nexus-redis
+    restart: unless-stopped
+    ports:
+      - '${REDIS_PORT:-6379}:6379'
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - nexus-network
+
+  # pgAdmin for Database Management (Optional)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: nexus-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@nexustransit.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin123}
+    ports:
+      - '${PGADMIN_PORT:-8080}:80'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - nexus-network
+    profiles:
+      - tools
+
+  # Redis Commander for Redis Management (Optional)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: nexus-redis-commander
+    restart: unless-stopped
+    environment:
+      REDIS_HOSTS: local:redis:6379
+    ports:
+      - '${REDIS_COMMANDER_PORT:-8081}:8081'
+    depends_on:
+      - redis
+    networks:
+      - nexus-network
+    profiles:
+      - tools
+
+# Persistent volumes
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+# Networks
+networks:
+  nexus-network:
+    driver: bridge

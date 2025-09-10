@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  # NexusTransit API Service (Production)
+  api:
+    build:
+      dockerfile: Dockerfile
+      context: .
+      target: production
+    container_name: nexus-api-prod
+    restart: always
+    env_file:
+      - .env.production
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - '${API_PORT:-3000}:3000'
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - nexus-network
+    healthcheck:
+      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost:3000/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # PostgreSQL Database Service (Production)
+  postgres:
+    image: postgres:15-alpine
+    container_name: nexus-postgres-prod
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - nexus-network
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $POSTGRES_USER -d $POSTGRES_DB']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis Cache Service (Production)
+  redis:
+    image: redis:7-alpine
+    container_name: nexus-redis-prod
+    restart: always
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    networks:
+      - nexus-network
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+# Persistent volumes
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+# Networks
+networks:
+  nexus-network:
+    driver: bridge
