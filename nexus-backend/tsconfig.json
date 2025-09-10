@@ -31,7 +31,7 @@
     // Additional Quality Checks
     "forceConsistentCasingInFileNames": true,
     "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false,
     // Path Mapping
     "paths": {
