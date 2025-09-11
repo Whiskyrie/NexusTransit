@@ -1,15 +1,6 @@
 import { Entity, Column } from 'typeorm';
-import { BaseEntity } from './base.entity';
-import { User } from './user.entity';
-
-export enum RoleType {
-  SUPER_ADMIN = 'super_admin',
-  ADMIN = 'admin',
-  MANAGER = 'manager',
-  OPERATOR = 'operator',
-  DRIVER = 'driver',
-  CUSTOMER = 'customer',
-}
+import { BaseEntity } from '../../../common/entities/base.entity';
+import { RoleType } from '../enums/role-type.enum';
 
 /**
  * Role Entity - Sistema de papéis e permissões
@@ -74,7 +65,6 @@ export class Role extends BaseEntity {
   settings?: Record<string, unknown>;
 
   // Relacionamentos - será configurado após resolver dependência circular
-  users!: User[];
 
   // Computed properties
 

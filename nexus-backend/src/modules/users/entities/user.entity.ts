@@ -1,19 +1,7 @@
 import { Entity, Column } from 'typeorm';
-import { BaseEntity } from './base.entity';
-
-export enum UserStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  SUSPENDED = 'suspended',
-}
-
-export enum UserType {
-  ADMIN = 'admin',
-  DRIVER = 'driver',
-  CUSTOMER = 'customer',
-  OPERATOR = 'operator',
-  MANAGER = 'manager',
-}
+import { BaseEntity } from '../../../common/entities/base.entity';
+import { UserStatus } from '../enums/user-status.enum';
+import { UserType } from '../enums/user-type.enum';
 
 /**
  * User Entity - Sistema de usuários do Nexus Transit
