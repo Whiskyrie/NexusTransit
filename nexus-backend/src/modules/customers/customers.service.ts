@@ -4,23 +4,23 @@ import { UpdateCustomerDto } from './dto/update-customer.dto';
 
 @Injectable()
 export class CustomersService {
-  create(createCustomerDto: CreateCustomerDto) {
+  create(_createCustomerDto: CreateCustomerDto): string {
     return 'This action adds a new customer';
   }
 
-  findAll() {
+  findAll(): string {
     return `This action returns all customers`;
   }
 
-  findOne(id: number) {
+  findOne(id: number): string {
     return `This action returns a #${id} customer`;
   }
 
-  update(id: number, updateCustomerDto: UpdateCustomerDto) {
+  update(id: number, _updateCustomerDto: UpdateCustomerDto): string {
     return `This action updates a #${id} customer`;
   }
 
-  remove(id: number) {
+  remove(id: number): string {
     return `This action removes a #${id} customer`;
   }
 }
