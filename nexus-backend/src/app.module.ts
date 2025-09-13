@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
+import { HealthModule } from './health/health.module';
 import { UsersModule } from './modules/users/users.module';
 import { RolesModule } from './modules/roles/roles.module';
 import { VehiclesModule } from './modules/vehicles/vehicles.module';
@@ -24,6 +25,7 @@ import configurations from './config';
       cache: true,
     }),
     DatabaseModule, // Configuração TypeORM + PostgreSQL
+    HealthModule, // Health checks e monitoramento
     UsersModule, // Sistema de usuários
     RolesModule, // Sistema de papéis e permissões
     VehiclesModule,
