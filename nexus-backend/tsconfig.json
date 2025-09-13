@@ -75,7 +75,9 @@
   },
   "include": [
     "src/**/*",
-    "test/**/*"
+    "test/**/*",
+    "src/**/*.ts",
+    "ormconfig.ts"
   ],
   "exclude": [
     "node_modules",
