@@ -16,6 +16,8 @@ import { CustomersModule } from './modules/customers/customers.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { RedisModule } from './modules/redis/redis.module';
+import { AuditModule } from './modules/audit/audit.module';
+import { LgpdModule } from './modules/lgpd/lgpd.module';
 import configurations from './config';
 
 @Module({
@@ -40,6 +42,8 @@ import configurations from './config';
     ReportsModule,
     AuthModule,
     RedisModule,
+    AuditModule, // Sistema de auditoria e logs
+    LgpdModule, // Conformidade LGPD
   ],
   controllers: [AppController],
   providers: [AppService],
