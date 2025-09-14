@@ -7,6 +7,7 @@ import { LoginDto } from './dto/login.dto';
 import { LoginResponseDto, UserResponseDto } from './dto/login-response.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { User } from '../users/entities/user.entity';
+import { AuditLogService, AuditAction, AuditCategory } from '../audit';
 
 @Injectable()
 export class AuthService {
@@ -16,38 +17,62 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly auditLogService: AuditLogService,
   ) {}
 
   /**
    * Autentica usuário com email e senha
    */
-  async login(loginDto: LoginDto): Promise<LoginResponseDto> {
-    const user = await this.validateUser(loginDto.email, loginDto.password);
+  async login(
+    loginDto: LoginDto,
+    ipAddress?: string,
+    userAgent?: string,
+  ): Promise<LoginResponseDto> {
+    try {
+      const user = await this.validateUser(loginDto.email, loginDto.password);
 
-    if (!user) {
-      throw new UnauthorizedException('Credenciais inválidas');
+      if (!user) {
+        // Log tentativa de login falhada
+        await this.logFailedLogin(loginDto.email, 'Invalid credentials', ipAddress, userAgent);
+        throw new UnauthorizedException('Credenciais inválidas');
+      }
+
+      if (!user.is_active) {
+        // Log tentativa de login com usuário inativo
+        await this.logFailedLogin(loginDto.email, 'User inactive', ipAddress, userAgent);
+        throw new UnauthorizedException('Usuário inativo');
+      }
+
+      if (!user.email_verified) {
+        // Log tentativa de login com email não verificado
+        await this.logFailedLogin(loginDto.email, 'Email not verified', ipAddress, userAgent);
+        throw new UnauthorizedException('Email não verificado');
+      }
+
+      const tokens = await this.generateTokens(user);
+
+      // Atualizar último login
+      await this.usersService.updateLastLogin(user.id);
+
+      // Log login bem-sucedido
+      await this.logSuccessfulLogin(user, ipAddress, userAgent);
+
+      return {
+        access_token: tokens.accessToken,
+        refresh_token: tokens.refreshToken,
+        token_type: 'Bearer',
+        expires_in: this.getAccessTokenExpiresIn(),
+        user: UserResponseDto.fromUser(user),
+      };
+    } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+
+      this.logger.error('Erro durante login', error);
+      await this.logFailedLogin(loginDto.email, 'System error', ipAddress, userAgent);
+      throw new UnauthorizedException('Erro interno do servidor');
     }
-
-    if (!user.is_active) {
-      throw new UnauthorizedException('Usuário inativo');
-    }
-
-    if (!user.email_verified) {
-      throw new UnauthorizedException('Email não verificado');
-    }
-
-    const tokens = await this.generateTokens(user);
-
-    // Atualizar último login
-    await this.usersService.updateLastLogin(user.id);
-
-    return {
-      access_token: tokens.accessToken,
-      refresh_token: tokens.refreshToken,
-      token_type: 'Bearer',
-      expires_in: this.getAccessTokenExpiresIn(),
-      user: UserResponseDto.fromUser(user),
-    };
   }
 
   /**
@@ -155,11 +180,104 @@ export class AuthService {
   }
 
   /**
-   * Gera hash da senha usando bcrypt
+   * Hash da senha usando bcrypt
    */
   async hashPassword(password: string): Promise<string> {
     const saltRounds = this.configService.get<number>('BCRYPT_SALT_ROUNDS', 12);
     return bcrypt.hash(password, saltRounds);
+  }
+
+  /**
+   * Log auditoria para login bem-sucedido
+   */
+  private async logSuccessfulLogin(
+    user: User,
+    ipAddress?: string,
+    userAgent?: string,
+  ): Promise<void> {
+    try {
+      const auditData = {
+        action: AuditAction.LOGIN,
+        category: AuditCategory.AUTH,
+        userId: user.id,
+        userEmail: user.email,
+        resourceType: 'auth',
+        resourceId: user.id,
+        description: `Successful login for user ${user.email}`,
+        metadata: {
+          userRoles: user.roles?.map(role => role.name) || [],
+          lastLogin: user.last_login_at,
+        },
+        ...(user.roles?.[0]?.name && { userRole: user.roles[0].name }),
+        ...(ipAddress && { ipAddress }),
+        ...(userAgent && { userAgent }),
+      };
+
+      await this.auditLogService.createLog(auditData);
+    } catch (error) {
+      this.logger.error('Failed to log successful login audit', error);
+    }
+  }
+
+  /**
+   * Log auditoria para tentativas de login falhadas
+   */
+  private async logFailedLogin(
+    email: string,
+    reason: string,
+    ipAddress?: string,
+    userAgent?: string,
+  ): Promise<void> {
+    try {
+      const auditData = {
+        action: AuditAction.FAILED_LOGIN,
+        category: AuditCategory.AUTH,
+        userEmail: email,
+        resourceType: 'auth',
+        description: `Failed login attempt for ${email}: ${reason}`,
+        metadata: {
+          reason,
+          timestamp: new Date().toISOString(),
+        },
+        ...(ipAddress && { ipAddress }),
+        ...(userAgent && { userAgent }),
+      };
+
+      await this.auditLogService.createLog(auditData);
+    } catch (error) {
+      this.logger.error('Failed to log failed login audit', error);
+    }
+  }
+
+  /**
+   * Log auditoria para logout
+   */
+  async logLogout(
+    userId: string,
+    userEmail: string,
+    ipAddress?: string,
+    userAgent?: string,
+  ): Promise<void> {
+    try {
+      const auditData = {
+        action: AuditAction.LOGOUT,
+        category: AuditCategory.AUTH,
+        userId,
+        userEmail,
+        resourceType: 'auth',
+        resourceId: userId,
+        description: `User ${userEmail} logged out`,
+        metadata: {
+          timestamp: new Date().toISOString(),
+        },
+        ...(ipAddress && { ipAddress }),
+        ...(userAgent && { userAgent }),
+      };
+
+      await this.auditLogService.createLog(auditData);
+    } catch (error) {
+      this.logger.error('Failed to log logout audit', error);
+    }
   }
 
   /**

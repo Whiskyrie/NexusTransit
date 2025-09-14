@@ -1,6 +1,7 @@
 import { Controller, Post, Body, HttpCode, HttpStatus, UseGuards, Req } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { ThrottlerGuard } from '@nestjs/throttler';
+import type { Request } from 'express';
 import { AuthService } from './auth.service';
 import { TokenBlacklistService } from './services/token-blacklist.service';
 import { LoginDto } from './dto/login.dto';
@@ -36,10 +37,12 @@ export class AuthController {
     status: 429,
     description: 'Muitas tentativas de login',
   })
-  async login(@Body() loginDto: LoginDto): Promise<LoginResponseDto> {
-    return this.authService.login(loginDto);
-  }
+  async login(@Body() loginDto: LoginDto, @Req() request: Request): Promise<LoginResponseDto> {
+    const ipAddress = this.getClientIp(request);
+    const userAgent = request.get('User-Agent');
 
+    return this.authService.login(loginDto, ipAddress, userAgent);
+  }
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -84,9 +87,16 @@ export class AuthController {
     }
 
     const token = authHeader.substring(7); // Remove "Bearer "
+    const ipAddress = this.getClientIp(req);
+    const userAgent = req.get('User-Agent');
 
     // Adiciona o token à blacklist
     const success = await this.tokenBlacklistService.addToBlacklist(token);
+
+    // Log auditoria do logout
+    if (req.user) {
+      await this.authService.logLogout(req.user.id, req.user.email, ipAddress, userAgent);
+    }
 
     if (success) {
       return { message: 'Logout realizado com sucesso' };
@@ -114,5 +124,17 @@ export class AuthController {
         ? 'Senha válida'
         : 'Senha deve conter ao menos: 8 caracteres, 1 maiúscula, 1 minúscula, 1 número e 1 caractere especial',
     };
+  }
+
+  /**
+   * Extrai o IP real do cliente considerando proxies
+   */
+  private getClientIp(request: Request): string {
+    return (
+      (request.headers['x-forwarded-for'] as string)?.split(',')[0] ??
+      (request.headers['x-real-ip'] as string) ??
+      request.socket.remoteAddress ??
+      'unknown'
+    );
   }
 }
