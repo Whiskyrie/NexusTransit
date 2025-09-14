@@ -26,12 +26,20 @@ export class UsersService {
   async findOne(id: string): Promise<User | null> {
     return this.userRepository.findOne({
       where: { id, deleted_at: IsNull() },
+      relations: ['roles'], // Incluir roles
     });
   }
 
   async findByEmail(email: string): Promise<User | null> {
     return this.userRepository.findOne({
       where: { email, deleted_at: IsNull() },
+      relations: ['roles'], // Incluir roles para autenticação
+    });
+  }
+
+  async updateLastLogin(id: string): Promise<void> {
+    await this.userRepository.update(id, {
+      last_login_at: new Date(),
     });
   }
 

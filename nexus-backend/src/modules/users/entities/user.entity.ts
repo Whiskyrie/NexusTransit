@@ -1,7 +1,8 @@
-import { Entity, Column } from 'typeorm';
+import { Entity, Column, ManyToMany, JoinTable } from 'typeorm';
 import { BaseEntity } from '../../../database/entities/base.entity';
 import { UserStatus } from '../enums/user-status.enum';
 import { UserType } from '../enums/user-type.enum';
+import { Role } from '../../auth/entities/role.entity';
 
 /**
  * User Entity - Sistema de usuários do Nexus Transit
@@ -95,7 +96,21 @@ export class User extends BaseEntity {
   })
   email_verified_at?: Date;
 
-  // Relacionamentos serão adicionados após criação da entidade Role
+  // Relacionamentos
+
+  @ManyToMany(() => Role, role => role.users)
+  @JoinTable({
+    name: 'user_roles',
+    joinColumn: {
+      name: 'user_id',
+      referencedColumnName: 'id',
+    },
+    inverseJoinColumn: {
+      name: 'role_id',
+      referencedColumnName: 'id',
+    },
+  })
+  roles!: Role[];
 
   // Computed properties
 

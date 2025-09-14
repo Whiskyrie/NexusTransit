@@ -14,6 +14,7 @@ import { TrackingModule } from './modules/tracking/tracking.module';
 import { IncidentsModule } from './modules/incidents/incidents.module';
 import { CustomersModule } from './modules/customers/customers.module';
 import { ReportsModule } from './modules/reports/reports.module';
+import { AuthModule } from './modules/auth/auth.module';
 import configurations from './config';
 
 @Module({
@@ -36,6 +37,7 @@ import configurations from './config';
     IncidentsModule,
     CustomersModule,
     ReportsModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
