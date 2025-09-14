@@ -2,6 +2,7 @@ import { Controller, Post, Body, HttpCode, HttpStatus, UseGuards, Req } from '@n
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
+import { TokenBlacklistService } from './services/token-blacklist.service';
 import { LoginDto } from './dto/login.dto';
 import { LoginResponseDto } from './dto/login-response.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -11,7 +12,10 @@ import type { AuthenticatedRequest } from './interfaces/authenticated-request.in
 @Controller('auth')
 @UseGuards(ThrottlerGuard) // Rate limiting
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly tokenBlacklistService: TokenBlacklistService,
+  ) {}
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
@@ -72,9 +76,23 @@ export class AuthController {
     status: 401,
     description: 'Token inválido',
   })
-  logout(@Req() _req: AuthenticatedRequest): { message: string } {
-    // TODO: Implementar blacklist de tokens quando necessário
-    return { message: 'Logout realizado com sucesso' };
+  async logout(@Req() req: AuthenticatedRequest): Promise<{ message: string }> {
+    // Extrai o token do cabeçalho Authorization
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      return { message: 'Token não fornecido, logout local realizado' };
+    }
+
+    const token = authHeader.substring(7); // Remove "Bearer "
+
+    // Adiciona o token à blacklist
+    const success = await this.tokenBlacklistService.addToBlacklist(token);
+
+    if (success) {
+      return { message: 'Logout realizado com sucesso' };
+    }
+
+    return { message: 'Logout parcial - token pode ainda estar válido' };
   }
 
   @Post('validate-password')

@@ -15,6 +15,7 @@ import { IncidentsModule } from './modules/incidents/incidents.module';
 import { CustomersModule } from './modules/customers/customers.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { RedisModule } from './modules/redis/redis.module';
 import configurations from './config';
 
 @Module({
@@ -38,6 +39,7 @@ import configurations from './config';
     CustomersModule,
     ReportsModule,
     AuthModule,
+    RedisModule,
   ],
   controllers: [AppController],
   providers: [AppService],

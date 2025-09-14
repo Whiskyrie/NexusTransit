@@ -8,13 +8,16 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { UsersModule } from '../users/users.module';
+import { RedisModule } from '../redis/redis.module';
 import { Role } from './entities/role.entity';
 import { Permission } from './entities/permission.entity';
+import { TokenBlacklistService } from './services/token-blacklist.service';
 
 @Module({
   imports: [
     // Módulos externos
     UsersModule,
+    RedisModule,
     PassportModule,
     ConfigModule,
 
@@ -51,8 +54,8 @@ import { Permission } from './entities/permission.entity';
       inject: [ConfigService],
     }),
   ],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, TokenBlacklistService],
   controllers: [AuthController],
-  exports: [AuthService, JwtModule],
+  exports: [AuthService, JwtModule, TokenBlacklistService],
 })
 export class AuthModule {}
