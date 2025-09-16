@@ -4,7 +4,7 @@ import { UpdateRouteDto } from './dto/update-route.dto';
 
 @Injectable()
 export class RoutesService {
-  create(createRouteDto: CreateRouteDto) {
+  create(_createRouteDto: CreateRouteDto) {
     return 'This action adds a new route';
   }
 
@@ -16,7 +16,7 @@ export class RoutesService {
     return `This action returns a #${id} route`;
   }
 
-  update(id: number, updateRouteDto: UpdateRouteDto) {
+  update(id: number, _updateRouteDto: UpdateRouteDto) {
     return `This action updates a #${id} route`;
   }
 
