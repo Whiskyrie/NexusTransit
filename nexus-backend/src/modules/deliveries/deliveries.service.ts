@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import { Injectable } from '@nestjs/common';
 import { CreateDeliveryDto } from './dto/create-delivery.dto';
 import { UpdateDeliveryDto } from './dto/update-delivery.dto';
 
 @Injectable()
 export class DeliveriesService {
-  create(createDeliveryDto: CreateDeliveryDto) {
+  create(_createDeliveryDto: CreateDeliveryDto) {
     return 'This action adds a new delivery';
   }
 
@@ -16,7 +17,7 @@ export class DeliveriesService {
     return `This action returns a #${id} delivery`;
   }
 
-  update(id: number, updateDeliveryDto: UpdateDeliveryDto) {
+  update(id: number, _updateDeliveryDto: UpdateDeliveryDto) {
     return `This action updates a #${id} delivery`;
   }
 

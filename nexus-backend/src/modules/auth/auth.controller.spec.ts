@@ -1,4 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { type TestingModule, Test } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 
 describe('AuthController', () => {
