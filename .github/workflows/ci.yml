@@ -68,4 +68,4 @@ jobs:
           cache: pnpm
           cache-dependency-path: ./nexus-backend/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
-      - run: pnpm run test -- --ci --coverage --watchAll=false
+      - run: pnpm run test:cov
