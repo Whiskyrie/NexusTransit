@@ -1,8 +1,11 @@
-import { Entity, Column } from 'typeorm';
+import { Entity, Column, OneToMany } from 'typeorm';
 import { BaseEntity } from '../../../database/entities/base.entity';
 import { VehicleStatus } from '../enums/vehicle-status.enum';
 import { VehicleType } from '../enums/vehicle-type.enum';
 import { FuelType } from '../enums/fuel-type.enum';
+import { VehicleDocument } from './vehicle-document.entity';
+import { VehicleMaintenance } from './vehicle-maintenance.entity';
+import { Auditable } from '../decorators/auditable.decorator';
 
 /**
  * Vehicle Entity - Sistema de gerenciamento de veículos
@@ -15,6 +18,13 @@ import { FuelType } from '../enums/fuel-type.enum';
  * - Monitoramento de combustível
  */
 @Entity('vehicles')
+@Auditable({
+  trackCreation: true,
+  trackUpdates: true,
+  trackDeletion: true,
+  excludeFields: ['updated_at', 'created_at', 'last_location_update'],
+  entityDisplayName: 'Veículo',
+})
 export class Vehicle extends BaseEntity {
   @Column({
     type: 'varchar',
@@ -151,6 +161,18 @@ export class Vehicle extends BaseEntity {
   has_refrigeration!: boolean;
 
   // Relacionamentos serão adicionados após criar outras entidades
+
+  @OneToMany(() => VehicleDocument, document => document.vehicle, {
+    cascade: true,
+    eager: false,
+  })
+  documents!: VehicleDocument[];
+
+  @OneToMany(() => VehicleMaintenance, maintenance => maintenance.vehicle, {
+    cascade: true,
+    eager: false,
+  })
+  maintenances!: VehicleMaintenance[];
 
   // Computed properties
 
