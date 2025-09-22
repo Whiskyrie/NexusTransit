@@ -164,6 +164,57 @@ export class VehicleResponseDto {
   @Expose()
   updated_at!: Date;
 
+  @ApiPropertyOptional({
+    description: 'Capacidade máxima de passageiros',
+    example: 5,
+  })
+  @Expose()
+  passenger_capacity?: number;
+
+  @ApiPropertyOptional({
+    description: 'Histórico de motoristas',
+    type: 'array',
+    items: {
+      type: 'object',
+      properties: {
+        id: { type: 'string' },
+        driver_id: { type: 'string' },
+        start_date: { type: 'string', format: 'date-time' },
+        end_date: { type: 'string', format: 'date-time' },
+        status: { type: 'string' },
+      },
+    },
+  })
+  @Expose()
+  driver_history?: {
+    id: string;
+    driver_id: string;
+    start_date: Date;
+    end_date?: Date;
+    status: string;
+  }[];
+
+  @ApiPropertyOptional({
+    description: 'Incidentes relacionados ao veículo',
+    type: 'array',
+    items: {
+      type: 'object',
+      properties: {
+        id: { type: 'string' },
+        title: { type: 'string' },
+        severity: { type: 'string' },
+        created_at: { type: 'string', format: 'date-time' },
+      },
+    },
+  })
+  @Expose()
+  incidents?: {
+    id: string;
+    title: string;
+    severity: string;
+    created_at: Date;
+  }[];
+
   // Propriedades computadas
   @ApiProperty({
     description: 'Indica se o veículo está disponível para uso',
