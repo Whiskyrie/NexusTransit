@@ -75,8 +75,12 @@ export class VehicleFilterDto {
   })
   @IsOptional()
   @Transform(({ value }) => {
-    if (value === 'true') return true;
-    if (value === 'false') return false;
+    if (value === 'true') {
+      return true;
+    }
+    if (value === 'false') {
+      return false;
+    }
     return value;
   })
   needs_maintenance?: boolean;
