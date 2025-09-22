@@ -13,7 +13,6 @@ import {
   HttpStatus,
   HttpCode,
 } from '@nestjs/common';
-import { Express } from 'express';
 import {
   ApiTags,
   ApiOperation,
@@ -397,10 +396,10 @@ export class VehiclesController {
   @ApiForbiddenResponse({
     description: 'Usuário não possui permissão para remover documentos',
   })
-  removeDocument(
+  async removeDocument(
     @Param('vehicleId', ParseUUIDPipe) vehicleId: string,
     @Param('documentId', ParseUUIDPipe) documentId: string,
-  ): void {
+  ): Promise<void> {
     return this.vehiclesService.removeDocument(vehicleId, documentId);
   }
 }
