@@ -5,6 +5,7 @@ import { VehicleType } from '../enums/vehicle-type.enum';
 import { FuelType } from '../enums/fuel-type.enum';
 import { VehicleDocument } from './vehicle-document.entity';
 import { VehicleMaintenance } from './vehicle-maintenance.entity';
+import { VehicleDriverHistory } from './vehicle-driver-history.entity';
 import { Auditable } from '../decorators/auditable.decorator';
 
 /**
@@ -72,7 +73,7 @@ export class Vehicle extends BaseEntity {
   @Column({
     type: 'enum',
     enum: VehicleStatus,
-    default: VehicleStatus.INACTIVE,
+    default: VehicleStatus.ACTIVE,
     comment: 'Status atual do veículo',
   })
   status!: VehicleStatus;
@@ -160,6 +161,13 @@ export class Vehicle extends BaseEntity {
   })
   has_refrigeration!: boolean;
 
+  @Column({
+    type: 'integer',
+    nullable: true,
+    comment: 'Capacidade de passageiros',
+  })
+  passenger_capacity?: number;
+
   // Relacionamentos serão adicionados após criar outras entidades
 
   @OneToMany(() => VehicleDocument, document => document.vehicle, {
@@ -173,6 +181,19 @@ export class Vehicle extends BaseEntity {
     eager: false,
   })
   maintenances!: VehicleMaintenance[];
+
+  @OneToMany(() => VehicleDriverHistory, driverHistory => driverHistory.vehicle, {
+    cascade: true,
+    eager: false,
+  })
+  driverHistories!: VehicleDriverHistory[];
+
+  // TODO: Adicionar relacionamento com Incident quando a entidade estiver implementada
+  // @OneToMany(() => Incident, incident => incident.vehicle, {
+  //   cascade: true,
+  //   eager: false,
+  // })
+  // incidents!: Incident[];
 
   // Computed properties
 

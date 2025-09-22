@@ -4,6 +4,7 @@ import {
   Post,
   Body,
   Patch,
+  Put,
   Param,
   Delete,
   Query,
@@ -212,6 +213,44 @@ export class VehiclesController {
     @Body() updateVehicleDto: UpdateVehicleDto,
   ): Promise<VehicleResponseDto> {
     return this.vehiclesService.update(id, updateVehicleDto);
+  }
+
+  @Put(':id')
+  @ApiOperation({
+    summary: 'Substituir veículo',
+    description: 'Substitui completamente um veículo existente',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID único do veículo',
+    type: 'string',
+    format: 'uuid',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Veículo substituído com sucesso',
+    type: VehicleResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Veículo não encontrado',
+  })
+  @ApiBadRequestResponse({
+    description: 'Dados inválidos fornecidos',
+  })
+  @ApiConflictResponse({
+    description: 'Placa já existe em outro veículo',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Token de autenticação inválido ou ausente',
+  })
+  @ApiForbiddenResponse({
+    description: 'Usuário não possui permissão para substituir veículos',
+  })
+  async replace(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() createVehicleDto: CreateVehicleDto,
+  ): Promise<VehicleResponseDto> {
+    return this.vehiclesService.replace(id, createVehicleDto);
   }
 
   @Delete(':id')

@@ -56,7 +56,7 @@ export class VehiclesService {
       year: createVehicleDto.year,
       vehicle_type: createVehicleDto.vehicle_type,
       fuel_type: createVehicleDto.fuel_type,
-      status: createVehicleDto.status ?? VehicleStatus.INACTIVE,
+      status: createVehicleDto.status ?? VehicleStatus.ACTIVE,
       mileage: createVehicleDto.mileage ?? 0,
       has_gps: createVehicleDto.has_gps ?? false,
       has_refrigeration: createVehicleDto.has_refrigeration ?? false,
@@ -109,7 +109,8 @@ export class VehiclesService {
     const queryBuilder = this.vehicleRepository
       .createQueryBuilder('vehicle')
       .leftJoinAndSelect('vehicle.documents', 'documents')
-      .leftJoinAndSelect('vehicle.maintenances', 'maintenances');
+      .leftJoinAndSelect('vehicle.maintenances', 'maintenances')
+      .leftJoinAndSelect('vehicle.driverHistories', 'driverHistories');
 
     // Apply filters
     if (search) {
@@ -162,7 +163,7 @@ export class VehiclesService {
   async findOne(id: string): Promise<VehicleResponseDto> {
     const vehicle = await this.vehicleRepository.findOne({
       where: { id },
-      relations: ['documents', 'maintenances'],
+      relations: ['documents', 'maintenances', 'driverHistories'],
     });
 
     if (!vehicle) {
@@ -222,6 +223,91 @@ export class VehiclesService {
     this.logger.log(`Veículo atualizado: ${updatedVehicle.license_plate} (${updatedVehicle.id})`);
 
     return this.mapToResponseDto(updatedVehicle);
+  }
+
+  async replace(id: string, createVehicleDto: CreateVehicleDto): Promise<VehicleResponseDto> {
+    const vehicle = await this.vehicleRepository.findOne({
+      where: { id },
+    });
+
+    if (!vehicle) {
+      throw new NotFoundException(`Veículo com ID ${id} não encontrado`);
+    }
+
+    // Validate and normalize license plate
+    const normalizedPlate = normalizeLicensePlate(createVehicleDto.license_plate);
+
+    const constraint = new IsLicensePlateConstraint();
+    if (!constraint.validate(normalizedPlate)) {
+      throw new BadRequestException('Placa de veículo inválida');
+    }
+
+    // Check if another vehicle has this license plate
+    const existingVehicle = await this.vehicleRepository.findOne({
+      where: { license_plate: normalizedPlate },
+    });
+
+    if (existingVehicle && existingVehicle.id !== id) {
+      throw new BadRequestException(`Veículo com placa ${normalizedPlate} já existe`);
+    }
+
+    // Validate status transition if status is changing
+    if (createVehicleDto.status && createVehicleDto.status !== vehicle.status) {
+      this.validateStatusTransition(vehicle.status, createVehicleDto.status);
+    }
+
+    // Replace all vehicle data with new data
+    const vehicleData: Partial<Vehicle> = {
+      license_plate: normalizedPlate,
+      brand: createVehicleDto.brand,
+      model: createVehicleDto.model,
+      year: createVehicleDto.year,
+      vehicle_type: createVehicleDto.vehicle_type,
+      fuel_type: createVehicleDto.fuel_type,
+      status: createVehicleDto.status ?? VehicleStatus.ACTIVE,
+      mileage: createVehicleDto.mileage ?? 0,
+      has_gps: createVehicleDto.has_gps ?? false,
+      has_refrigeration: createVehicleDto.has_refrigeration ?? false,
+    };
+
+    // Add optional fields only if they exist
+    if (createVehicleDto.color) {
+      vehicleData.color = createVehicleDto.color;
+    }
+    if (createVehicleDto.load_capacity) {
+      vehicleData.load_capacity = createVehicleDto.load_capacity;
+    }
+    if (createVehicleDto.cargo_volume) {
+      vehicleData.cargo_volume = createVehicleDto.cargo_volume;
+    }
+    if (createVehicleDto.fuel_capacity) {
+      vehicleData.fuel_capacity = createVehicleDto.fuel_capacity;
+    }
+    if (createVehicleDto.passenger_capacity) {
+      vehicleData.passenger_capacity = createVehicleDto.passenger_capacity;
+    }
+    if (createVehicleDto.last_maintenance_at) {
+      vehicleData.last_maintenance_at = new Date(createVehicleDto.last_maintenance_at);
+    }
+    if (createVehicleDto.next_maintenance_at) {
+      vehicleData.next_maintenance_at = new Date(createVehicleDto.next_maintenance_at);
+    }
+    if (createVehicleDto.insurance_info) {
+      vehicleData.insurance_info = createVehicleDto.insurance_info;
+    }
+    if (createVehicleDto.specifications) {
+      vehicleData.specifications = createVehicleDto.specifications;
+    }
+
+    // Update vehicle with new data
+    Object.assign(vehicle, vehicleData);
+    const replacedVehicle = await this.vehicleRepository.save(vehicle);
+
+    this.logger.log(
+      `Veículo substituído: ${replacedVehicle.license_plate} (${replacedVehicle.id})`,
+    );
+
+    return this.mapToResponseDto(replacedVehicle);
   }
 
   async remove(id: string): Promise<void> {
@@ -418,6 +504,7 @@ export class VehiclesService {
       cargo_volume: vehicle.cargo_volume,
       fuel_capacity: vehicle.fuel_capacity,
       mileage: vehicle.mileage,
+      passenger_capacity: vehicle.passenger_capacity,
       last_maintenance_at: vehicle.last_maintenance_at,
       next_maintenance_at: vehicle.next_maintenance_at,
       has_gps: vehicle.has_gps,
@@ -467,5 +554,51 @@ export class VehiclesService {
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+  }
+
+  /**
+   * Valida as transições de status permitidas para veículos
+   * @param currentStatus Status atual do veículo
+   * @param newStatus Novo status solicitado
+   * @throws BadRequestException se a transição não for permitida
+   */
+  private validateStatusTransition(currentStatus: VehicleStatus, newStatus: VehicleStatus): void {
+    // Definir as transições permitidas
+    const allowedTransitions: Record<VehicleStatus, VehicleStatus[]> = {
+      [VehicleStatus.ACTIVE]: [
+        VehicleStatus.INACTIVE,
+        VehicleStatus.MAINTENANCE,
+        VehicleStatus.OUT_OF_SERVICE,
+        VehicleStatus.IN_ROUTE,
+      ],
+      [VehicleStatus.INACTIVE]: [
+        VehicleStatus.ACTIVE,
+        VehicleStatus.MAINTENANCE,
+        VehicleStatus.OUT_OF_SERVICE,
+      ],
+      [VehicleStatus.MAINTENANCE]: [
+        VehicleStatus.ACTIVE,
+        VehicleStatus.INACTIVE,
+        VehicleStatus.OUT_OF_SERVICE,
+      ],
+      [VehicleStatus.OUT_OF_SERVICE]: [
+        VehicleStatus.ACTIVE,
+        VehicleStatus.INACTIVE,
+        VehicleStatus.MAINTENANCE,
+      ],
+      [VehicleStatus.IN_ROUTE]: [
+        VehicleStatus.ACTIVE,
+        VehicleStatus.MAINTENANCE,
+        VehicleStatus.OUT_OF_SERVICE,
+      ],
+    };
+
+    // Verificar se a transição é permitida
+    const allowed = allowedTransitions[currentStatus];
+    if (!allowed?.includes(newStatus)) {
+      throw new BadRequestException(
+        `Transição de status não permitida: ${currentStatus} -> ${newStatus}`,
+      );
+    }
   }
 }

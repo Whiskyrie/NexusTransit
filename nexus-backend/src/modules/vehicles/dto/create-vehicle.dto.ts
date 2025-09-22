@@ -87,13 +87,13 @@ export class CreateVehicleDto {
   @ApiProperty({
     description: 'Status inicial do veículo',
     enum: VehicleStatus,
-    example: VehicleStatus.INACTIVE,
-    default: VehicleStatus.INACTIVE,
+    example: VehicleStatus.ACTIVE,
+    default: VehicleStatus.ACTIVE,
     required: false,
   })
   @IsOptional()
   @IsEnum(VehicleStatus)
-  status?: VehicleStatus = VehicleStatus.INACTIVE;
+  status?: VehicleStatus = VehicleStatus.ACTIVE;
 
   @ApiProperty({
     description: 'Tipo de combustível',
@@ -184,6 +184,16 @@ export class CreateVehicleDto {
   @IsOptional()
   @IsBoolean()
   has_refrigeration?: boolean = false;
+
+  @ApiProperty({
+    description: 'Capacidade de passageiros',
+    example: 5,
+    required: false,
+    minimum: 0,
+  })
+  @IsOptional()
+  @IsPositive()
+  passenger_capacity?: number;
 
   @ApiProperty({
     description: 'Informações de seguro em formato JSON',
