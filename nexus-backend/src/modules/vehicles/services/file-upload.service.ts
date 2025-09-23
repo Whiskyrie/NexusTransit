@@ -138,7 +138,7 @@ export class FileUploadService {
 
     return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
   }
-
+  /*
   // Future: Backblaze B2 integration methods
   async uploadToBackblazeB2(
     _file: Express.Multer.File,
@@ -153,7 +153,7 @@ export class FileUploadService {
     // TODO: Implement migration from local storage to B2
     throw new Error('B2 migration not implemented yet');
   }
-
+*/
   // Configuration factory methods
   static getVehicleDocumentConfig(): UploadConfig {
     return {
