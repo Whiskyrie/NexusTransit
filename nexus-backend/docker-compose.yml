@@ -30,7 +30,7 @@ services:
 
   # PostgreSQL Database Service
   postgres:
-    image: postgres:15-alpine
+    image: postgres:17-alpine
     container_name: nexus-postgres
     restart: unless-stopped
     environment:
@@ -47,7 +47,7 @@ services:
 
   # Redis Cache Service
   redis:
-    image: redis:7-alpine
+    image: redis:8-alpine
     container_name: nexus-redis
     restart: unless-stopped
     ports:
