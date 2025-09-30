@@ -5,7 +5,7 @@ import {
   UpdateEvent,
   RemoveEvent,
 } from 'typeorm';
-import { Logger } from '@nestjs/common';
+import { Logger, Injectable, Optional } from '@nestjs/common';
 import { ClsService } from 'nestjs-cls';
 import { AuditLogService } from '../../audit/audit-log.service';
 import { AuditAction, AuditCategory } from '../../audit/enums';
@@ -17,13 +17,14 @@ import type {
 } from '../interfaces/auditable.interface';
 import { ClsAuditUtils } from '../utils/cls-audit.util';
 
+@Injectable()
 @EventSubscriber()
 export class AuditSubscriber implements EntitySubscriberInterface {
   private readonly logger = new Logger(AuditSubscriber.name);
 
   constructor(
-    private readonly clsService: ClsService,
-    private readonly auditLogService: AuditLogService,
+    @Optional() private readonly clsService?: ClsService,
+    @Optional() private readonly auditLogService?: AuditLogService,
   ) {}
 
   /**
@@ -116,10 +117,14 @@ export class AuditSubscriber implements EntitySubscriberInterface {
         auditLogData.correlationId = context.requestId;
       }
 
-      await this.auditLogService.createLog(auditLogData as CreateAuditLogDto);
-      this.logger.debug(
-        `Auditoria registrada: ${action} em ${entityName} (${entityId}) por usuário ${context.userId ?? 'SYSTEM'}`,
-      );
+      if (this.auditLogService) {
+        await this.auditLogService.createLog(auditLogData as CreateAuditLogDto);
+        this.logger.debug(
+          `Auditoria registrada: ${action} em ${entityName} (${entityId}) por usuário ${context.userId ?? 'SYSTEM'}`,
+        );
+      } else {
+        this.logger.debug('AuditLogService não disponível, pulando registro de auditoria');
+      }
     } catch (error) {
       this.logger.error(
         `Erro ao registrar auditoria para ${action} em ${entity.constructor.name}:`,
@@ -130,6 +135,14 @@ export class AuditSubscriber implements EntitySubscriberInterface {
   }
 
   private getAuditContext(): AuditContext {
+    if (!this.clsService) {
+      // Retornar contexto padrão quando CLS não está disponível
+      return {
+        userId: undefined,
+        userAgent: undefined,
+        requestId: undefined,
+      };
+    }
     return ClsAuditUtils.getAuditContext(this.clsService);
   }
 }

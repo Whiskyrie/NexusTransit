@@ -1,4 +1,4 @@
-import { Entity, Column, OneToOne } from 'typeorm';
+import { Entity, Column, OneToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from '../../../database/entities/base.entity';
 import { CNHCategory } from '../enums/cnh-category.enum';
 import { Driver } from './driver.entity';
@@ -58,5 +58,6 @@ export class DriverLicense extends BaseEntity {
   is_active!: boolean;
 
   @OneToOne(() => Driver, driver => driver.license)
+  @JoinColumn({ name: 'driver_id' })
   driver!: Driver;
 }

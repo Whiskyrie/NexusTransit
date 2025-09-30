@@ -13,6 +13,30 @@ import { normalizeCNH } from './validators/cnh.validator';
 import { DriverStatus } from './enums/driver-status.enum';
 import { CNHCategory } from './enums/cnh-category.enum';
 
+/**
+ * Converte data do formato DD-MM-YYYY para YYYY-MM-DD
+ * @param dateString Data no formato DD-MM-YYYY
+ * @returns Data no formato YYYY-MM-DD ou a string original se não for DD-MM-YYYY
+ */
+function convertDateFormat(dateString: string): string {
+  if (typeof dateString !== 'string') {
+    return dateString;
+  }
+
+  // Verifica se está no formato DD-MM-YYYY
+  const ddmmyyyyPattern = /^(\d{1,2})-(\d{1,2})-(\d{4})$/;
+  const match = ddmmyyyyPattern.exec(dateString);
+
+  if (match && match[1] && match[2] && match[3]) {
+    const day = match[1];
+    const month = match[2];
+    const year = match[3];
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  }
+
+  // Se não está no formato DD-MM-YYYY, retorna a string original
+  return dateString;
+}
 @Injectable()
 export class DriversService {
   constructor(
@@ -23,7 +47,9 @@ export class DriversService {
   ) {}
 
   async create(createDriverDto: CreateDriverDto): Promise<DriverResponseDto> {
-    // Validate and normalize CPF
+    console.warn('DTO completo recebido:', JSON.stringify(createDriverDto, null, 2));
+
+    // Validate CPF
     const normalizedCPF = normalizeCPF(createDriverDto.cpf);
 
     // Check if driver with this CPF already exists
@@ -45,7 +71,12 @@ export class DriversService {
     }
 
     // Validate age (minimum 18 years)
-    const birthDate = new Date(createDriverDto.birth_date);
+    console.warn('Birth date recebida:', createDriverDto.birth_date);
+    console.warn('Tipo:', typeof createDriverDto.birth_date);
+    const formattedBirthDate = convertDateFormat(createDriverDto.birth_date);
+    console.warn('Data formatada:', formattedBirthDate);
+    const birthDate = new Date(formattedBirthDate);
+    console.warn('Data convertida:', birthDate);
     const today = new Date();
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
@@ -73,17 +104,23 @@ export class DriversService {
 
     // Create driver license
     const normalizedCNH = normalizeCNH(createDriverDto.cnh_number);
+    console.warn('CNH expiration date recebida:', createDriverDto.cnh_expiration_date);
+    console.warn('Tipo:', typeof createDriverDto.cnh_expiration_date);
+    const formattedCnhExpirationDate = convertDateFormat(createDriverDto.cnh_expiration_date);
+    console.warn('Data CNH formatada:', formattedCnhExpirationDate);
+    const cnhExpirationDate = new Date(formattedCnhExpirationDate);
+    console.warn('Data CNH convertida:', cnhExpirationDate);
+
     const driverLicense = this.driverLicenseRepository.create({
       license_number: normalizedCNH,
-      category: createDriverDto.cnh_category,
+      category: createDriverDto.cnh_category.toLowerCase() as CNHCategory, // Converter para minúsculo
       issue_date: new Date(), // Default to today
-      expiration_date: new Date(createDriverDto.cnh_expiration_date),
+      expiration_date: cnhExpirationDate,
       issuing_authority: 'DENATRAN', // Default
       issuing_state: 'SP', // Default
       is_active: true,
       driver: savedDriver,
     });
-
     await this.driverLicenseRepository.save(driverLicense);
 
     return this.mapToResponseDto(savedDriver);
