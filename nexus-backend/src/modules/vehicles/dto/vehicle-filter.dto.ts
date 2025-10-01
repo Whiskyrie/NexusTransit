@@ -56,7 +56,7 @@ export class VehicleFilterDto {
   })
   @IsOptional()
   @IsString()
-  @Transform(({ value }) => value?.trim())
+  @Transform(({ value }: { value: string }) => value?.trim())
   search?: string;
 
   @ApiPropertyOptional({
@@ -66,7 +66,7 @@ export class VehicleFilterDto {
   })
   @IsOptional()
   @IsString()
-  @Transform(({ value }) => value?.trim())
+  @Transform(({ value }: { value: string }) => value?.trim())
   brand?: string;
 
   @ApiPropertyOptional({
@@ -74,14 +74,14 @@ export class VehicleFilterDto {
     example: true,
   })
   @IsOptional()
-  @Transform(({ value }) => {
+  @Transform(({ value }: { value: unknown }): boolean | undefined => {
     if (value === 'true') {
       return true;
     }
     if (value === 'false') {
       return false;
     }
-    return value;
+    return undefined;
   })
   needs_maintenance?: boolean;
 
