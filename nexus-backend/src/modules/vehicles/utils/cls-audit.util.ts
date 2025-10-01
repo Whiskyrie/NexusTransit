@@ -31,8 +31,7 @@ export class ClsAuditUtils {
         userAgent,
         requestId,
       };
-    } catch (error) {
-      console.warn('Erro ao obter contexto de auditoria:', error);
+    } catch {
       return {};
     }
   }

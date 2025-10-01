@@ -281,7 +281,6 @@ export class LgpdController {
     // Envia o arquivo
     res.sendFile(request.filePath, err => {
       if (err) {
-        console.error('Erro ao enviar arquivo:', err);
         if (!res.headersSent) {
           res.status(500).json({
             success: false,

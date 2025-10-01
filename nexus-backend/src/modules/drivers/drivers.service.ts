@@ -27,7 +27,7 @@ function convertDateFormat(dateString: string): string {
   const ddmmyyyyPattern = /^(\d{1,2})-(\d{1,2})-(\d{4})$/;
   const match = ddmmyyyyPattern.exec(dateString);
 
-  if (match && match[1] && match[2] && match[3]) {
+  if (match?.[1] && match[2] && match[3]) {
     const day = match[1];
     const month = match[2];
     const year = match[3];
@@ -47,8 +47,6 @@ export class DriversService {
   ) {}
 
   async create(createDriverDto: CreateDriverDto): Promise<DriverResponseDto> {
-    console.warn('DTO completo recebido:', JSON.stringify(createDriverDto, null, 2));
-
     // Validate CPF
     const normalizedCPF = normalizeCPF(createDriverDto.cpf);
 
@@ -71,12 +69,8 @@ export class DriversService {
     }
 
     // Validate age (minimum 18 years)
-    console.warn('Birth date recebida:', createDriverDto.birth_date);
-    console.warn('Tipo:', typeof createDriverDto.birth_date);
     const formattedBirthDate = convertDateFormat(createDriverDto.birth_date);
-    console.warn('Data formatada:', formattedBirthDate);
     const birthDate = new Date(formattedBirthDate);
-    console.warn('Data convertida:', birthDate);
     const today = new Date();
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
@@ -104,12 +98,8 @@ export class DriversService {
 
     // Create driver license
     const normalizedCNH = normalizeCNH(createDriverDto.cnh_number);
-    console.warn('CNH expiration date recebida:', createDriverDto.cnh_expiration_date);
-    console.warn('Tipo:', typeof createDriverDto.cnh_expiration_date);
     const formattedCnhExpirationDate = convertDateFormat(createDriverDto.cnh_expiration_date);
-    console.warn('Data CNH formatada:', formattedCnhExpirationDate);
     const cnhExpirationDate = new Date(formattedCnhExpirationDate);
-    console.warn('Data CNH convertida:', cnhExpirationDate);
 
     const driverLicense = this.driverLicenseRepository.create({
       license_number: normalizedCNH,
