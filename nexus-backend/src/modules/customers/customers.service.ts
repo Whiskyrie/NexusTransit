@@ -15,6 +15,7 @@ import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 import { CustomerFilterDto } from './dto/customer-filter.dto';
 import { CustomerStatus } from './enums/customer-status.enum';
+import { AddressType } from './enums/address-type.enum';
 import { ViaCepService } from './services/viacep.service';
 import { GeocodingService } from './services/geocoding.service';
 
@@ -90,9 +91,16 @@ export class CustomersService {
           // Geocode address
           if (addressDto.street && addressDto.zipCode) {
             try {
-              const coords = await this.geocodingService.geocodeAddress(addressDto);
-              addressDto.latitude = coords.lat;
-              addressDto.longitude = coords.lng;
+              const coords = await this.geocodingService.geocodeAddress({
+                street: addressDto.street ?? '',
+                number: addressDto.number ?? '',
+                neighborhood: addressDto.neighborhood ?? '',
+                city: addressDto.city ?? '',
+                state: addressDto.state ?? '',
+                zipCode: addressDto.zipCode,
+              });
+              addressDto.latitude = coords.latitude;
+              addressDto.longitude = coords.longitude;
             } catch (error) {
               console.warn('Geocoding failed:', error);
             }
@@ -413,9 +421,16 @@ export class CustomersService {
     // Geocode address
     if (createAddressDto.street && createAddressDto.zipCode) {
       try {
-        const coords = await this.geocodingService.geocodeAddress(createAddressDto);
-        createAddressDto.latitude = coords.lat;
-        createAddressDto.longitude = coords.lng;
+        const coords = await this.geocodingService.geocodeAddress({
+          street: createAddressDto.street ?? '',
+          number: createAddressDto.number ?? '',
+          neighborhood: createAddressDto.neighborhood ?? '',
+          city: createAddressDto.city ?? '',
+          state: createAddressDto.state ?? '',
+          zipCode: createAddressDto.zipCode,
+        });
+        createAddressDto.latitude = coords.latitude;
+        createAddressDto.longitude = coords.longitude;
       } catch (error) {
         console.warn('Geocoding failed:', error);
       }
@@ -441,7 +456,7 @@ export class CustomersService {
     const where: FindOptionsWhere<CustomerAddress> = { customerId, isActive: true };
 
     if (filters.type) {
-      where.type = filters.type;
+      where.type = filters.type as AddressType;
     }
 
     if (filters.isPrimary !== undefined) {
@@ -516,8 +531,8 @@ export class CustomersService {
       try {
         const addressData = { ...address, ...updateAddressDto };
         const coords = await this.geocodingService.geocodeAddress(addressData);
-        updateAddressDto.latitude = coords.lat;
-        updateAddressDto.longitude = coords.lng;
+        updateAddressDto.latitude = coords.latitude;
+        updateAddressDto.longitude = coords.longitude;
       } catch (error) {
         console.warn('Geocoding failed:', error);
       }
