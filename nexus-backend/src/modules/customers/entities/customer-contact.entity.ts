@@ -15,7 +15,7 @@ export class CustomerContact {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column({ length: 18 })
+  @Column({ type: 'uuid' })
   @Index()
   customerId!: string;
 
@@ -28,10 +28,10 @@ export class CustomerContact {
   @Column({ type: 'enum', enum: ContactType })
   type: ContactType = ContactType.EMAIL;
 
-  @Column({ default: false })
+  @Column({ type: 'boolean', default: false })
   isPrimary = false;
 
-  @Column({ default: true })
+  @Column({ type: 'boolean', default: true })
   isActive = false;
 
   @Column({ type: 'jsonb', nullable: true })

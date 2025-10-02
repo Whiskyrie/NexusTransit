@@ -155,20 +155,6 @@ export class CreateCustomerAddressesTable1694544000014 implements MigrationInter
       }),
     );
 
-    // Create spatial index for geolocation queries (PostGIS extension)
-    try {
-      await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "postgis"`);
-      await queryRunner.query(`
-        CREATE INDEX IF NOT EXISTS IDX_CUSTOMER_ADDRESSES_LOCATION 
-        ON customer_addresses 
-        USING GIST (ST_Point(longitude, latitude))
-        WHERE latitude IS NOT NULL AND longitude IS NOT NULL
-      `);
-    } catch {
-      // PostGIS might not be available, skip spatial index
-      console.warn('PostGIS extension not available, skipping spatial index');
-    }
-
     // Add foreign key constraint
     await queryRunner.createForeignKey(
       'customer_addresses',

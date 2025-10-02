@@ -16,7 +16,7 @@ export class CustomerPreferences {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column({ length: 18 })
+  @Column({ type: 'uuid' })
   @Index()
   customerId!: string;
 
@@ -32,10 +32,10 @@ export class CustomerPreferences {
   @Column({ type: 'jsonb', nullable: true })
   restrictedItems?: string[];
 
-  @Column({ default: false })
+  @Column({ type: 'boolean', default: false })
   allowWeekendDelivery = false;
 
-  @Column({ default: true })
+  @Column({ type: 'boolean', default: true })
   requireSignature = false;
 
   @Column({ type: 'jsonb', nullable: true })

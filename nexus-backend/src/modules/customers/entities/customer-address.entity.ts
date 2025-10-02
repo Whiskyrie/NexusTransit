@@ -15,7 +15,7 @@ export class CustomerAddress {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column({ length: 18 })
+  @Column({ type: 'uuid' })
   @Index()
   customerId!: string;
 
@@ -51,10 +51,10 @@ export class CustomerAddress {
   @Column({ type: 'enum', enum: AddressType })
   type!: AddressType;
 
-  @Column({ default: false })
+  @Column({ type: 'boolean', default: false })
   isPrimary!: boolean;
 
-  @Column({ default: true })
+  @Column({ type: 'boolean', default: true })
   isActive!: boolean;
 
   @Column({ type: 'jsonb', nullable: true })
