@@ -5,6 +5,7 @@ import {
   ManyToOne,
   CreateDateColumn,
   UpdateDateColumn,
+  Index,
 } from 'typeorm';
 import { ContactType } from '../enums/contact-type.enum';
 import { Customer } from './customer.entity';
@@ -13,6 +14,10 @@ import { Customer } from './customer.entity';
 export class CustomerContact {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
+
+  @Column({ length: 18 })
+  @Index()
+  customerId!: string;
 
   @Column({ length: 100 })
   name!: string;

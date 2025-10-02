@@ -55,7 +55,13 @@ export class CustomersService {
       }
 
       // Create customer
-      const customer = this.customerRepository.create(createCustomerDto);
+      const {
+        addresses: _addresses,
+        contacts: _contacts,
+        preferences: _preferences,
+        ...customerData
+      } = createCustomerDto;
+      const customer = this.customerRepository.create(customerData);
       const savedCustomer = await queryRunner.manager.save(customer);
 
       // Process addresses if provided
@@ -127,11 +133,11 @@ export class CustomersService {
     } catch (error) {
       await queryRunner.rollbackTransaction();
 
-      if (error instanceof ConflictException ?? error instanceof BadRequestException) {
+      if (error instanceof ConflictException || error instanceof BadRequestException) {
         throw error;
       }
 
-      throw new InternalServerErrorException('Failed to create customer', error);
+      throw new InternalServerErrorException('Failed to create customer');
     } finally {
       await queryRunner.release();
     }
@@ -226,7 +232,7 @@ export class CustomersService {
       }
 
       // Check for conflicts with taxId or email
-      if (updateCustomerDto.taxId ?? updateCustomerDto.email) {
+      if (updateCustomerDto.taxId || updateCustomerDto.email) {
         const existingCustomer = await this.customerRepository.findOne({
           where: [{ taxId: updateCustomerDto.taxId }, { email: updateCustomerDto.email }],
         });
@@ -243,7 +249,7 @@ export class CustomersService {
 
       // Update customer
       Object.assign(customer, updateCustomerDto);
-      const updatedCustomer = await queryRunner.manager.save(customer);
+      await queryRunner.manager.save(customer);
 
       // Process addresses updates if provided
       if (updateCustomerDto.addresses) {
@@ -295,11 +301,11 @@ export class CustomersService {
     } catch (error) {
       await queryRunner.rollbackTransaction();
 
-      if (error instanceof NotFoundException ?? error instanceof ConflictException) {
+      if (error instanceof NotFoundException || error instanceof ConflictException) {
         throw error;
       }
 
-      throw new InternalServerErrorException('Failed to update customer', error);
+      throw new InternalServerErrorException('Failed to update customer');
     } finally {
       await queryRunner.release();
     }
@@ -317,8 +323,8 @@ export class CustomersService {
       customer.status = CustomerStatus.INACTIVE;
       customer.deletedAt = new Date();
       await this.customerRepository.save(customer);
-    } catch (error) {
-      throw new InternalServerErrorException('Failed to delete customer', error);
+    } catch {
+      throw new InternalServerErrorException('Failed to delete customer');
     }
   }
 
@@ -338,12 +344,12 @@ export class CustomersService {
 
     try {
       customer.status = CustomerStatus.ACTIVE;
-      customer.deletedAt = null;
+      delete customer.deletedAt;
       await this.customerRepository.save(customer);
 
       return this.findOne(id);
-    } catch (error) {
-      throw new InternalServerErrorException('Failed to restore customer', error);
+    } catch {
+      throw new InternalServerErrorException('Failed to restore customer');
     }
   }
 
@@ -425,14 +431,14 @@ export class CustomersService {
       customerId,
     });
 
-    return await this.addressRepository.save(address);
+    return this.addressRepository.save(address);
   }
 
   async findAddressesByCustomer(
     customerId: string,
     filters: { type?: string; isPrimary?: boolean },
   ): Promise<CustomerAddress[]> {
-    const where: any = { customerId, isActive: true };
+    const where: FindOptionsWhere<CustomerAddress> = { customerId, isActive: true };
 
     if (filters.type) {
       where.type = filters.type;
@@ -442,7 +448,7 @@ export class CustomersService {
       where.isPrimary = filters.isPrimary;
     }
 
-    return await this.addressRepository.find({
+    return this.addressRepository.find({
       where,
       order: { isPrimary: 'DESC', createdAt: 'ASC' },
     });
@@ -502,8 +508,8 @@ export class CustomersService {
 
     // Geocode address if coordinates not provided but address data is
     if (
-      (updateAddressDto.street ?? address.street) &&
-      (updateAddressDto.zipCode ?? address.zipCode) &&
+      (updateAddressDto.street || address.street) &&
+      (updateAddressDto.zipCode || address.zipCode) &&
       !updateAddressDto.latitude &&
       !updateAddressDto.longitude
     ) {
@@ -523,7 +529,7 @@ export class CustomersService {
     }
 
     Object.assign(address, updateAddressDto);
-    return await this.addressRepository.save(address);
+    return this.addressRepository.save(address);
   }
 
   async setPrimaryAddress(customerId: string, addressId: string): Promise<CustomerAddress> {

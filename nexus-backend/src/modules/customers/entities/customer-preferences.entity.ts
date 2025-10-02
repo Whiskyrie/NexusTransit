@@ -5,6 +5,7 @@ import {
   ManyToOne,
   CreateDateColumn,
   UpdateDateColumn,
+  Index,
 } from 'typeorm';
 import { DeliveryPreference } from '../enums/delivery-preference.enum';
 import { NotificationChannel } from '../enums/notification-channel.enum';
@@ -14,6 +15,10 @@ import { Customer } from './customer.entity';
 export class CustomerPreferences {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
+
+  @Column({ length: 18 })
+  @Index()
+  customerId!: string;
 
   @Column({ type: 'enum', enum: DeliveryPreference, default: DeliveryPreference.STANDARD })
   deliveryPreference: DeliveryPreference = DeliveryPreference.STANDARD;

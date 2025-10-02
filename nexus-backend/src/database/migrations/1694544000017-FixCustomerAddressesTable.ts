@@ -42,7 +42,7 @@ export class FixCustomerAddressesTable1694544000017 implements MigrationInterfac
     }
 
     // Create index for customer_id if it doesn't exist
-    const hasCustomerIdIndex = table?.indexes.some(index =>
+    const hasCustomerIdIndex = table?.indices.some((index: { columnNames: string | string[] }) =>
       index.columnNames.includes('customer_id'),
     );
 
@@ -57,7 +57,7 @@ export class FixCustomerAddressesTable1694544000017 implements MigrationInterfac
     }
 
     // Create composite index for primary addresses
-    const hasPrimaryIndex = table?.indexes.some(
+    const hasPrimaryIndex = table?.indices.some(
       index =>
         index.name === 'IDX_CUSTOMER_ADDRESSES_PRIMARY' &&
         index.columnNames.includes('customer_id') &&
