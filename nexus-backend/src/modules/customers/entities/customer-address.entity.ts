@@ -17,6 +17,10 @@ export class CustomerAddress {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
+  @Column({ length: 18 })
+  @Index()
+  customerId!: string;
+
   @Column({ length: 100 })
   street!: string;
 
@@ -50,7 +54,7 @@ export class CustomerAddress {
   type!: AddressType;
 
   @Column({ default: false })
-  isDefault!: boolean;
+  isPrimary!: boolean;
 
   @Column({ default: true })
   isActive!: boolean;

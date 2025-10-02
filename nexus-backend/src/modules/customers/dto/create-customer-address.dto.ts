@@ -49,7 +49,7 @@ export class CreateCustomerAddressDto {
   type!: AddressType;
 
   @IsOptional()
-  isDefault?: boolean;
+  isPrimary?: boolean;
 
   @IsOptional()
   isActive?: boolean;
