@@ -3,14 +3,12 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
-  OneToMany,
   CreateDateColumn,
   UpdateDateColumn,
   Index,
 } from 'typeorm';
 import { AddressType } from '../enums/address-type.enum';
 import { Customer } from './customer.entity';
-import { Delivery } from '../../deliveries/entities/delivery.entity';
 
 @Entity('customer_addresses')
 export class CustomerAddress {
@@ -64,12 +62,6 @@ export class CustomerAddress {
 
   @ManyToOne(() => Customer, customer => customer.addresses, { onDelete: 'CASCADE' })
   customer!: Customer;
-
-  @OneToMany(() => Delivery, delivery => delivery.pickupAddress)
-  deliveriesAsPickup!: Delivery[];
-
-  @OneToMany(() => Delivery, delivery => delivery.deliveryAddress)
-  deliveriesAsDelivery!: Delivery[];
 
   @CreateDateColumn({ type: 'timestamp with time zone' })
   createdAt!: Date;

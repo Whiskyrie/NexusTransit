@@ -14,7 +14,6 @@ import { CustomerCategory } from '../enums/customer-category.enum';
 import { CustomerAddress } from './customer-address.entity';
 import { CustomerContact } from './customer-contact.entity';
 import { CustomerPreferences } from './customer-preferences.entity';
-import { Delivery } from '../../deliveries/entities/delivery.entity';
 
 @Entity('customers')
 @Index(['taxId'])
@@ -58,9 +57,6 @@ export class Customer {
 
   @OneToMany(() => CustomerPreferences, preferences => preferences.customer, { cascade: true })
   preferences!: CustomerPreferences[];
-
-  @OneToMany(() => Delivery, delivery => delivery.customer)
-  deliveries!: Delivery[];
 
   @CreateDateColumn({ type: 'timestamp with time zone' })
   createdAt!: Date;

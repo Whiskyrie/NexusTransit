@@ -241,8 +241,18 @@ export class CustomersService {
 
       // Check for conflicts with taxId or email
       if (updateCustomerDto.taxId || updateCustomerDto.email) {
+        const whereConditions = [];
+
+        if (updateCustomerDto.taxId) {
+          whereConditions.push({ taxId: updateCustomerDto.taxId });
+        }
+
+        if (updateCustomerDto.email) {
+          whereConditions.push({ email: updateCustomerDto.email });
+        }
+
         const existingCustomer = await this.customerRepository.findOne({
-          where: [{ taxId: updateCustomerDto.taxId }, { email: updateCustomerDto.email }],
+          where: whereConditions,
         });
 
         if (existingCustomer && existingCustomer.id !== id) {

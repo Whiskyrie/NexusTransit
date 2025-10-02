@@ -4,20 +4,20 @@ import type { CustomerContact } from '../entities/customer-contact.entity';
 import type { CustomerPreferences } from '../entities/customer-preferences.entity';
 
 export class CustomerResponseDto {
-  id: string;
-  taxId: string;
-  name: string;
-  email: string;
-  phone: string;
-  type: string;
-  status: string;
-  category: string;
+  id!: string;
+  taxId!: string;
+  name!: string;
+  email!: string;
+  phone!: string;
+  type!: string;
+  status!: string;
+  category!: string;
   metadata?: Record<string, unknown>;
   addresses?: CustomerAddress[];
   contacts?: CustomerContact[];
   preferences?: CustomerPreferences[];
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt!: Date;
+  updatedAt!: Date;
 
   static fromEntity(customer: Customer): CustomerResponseDto {
     return {
@@ -29,7 +29,7 @@ export class CustomerResponseDto {
       type: customer.type,
       status: customer.status,
       category: customer.category,
-      metadata: customer.metadata,
+      ...(customer.metadata && { metadata: customer.metadata }),
       addresses: customer.addresses,
       contacts: customer.contacts,
       preferences: customer.preferences,
