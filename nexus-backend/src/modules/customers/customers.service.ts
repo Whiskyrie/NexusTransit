@@ -6,7 +6,7 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource, Like } from 'typeorm';
+import { Repository, DataSource, Like, FindOptionsWhere } from 'typeorm';
 import { Customer } from './entities/customer.entity';
 import { CustomerAddress } from './entities/customer-address.entity';
 import { CustomerContact } from './entities/customer-contact.entity';
@@ -70,10 +70,10 @@ export class CustomersService {
 
               // Merge fetched data with provided data
               Object.assign(addressDto, {
-                street: addressDto.street || addressData.logradouro,
-                neighborhood: addressDto.neighborhood || addressData.bairro,
-                city: addressDto.city || addressData.localidade,
-                state: addressDto.state || addressData.uf,
+                street: addressDto.street ?? addressData.logradouro,
+                neighborhood: addressDto.neighborhood ?? addressData.bairro,
+                city: addressDto.city ?? addressData.localidade,
+                state: addressDto.state ?? addressData.uf,
               });
             } catch (error) {
               // Continue with provided data if CEP validation fails
@@ -127,7 +127,7 @@ export class CustomersService {
     } catch (error) {
       await queryRunner.rollbackTransaction();
 
-      if (error instanceof ConflictException || error instanceof BadRequestException) {
+      if (error instanceof ConflictException ?? error instanceof BadRequestException) {
         throw error;
       }
 
@@ -156,7 +156,7 @@ export class CustomersService {
     } = filter;
 
     const skip = (page - 1) * limit;
-    const where: any = {};
+    const where: FindOptionsWhere<Customer> = {};
 
     // Build where conditions
     if (search) {
@@ -226,7 +226,7 @@ export class CustomersService {
       }
 
       // Check for conflicts with taxId or email
-      if (updateCustomerDto.taxId || updateCustomerDto.email) {
+      if (updateCustomerDto.taxId ?? updateCustomerDto.email) {
         const existingCustomer = await this.customerRepository.findOne({
           where: [{ taxId: updateCustomerDto.taxId }, { email: updateCustomerDto.email }],
         });
@@ -295,7 +295,7 @@ export class CustomersService {
     } catch (error) {
       await queryRunner.rollbackTransaction();
 
-      if (error instanceof NotFoundException || error instanceof ConflictException) {
+      if (error instanceof NotFoundException ?? error instanceof ConflictException) {
         throw error;
       }
 
@@ -374,7 +374,10 @@ export class CustomersService {
   }
 
   // Address management methods
-  async createAddress(customerId: string, createAddressDto: any): Promise<CustomerAddress> {
+  async createAddress(
+    customerId: string,
+    createAddressDto: Partial<CustomerAddress>,
+  ): Promise<CustomerAddress> {
     const customer = await this.customerRepository.findOne({ where: { id: customerId } });
 
     if (!customer) {
@@ -390,10 +393,10 @@ export class CustomersService {
 
         // Merge fetched data with provided data
         Object.assign(createAddressDto, {
-          street: createAddressDto.street || addressData.logradouro,
-          neighborhood: createAddressDto.neighborhood || addressData.bairro,
-          city: createAddressDto.city || addressData.localidade,
-          state: createAddressDto.state || addressData.uf,
+          street: createAddressDto.street ?? addressData.logradouro,
+          neighborhood: createAddressDto.neighborhood ?? addressData.bairro,
+          city: createAddressDto.city ?? addressData.localidade,
+          state: createAddressDto.state ?? addressData.uf,
         });
       } catch (error) {
         // Continue with provided data if CEP validation fails
@@ -474,7 +477,7 @@ export class CustomersService {
   async updateAddress(
     customerId: string,
     addressId: string,
-    updateAddressDto: any,
+    updateAddressDto: Partial<CustomerAddress>,
   ): Promise<CustomerAddress> {
     const address = await this.findAddressById(customerId, addressId);
 
@@ -487,10 +490,10 @@ export class CustomersService {
 
         // Merge fetched data with provided data
         Object.assign(updateAddressDto, {
-          street: updateAddressDto.street || addressData.logradouro,
-          neighborhood: updateAddressDto.neighborhood || addressData.bairro,
-          city: updateAddressDto.city || addressData.localidade,
-          state: updateAddressDto.state || addressData.uf,
+          street: updateAddressDto.street ?? addressData.logradouro,
+          neighborhood: updateAddressDto.neighborhood ?? addressData.bairro,
+          city: updateAddressDto.city ?? addressData.localidade,
+          state: updateAddressDto.state ?? addressData.uf,
         });
       } catch (error) {
         console.warn(`CEP validation failed for ${updateAddressDto.zipCode}:`, error);
@@ -499,8 +502,8 @@ export class CustomersService {
 
     // Geocode address if coordinates not provided but address data is
     if (
-      (updateAddressDto.street || address.street) &&
-      (updateAddressDto.zipCode || address.zipCode) &&
+      (updateAddressDto.street ?? address.street) &&
+      (updateAddressDto.zipCode ?? address.zipCode) &&
       !updateAddressDto.latitude &&
       !updateAddressDto.longitude
     ) {

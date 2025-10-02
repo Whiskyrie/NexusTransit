@@ -34,7 +34,7 @@ export class CustomerAddressesController {
     try {
       return await this.customersService.createAddress(customerId, createAddressDto);
     } catch (error) {
-      throw new BadRequestException(error.message);
+      throw new BadRequestException(error instanceof Error ? error.message : 'An error occurred');
     }
   }
 
@@ -50,12 +50,17 @@ export class CustomerAddressesController {
     @Query('type') type?: string,
     @Query('isPrimary') isPrimary?: string,
   ): Promise<CustomerAddress[]> {
-    const filters = {
-      type,
-      isPrimary: isPrimary === 'true',
-    };
+    const filters: { type?: string; isPrimary?: boolean } = {};
 
-    return await this.customersService.findAddressesByCustomer(customerId, filters);
+    if (type !== undefined) {
+      filters.type = type;
+    }
+
+    if (isPrimary !== undefined) {
+      filters.isPrimary = isPrimary === 'true';
+    }
+
+    return this.customersService.findAddressesByCustomer(customerId, filters);
   }
 
   @Get('primary')
@@ -66,7 +71,7 @@ export class CustomerAddressesController {
   async findPrimary(
     @Param('customerId', ParseUUIDPipe) customerId: string,
   ): Promise<CustomerAddress> {
-    return await this.customersService.findPrimaryAddress(customerId);
+    return this.customersService.findPrimaryAddress(customerId);
   }
 
   @Get(':addressId')
@@ -79,7 +84,7 @@ export class CustomerAddressesController {
     @Param('customerId', ParseUUIDPipe) customerId: string,
     @Param('addressId', ParseUUIDPipe) addressId: string,
   ): Promise<CustomerAddress> {
-    return await this.customersService.findAddressById(customerId, addressId);
+    return this.customersService.findAddressById(customerId, addressId);
   }
 
   @Patch(':addressId')
@@ -97,7 +102,7 @@ export class CustomerAddressesController {
     try {
       return await this.customersService.updateAddress(customerId, addressId, updateAddressDto);
     } catch (error) {
-      throw new BadRequestException(error.message);
+      throw new BadRequestException(error instanceof Error ? error.message : 'An error occurred');
     }
   }
 
@@ -115,7 +120,7 @@ export class CustomerAddressesController {
     @Param('customerId', ParseUUIDPipe) customerId: string,
     @Param('addressId', ParseUUIDPipe) addressId: string,
   ): Promise<CustomerAddress> {
-    return await this.customersService.setPrimaryAddress(customerId, addressId);
+    return this.customersService.setPrimaryAddress(customerId, addressId);
   }
 
   @Delete(':addressId')
@@ -132,7 +137,7 @@ export class CustomerAddressesController {
     try {
       await this.customersService.removeAddress(customerId, addressId);
     } catch (error) {
-      throw new BadRequestException(error.message);
+      throw new BadRequestException(error instanceof Error ? error.message : 'An error occurred');
     }
   }
 }
