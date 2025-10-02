@@ -1,9 +1,4 @@
-import {
-  type MigrationInterface,
-  type QueryRunner,
-  TableIndex,
-  TableColumn,
-} from 'typeorm';
+import { type MigrationInterface, type QueryRunner, TableIndex, TableColumn } from 'typeorm';
 
 export class AddCustomerIdToRelatedTables1694544000018 implements MigrationInterface {
   name = 'AddCustomerIdToRelatedTables1694544000018';
