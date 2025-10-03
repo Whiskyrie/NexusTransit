@@ -7,7 +7,7 @@ import {
   IsNumber,
   IsBoolean,
 } from 'class-validator';
-import { AuditAction, AuditCategory } from '../enums';
+import { AuditAction, AuditCategory } from '../enums/auditEnums';
 
 export class CreateAuditLogDto {
   @IsEnum(AuditAction)

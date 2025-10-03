@@ -7,7 +7,7 @@ import {
   Index,
 } from 'typeorm';
 import { BaseEntity } from '../../../database/entities/base.entity';
-import { ConsentType } from '../enums';
+import { ConsentType } from '../enums/lgpdEnums';
 
 /**
  * Entidade para gerenciar consentimentos LGPD dos usuários

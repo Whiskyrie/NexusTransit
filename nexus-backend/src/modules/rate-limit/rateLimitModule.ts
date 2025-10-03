@@ -17,13 +17,13 @@ export {
   RateLimitByRole,
   RateLimitByIP,
   RATE_LIMIT_KEY,
-} from './decorators';
+} from './decorators/rateLimitDecorators';
 
 // Guards
-export { RateLimitGuard } from './guards';
+export { RateLimitGuard } from './guards/rateLimitGuards';
 
 // Services
-export { RateLimitService } from './services';
+export { RateLimitService } from './services/rateLimitServices';
 
 // Module
 export { RateLimitModule } from './rate-limit.module';

@@ -2,11 +2,10 @@
 export * from './interfaces/auditable.interface';
 
 // Constants
-export * from './constants/auditable.constants';
+export * from './constants/vehicleConstants';
 
 // Utils
-export * from './utils/auditable.util';
-export * from './utils/cls-audit.util';
+export * from './utils/auditUtils';
 
 // Decorators
 export * from './decorators/auditable.decorator';

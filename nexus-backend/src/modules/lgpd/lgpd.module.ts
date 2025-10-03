@@ -4,7 +4,7 @@ import { LgpdController } from './lgpd.controller';
 import { ConsentService } from './consent.service';
 import { DataRequestService } from './data-request.service';
 import { DataPortabilityService } from './data-portability.service';
-import { UserConsentEntity, DataRequestEntity } from './entities';
+import { UserConsentEntity, DataRequestEntity } from './entities/lgpdEntities';
 
 @Module({
   imports: [TypeOrmModule.forFeature([UserConsentEntity, DataRequestEntity])],

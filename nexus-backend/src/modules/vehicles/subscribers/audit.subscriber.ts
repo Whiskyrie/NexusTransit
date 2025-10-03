@@ -8,8 +8,8 @@ import {
 import { Logger, Injectable, Optional } from '@nestjs/common';
 import { ClsService } from 'nestjs-cls';
 import { AuditLogService } from '../../audit/audit-log.service';
-import { AuditAction, AuditCategory } from '../../audit/enums';
-import { CreateAuditLogDto } from '../../audit/dto';
+import { AuditAction, AuditCategory } from '../../audit/enums/auditEnums';
+import { CreateAuditLogDto } from '../../audit/dto/auditDto';
 import type {
   AuditableEntity,
   AuditMetadata,

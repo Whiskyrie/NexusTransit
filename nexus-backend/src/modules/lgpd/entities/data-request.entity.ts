@@ -7,7 +7,7 @@ import {
   Index,
 } from 'typeorm';
 import { BaseEntity } from '../../../database/entities/base.entity';
-import { DataRequestStatus, DataRequestType } from '../enums';
+import { DataRequestStatus, DataRequestType } from '../enums/lgpdEnums';
 
 /**
  * Entidade para gerenciar solicitações de dados LGPD

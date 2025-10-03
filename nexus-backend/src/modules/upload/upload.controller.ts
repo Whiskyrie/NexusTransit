@@ -12,7 +12,11 @@ import {
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiConsumes, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { UploadService, UploadResult } from './upload.service';
-import { ImageValidationPipe, AvatarValidationPipe, MultipleImagesValidationPipe } from './pipes';
+import {
+  ImageValidationPipe,
+  AvatarValidationPipe,
+  MultipleImagesValidationPipe,
+} from './pipes/uploadPipes';
 
 @ApiTags('Upload')
 @Controller('upload')

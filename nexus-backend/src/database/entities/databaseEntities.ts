@@ -2,4 +2,4 @@
 export { BaseEntity } from './base.entity';
 
 // Module entities exports
-export { AuditLogEntity } from '../../modules/audit/entities';
+export { AuditLogEntity } from '../../modules/audit/entities/auditEntities';
