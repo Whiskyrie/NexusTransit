@@ -150,7 +150,7 @@ describe('DriversService', () => {
       const underageDate = new Date(today.getFullYear() - 17, today.getMonth(), today.getDate());
       const underageDriver: CreateDriverDto = {
         ...mockCreateDriverDto,
-        birth_date: underageDate.toISOString().split('T')[0] as string,
+        birth_date: underageDate.toISOString().split('T')[0]!,
       };
       driverRepository.findOne.mockResolvedValue(null);
 
