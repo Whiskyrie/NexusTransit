@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AuditLogEntity } from './entities';
+import { AuditLogEntity } from './entities/auditEntities';
 import { AuditLogService } from './audit-log.service';
-import { AuditInterceptor } from './interceptors';
+import { AuditInterceptor } from './interceptors/auditInterceptors';
 import { AuditSubscriber } from '../vehicles/subscribers/audit.subscriber';
 
 @Module({

@@ -1,49 +1,27 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Driver } from './entities/driver.entity';
-import { DriverLicense } from './entities/driver-license.entity';
 import { CreateDriverDto } from './dto/create-driver.dto';
 import { UpdateDriverDto } from './dto/update-driver.dto';
 import { DriverFilterDto } from './dto/driver-filter.dto';
 import { DriverResponseDto } from './dto/driver-response.dto';
 import { PaginatedResponseDto } from '../../common/dto/paginated-response.dto';
 import { normalizeCPF } from './validators/cpf.validator';
-import { normalizeCNH } from './validators/cnh.validator';
 import { DriverStatus } from './enums/driver-status.enum';
 import { CNHCategory } from './enums/cnh-category.enum';
+import { DriverLicenseService } from './services/driver-license.service';
+import { convertDateFormat, validateMinimumAge } from './utils/date.util';
+import { MINIMUM_DRIVER_AGE } from './constants/driver.constants';
 
-/**
- * Converte data do formato DD-MM-YYYY para YYYY-MM-DD
- * @param dateString Data no formato DD-MM-YYYY
- * @returns Data no formato YYYY-MM-DD ou a string original se não for DD-MM-YYYY
- */
-function convertDateFormat(dateString: string): string {
-  if (typeof dateString !== 'string') {
-    return dateString;
-  }
-
-  // Verifica se está no formato DD-MM-YYYY
-  const ddmmyyyyPattern = /^(\d{1,2})-(\d{1,2})-(\d{4})$/;
-  const match = ddmmyyyyPattern.exec(dateString);
-
-  if (match?.[1] && match[2] && match[3]) {
-    const day = match[1];
-    const month = match[2];
-    const year = match[3];
-    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-  }
-
-  // Se não está no formato DD-MM-YYYY, retorna a string original
-  return dateString;
-}
 @Injectable()
 export class DriversService {
+  private readonly logger = new Logger(DriversService.name);
+
   constructor(
     @InjectRepository(Driver)
     private readonly driverRepository: Repository<Driver>,
-    @InjectRepository(DriverLicense)
-    private readonly driverLicenseRepository: Repository<DriverLicense>,
+    private readonly driverLicenseService: DriverLicenseService,
   ) {}
 
   async create(createDriverDto: CreateDriverDto): Promise<DriverResponseDto> {
@@ -71,16 +49,9 @@ export class DriversService {
     // Validate age (minimum 18 years)
     const formattedBirthDate = convertDateFormat(createDriverDto.birth_date);
     const birthDate = new Date(formattedBirthDate);
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
 
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-
-    if (age < 18) {
-      throw new BadRequestException('Motorista deve ter no mínimo 18 anos');
+    if (!validateMinimumAge(birthDate, MINIMUM_DRIVER_AGE)) {
+      throw new BadRequestException(`Motorista deve ter no mínimo ${MINIMUM_DRIVER_AGE} anos`);
     }
 
     // Create driver
@@ -96,22 +67,15 @@ export class DriversService {
 
     const savedDriver = await this.driverRepository.save(driver);
 
-    // Create driver license
-    const normalizedCNH = normalizeCNH(createDriverDto.cnh_number);
-    const formattedCnhExpirationDate = convertDateFormat(createDriverDto.cnh_expiration_date);
-    const cnhExpirationDate = new Date(formattedCnhExpirationDate);
+    // Create driver license using DriverLicenseService
+    await this.driverLicenseService.createDriverLicense(
+      savedDriver,
+      createDriverDto.cnh_number,
+      createDriverDto.cnh_category,
+      createDriverDto.cnh_expiration_date,
+    );
 
-    const driverLicense = this.driverLicenseRepository.create({
-      license_number: normalizedCNH,
-      category: createDriverDto.cnh_category.toLowerCase() as CNHCategory, // Converter para minúsculo
-      issue_date: new Date(), // Default to today
-      expiration_date: cnhExpirationDate,
-      issuing_authority: 'DENATRAN', // Default
-      issuing_state: 'SP', // Default
-      is_active: true,
-      driver: savedDriver,
-    });
-    await this.driverLicenseRepository.save(driverLicense);
+    this.logger.log(`Motorista criado: ${savedDriver.full_name} (${savedDriver.id})`);
 
     return this.mapToResponseDto(savedDriver);
   }
@@ -240,18 +204,27 @@ export class DriversService {
       updateDriverDto.cnh_expiration_date
     ) {
       if (driver.license) {
+        const updateData: Partial<{
+          license_number: string;
+          category: string;
+          expiration_date: string;
+        }> = {};
+
         if (updateDriverDto.cnh_number) {
-          driver.license.license_number = normalizeCNH(updateDriverDto.cnh_number);
+          updateData.license_number = updateDriverDto.cnh_number;
         }
         if (updateDriverDto.cnh_category) {
-          driver.license.category = updateDriverDto.cnh_category;
+          updateData.category = updateDriverDto.cnh_category;
         }
         if (updateDriverDto.cnh_expiration_date) {
-          driver.license.expiration_date = new Date(updateDriverDto.cnh_expiration_date);
+          updateData.expiration_date = updateDriverDto.cnh_expiration_date;
         }
-        await this.driverLicenseRepository.save(driver.license);
+
+        await this.driverLicenseService.updateDriverLicense(driver.license.id, updateData);
       }
     }
+
+    this.logger.log(`Motorista atualizado: ${updatedDriver.id}`);
 
     return this.mapToResponseDto(updatedDriver);
   }
@@ -268,6 +241,8 @@ export class DriversService {
     // Soft delete - mark as inactive
     driver.is_active = false;
     await this.driverRepository.save(driver);
+
+    this.logger.log(`Motorista removido (soft delete): ${driver.id}`);
   }
 
   private mapToResponseDto(driver: Driver): DriverResponseDto {

@@ -3,4 +3,5 @@ onlyBuiltDependencies:
   - '@scarf/scarf'
   - bcrypt
   - core-js
+  - sharp
   - unrs-resolver

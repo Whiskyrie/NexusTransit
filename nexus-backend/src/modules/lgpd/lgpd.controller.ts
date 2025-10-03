@@ -27,8 +27,8 @@ import {
   RevokeConsentDto,
   CreateDataRequestDto,
   UpdateDataRequestDto,
-} from './dto';
-import { DataRequestStatus, DataRequestType, ConsentType } from './enums';
+} from './dto/lgpdDto';
+import { DataRequestStatus, DataRequestType, ConsentType } from './enums/lgpdEnums';
 
 interface AuthenticatedUser {
   id: string;

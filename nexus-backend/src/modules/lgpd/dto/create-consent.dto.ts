@@ -1,5 +1,5 @@
 import { IsEnum, IsString, IsOptional, IsIP, IsDateString, IsObject } from 'class-validator';
-import { ConsentType } from '../enums';
+import { ConsentType } from '../enums/lgpdEnums';
 
 export class CreateConsentDto {
   @IsEnum(ConsentType)

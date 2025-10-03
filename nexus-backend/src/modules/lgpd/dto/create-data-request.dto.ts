@@ -1,5 +1,5 @@
 import { IsEnum, IsString, IsOptional, IsIP, IsObject } from 'class-validator';
-import { DataRequestType } from '../enums';
+import { DataRequestType } from '../enums/lgpdEnums';
 
 export class CreateDataRequestDto {
   @IsEnum(DataRequestType)

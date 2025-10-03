@@ -9,7 +9,7 @@ import {
   Max,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { AuditAction, AuditCategory } from '../enums';
+import { AuditAction, AuditCategory } from '../enums/auditEnums';
 
 export class QueryAuditLogsDto {
   @IsOptional()

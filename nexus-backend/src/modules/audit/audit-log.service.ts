@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindManyOptions, Between, Like, FindOptionsWhere } from 'typeorm';
-import { AuditLogEntity } from './entities';
-import { CreateAuditLogDto, QueryAuditLogsDto } from './dto';
-import { AuditAction } from './enums';
+import { AuditLogEntity } from './entities/auditEntities';
+import { CreateAuditLogDto, QueryAuditLogsDto } from './dto/auditDto';
+import { AuditAction } from './enums/auditEnums';
 
 @Injectable()
 export class AuditLogService {

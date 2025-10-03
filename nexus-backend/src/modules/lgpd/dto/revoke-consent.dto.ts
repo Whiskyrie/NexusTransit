@@ -1,5 +1,5 @@
 import { IsEnum, IsString, IsOptional } from 'class-validator';
-import { ConsentType } from '../enums';
+import { ConsentType } from '../enums/lgpdEnums';
 
 export class RevokeConsentDto {
   @IsEnum(ConsentType)
