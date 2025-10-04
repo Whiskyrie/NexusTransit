@@ -1,0 +1,83 @@
+# ===================================================================
+# CODEOWNERS para o repositório NexusTransit
+#
+# Proprietário Principal:
+# Evandro Filho (Lead Developer) é o proprietário geral e revisor
+# para arquivos críticos e áreas não especificadas.
+#
+# Equipe:
+# - Evandro Filho  -> @Whiskyrie  (Lead)
+# - Marlon Meireles -> @Maexar  (Backend)
+# - Luiz Gustavo   -> @Gugalzg    (Frontend)
+# - Marco França    -> @MarcoAfB   (Mobile)
+#
+# ===================================================================
+
+
+# ===============================================================
+# Regras Globais e Proprietários Principais
+# ===============================================================
+
+# Evandro, como Lead, é o proprietário padrão de tudo.
+# Isso garante que nada passe sem um revisor.
+* @Whiskyrie
+
+
+# ===============================================================
+# Documentação e Arquivos de Configuração Críticos
+# ===============================================================
+
+# Documentação e configurações do projeto são responsabilidade do Lead.
+/docs/              @Whiskyrie
+README.md           @Whiskyrie
+.github/            @Whiskyrie
+
+
+# ===============================================================
+# Backend - Responsabilidade do Marlon e revisão do Lead
+# ===============================================================
+
+/src/server/        @Maexar @Whiskyrie
+/src/api/           @Maexar @Whiskyrie
+/src/controllers/   @Maexar
+/src/services/      @Maexar
+/src/database/      @Maexar
+/prisma/            @Maexar
+
+
+# ===============================================================
+# Frontend - Responsabilidade do Luiz e revisão do Lead
+# ===============================================================
+
+/src/components/    @Gugalzg @Whiskyrie
+/src/pages/         @Gugalzg @Whiskyrie
+/src/styles/        @Gugalzg
+/src/hooks/         @Gugalzg
+*.jsx               @Gugalzg
+*.tsx               @Gugalzg
+
+
+# ===============================================================
+# Mobile - Responsabilidade do Marco e revisão do Lead
+# ===============================================================
+# Assumindo que o código mobile ficará em uma pasta /mobile ou /src/mobile
+
+/mobile/            @MarcoAfB @Whiskyrie
+/src/mobile/        @MarcoAfB @Whiskyrie
+
+
+
+# ===============================================================
+# Configurações de Build e Dependências
+# ===============================================================
+# O especialista da área é o primeiro revisor, mas o Lead também aprova.
+
+# Dependências gerais (afetam todos)
+package.json        @Whiskyrie @Gugalzg @Maexar
+yarn.lock           @Whiskyrie
+pnpm-lock.yaml      @Whiskyrie
+
+# Configurações de Build e Deploy (DevOps)
+Dockerfile          @Whiskyrie
+docker-compose.yml  @Whiskyrie
+.gitlab-ci.yml      @Whiskyrie
