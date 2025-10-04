@@ -10,6 +10,16 @@ export class CreateDeliveriesTable1694544000019 implements MigrationInterface {
   name = 'CreateDeliveriesTable1694544000019';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
+    // Dropar tabela antiga se existir (para substituir pela nova versão)
+    await queryRunner.query(`DROP TABLE IF EXISTS "deliveries" CASCADE`);
+
+    // Dropar ENUMs antigos se existirem
+    await queryRunner.query(`DROP TYPE IF EXISTS "delivery_status_enum" CASCADE`);
+    await queryRunner.query(`DROP TYPE IF EXISTS "delivery_priority_enum" CASCADE`);
+    await queryRunner.query(`DROP TYPE IF EXISTS "delivery_type_enum" CASCADE`);
+    await queryRunner.query(`DROP TYPE IF EXISTS "failure_reason_enum" CASCADE`);
+    await queryRunner.query(`DROP TYPE IF EXISTS "proof_type_enum" CASCADE`);
+
     // Criar enums
     await queryRunner.query(`
       CREATE TYPE "delivery_status_enum" AS ENUM (

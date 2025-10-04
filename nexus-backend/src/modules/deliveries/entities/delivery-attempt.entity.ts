@@ -17,7 +17,7 @@ import { Driver } from '../../drivers/entities/driver.entity';
 @Index(['delivery_id'])
 @Index(['attempt_number'])
 @Index(['status'])
-@Index(['attempted_at'])
+@Index(['started_at'])
 export class DeliveryAttempt extends BaseEntity {
   @Column({
     type: 'integer',
