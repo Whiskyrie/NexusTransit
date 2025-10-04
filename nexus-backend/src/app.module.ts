@@ -18,7 +18,8 @@ import { AuthModule } from './modules/auth/auth.module';
 import { RedisModule } from './modules/redis/redis.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { LgpdModule } from './modules/lgpd/lgpd.module';
-import configurations from './config';
+import { UploadModule } from './modules/upload/upload.module';
+import configurations from './config/configurations';
 
 @Module({
   imports: [
@@ -43,7 +44,8 @@ import configurations from './config';
     AuthModule,
     RedisModule,
     AuditModule, // Sistema de auditoria e logs
-    LgpdModule, // Conformidade LGPD
+    LgpdModule,
+    UploadModule, // Conformidade LGPD
   ],
   controllers: [AppController],
   providers: [AppService],

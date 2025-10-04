@@ -1,6 +1,6 @@
 import { Entity, Column, CreateDateColumn, Index } from 'typeorm';
 import { BaseEntity } from '../../../database/entities/base.entity';
-import { AuditAction, AuditCategory } from '../enums';
+import { AuditAction, AuditCategory } from '../enums/auditEnums';
 
 @Entity('audit_logs')
 @Index(['userId', 'createdAt'])

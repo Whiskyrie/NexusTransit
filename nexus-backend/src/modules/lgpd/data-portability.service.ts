@@ -138,10 +138,8 @@ export class DataPortabilityService {
       if (await this.fileExists(filePath)) {
         await fs.unlink(filePath);
       }
-    } catch (error) {
-      console.error(
-        `Erro ao deletar arquivo de exportação: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
-      );
+    } catch {
+      // Silenciosamente ignora erro ao deletar arquivo
     }
   }
 
@@ -170,10 +168,7 @@ export class DataPortabilityService {
       }
 
       return deletedCount;
-    } catch (error) {
-      console.error(
-        `Erro ao limpar arquivos antigos: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
-      );
+    } catch {
       return 0;
     }
   }

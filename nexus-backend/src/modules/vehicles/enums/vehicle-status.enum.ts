@@ -7,4 +7,5 @@ export enum VehicleStatus {
   INACTIVE = 'inactive',
   MAINTENANCE = 'maintenance',
   OUT_OF_SERVICE = 'out_of_service',
+  IN_ROUTE = 'in_route',
 }

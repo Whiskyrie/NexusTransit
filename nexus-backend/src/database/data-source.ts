@@ -3,14 +3,14 @@ import type { ConfigService } from '@nestjs/config';
 import type { DatabaseConfig } from '../config/database.config';
 import path from 'path';
 
-/** 
-    Cria e configura uma instância do DataSource do TypeORM
-**/
+/*
+  Cria e configura uma instância de DataSource do TypeORM
+*/
 export const createDataSource = (configService: ConfigService): DataSource => {
   const dbConfig = configService.get<DatabaseConfig>('database');
 
   if (!dbConfig) {
-    throw new Error('Database configuration not found');
+    throw new Error('Configuração do banco de dados não encontrada');
   }
 
   return new DataSource({
@@ -22,67 +22,67 @@ export const createDataSource = (configService: ConfigService): DataSource => {
     password: dbConfig.password,
     database: dbConfig.database,
 
-    // Entity configuration
+    // Configuração de entidades
     entities: [path.join(__dirname, '..', '**', '*.entity{.ts,.js}')],
     subscribers: [path.join(__dirname, '..', '**', '*.subscriber{.ts,.js}')],
 
-    // Migration configuration
+    // Configuração de migrações
     migrations: [path.join(__dirname, 'migrations', '*{.ts,.js}')],
     migrationsTableName: 'nexus_migrations',
-    migrationsRun: false, // Executar manualmente via CLI
-    migrationsTransactionMode: 'each', // Each migration in separate transaction
+    migrationsRun: false, // Migrações devem ser executadas manualmente via CLI
+    migrationsTransactionMode: 'each', // Cada migração é executada em uma transação separada
 
-    // PostgreSQL specific optimizations
+    // Otimizações específicas do PostgreSQL
     extra: {
-      // Connection pool configuration
-      max: 20, // Maximum 20 connections as per requirements
-      min: 5, // Minimum connections in pool
-      idleTimeoutMillis: 30000, // 30s idle timeout
-      connectionTimeoutMillis: 2000, // 2s connection timeout
-      acquireTimeoutMillis: 60000, // 60s acquire timeout
+      // Configurações do pool de conexões
+      max: 20, // Máximo de 20 conexões simultâneas conforme requisitos
+      min: 5, // Número mínimo de conexões mantidas no pool
+      idleTimeoutMillis: 30000, // Fecha conexões ociosas após 30 segundos
+      connectionTimeoutMillis: 2000, // Timeout para estabelecer novas conexões (2 segundos)
+      acquireTimeoutMillis: 60000, // Timeout para adquirir uma conexão do pool (60 segundos)
 
-      // PostgreSQL specific settings
+      // Configurações específicas do PostgreSQL
       application_name: 'nexus-transit-api',
-      statement_timeout: 30000, // 30s statement timeout
+      statement_timeout: 30000, // Cancela consultas que demoram mais de 30 segundos
     },
 
-    // Performance & Monitoring
-    maxQueryExecutionTime: 1000, // Log queries > 1s
+    // Performance & Monitoramento
+    maxQueryExecutionTime: 1000, // Loga consultas que demoram mais de 1 segundo
     logging:
       process.env.NODE_ENV === 'development' ? ['query', 'error', 'schema', 'warn'] : ['error'],
     logger: 'advanced-console',
 
-    // Schema management
-    synchronize: false, // Never use in production
+    // Gerenciamento de schema
+    synchronize: false, // Nunca sincroniza schema automaticamente em produção
     dropSchema: false,
 
-    // Cache configuration (will be setup with Redis later)
-    cache: false, // Will enable Redis cache later
+    // Configuração de cache (integração com Redis planejada)
+    cache: false, // Será habilitado com cache Redis no futuro
 
-    // Security & Performance
-    isolateWhereStatements: true, // Improve query security
+    // Segurança & Performance
+    isolateWhereStatements: true, // Melhora a segurança das consultas isolando cláusulas WHERE
 
-    // PostgreSQL extensions
-    uuidExtension: 'uuid-ossp', // For UUID generation
-    installExtensions: true, // Auto-install required extensions
+    // Extensões do PostgreSQL
+    uuidExtension: 'uuid-ossp', // Habilita suporte para geração de UUID
+    installExtensions: true, // Instala automaticamente as extensões necessárias do PostgreSQL
 
-    // SSL configuration for production
+    // Configuração SSL para ambiente de produção
     ssl:
       process.env.NODE_ENV === 'production'
         ? {
-            rejectUnauthorized: false, // Configure properly for production
+            rejectUnauthorized: false, // TODO: Configurar adequadamente para produção com certificados válidos
           }
         : false,
   });
 };
 
 /**
- * Default DataSource instance for CLI operations
- * This is required for TypeORM CLI commands
+ * Instância padrão do DataSource para operações CLI do TypeORM
+ * Esta instância é necessária para executar comandos CLI como migrações
  */
 const AppDataSource = createDataSource({
   get: (key: string) => {
-    // Fallback configuration for CLI when ConfigService is not available
+    // Configuração de fallback quando ConfigService não está disponível (contexto CLI)
     const configs: Record<string, DatabaseConfig> = {
       database: {
         url:

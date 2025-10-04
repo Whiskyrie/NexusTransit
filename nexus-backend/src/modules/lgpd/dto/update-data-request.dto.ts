@@ -1,5 +1,5 @@
 import { IsEnum, IsString, IsOptional, IsUUID } from 'class-validator';
-import { DataRequestStatus } from '../enums';
+import { DataRequestStatus } from '../enums/lgpdEnums';
 
 export class UpdateDataRequestDto {
   @IsOptional()

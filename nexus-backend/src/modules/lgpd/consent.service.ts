@@ -2,8 +2,8 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserConsentEntity } from './entities/user-consent.entity';
-import { CreateConsentDto, RevokeConsentDto } from './dto/index';
-import { ConsentType } from './enums/index';
+import { CreateConsentDto, RevokeConsentDto } from './dto/lgpdDto';
+import { ConsentType } from './enums/lgpdEnums';
 
 @Injectable()
 export class ConsentService {

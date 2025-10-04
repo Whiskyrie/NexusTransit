@@ -1,8 +1,12 @@
-import { Entity, Column } from 'typeorm';
+import { Entity, Column, OneToMany } from 'typeorm';
 import { BaseEntity } from '../../../database/entities/base.entity';
 import { VehicleStatus } from '../enums/vehicle-status.enum';
 import { VehicleType } from '../enums/vehicle-type.enum';
 import { FuelType } from '../enums/fuel-type.enum';
+import { VehicleDocument } from './vehicle-document.entity';
+import { VehicleMaintenance } from './vehicle-maintenance.entity';
+import { VehicleDriverHistory } from './vehicle-driver-history.entity';
+import { Auditable } from '../decorators/auditable.decorator';
 
 /**
  * Vehicle Entity - Sistema de gerenciamento de veículos
@@ -15,6 +19,13 @@ import { FuelType } from '../enums/fuel-type.enum';
  * - Monitoramento de combustível
  */
 @Entity('vehicles')
+@Auditable({
+  trackCreation: true,
+  trackUpdates: true,
+  trackDeletion: true,
+  excludeFields: ['updated_at', 'created_at', 'last_location_update'],
+  entityDisplayName: 'Veículo',
+})
 export class Vehicle extends BaseEntity {
   @Column({
     type: 'varchar',
@@ -62,7 +73,7 @@ export class Vehicle extends BaseEntity {
   @Column({
     type: 'enum',
     enum: VehicleStatus,
-    default: VehicleStatus.INACTIVE,
+    default: VehicleStatus.ACTIVE,
     comment: 'Status atual do veículo',
   })
   status!: VehicleStatus;
@@ -150,7 +161,39 @@ export class Vehicle extends BaseEntity {
   })
   has_refrigeration!: boolean;
 
+  @Column({
+    type: 'integer',
+    nullable: true,
+    comment: 'Capacidade de passageiros',
+  })
+  passenger_capacity?: number;
+
   // Relacionamentos serão adicionados após criar outras entidades
+
+  @OneToMany(() => VehicleDocument, document => document.vehicle, {
+    cascade: true,
+    eager: false,
+  })
+  documents!: VehicleDocument[];
+
+  @OneToMany(() => VehicleMaintenance, maintenance => maintenance.vehicle, {
+    cascade: true,
+    eager: false,
+  })
+  maintenances!: VehicleMaintenance[];
+
+  @OneToMany(() => VehicleDriverHistory, driverHistory => driverHistory.vehicle, {
+    cascade: true,
+    eager: false,
+  })
+  driverHistories!: VehicleDriverHistory[];
+
+  // TODO: Adicionar relacionamento com Incident quando a entidade estiver implementada
+  // @OneToMany(() => Incident, incident => incident.vehicle, {
+  //   cascade: true,
+  //   eager: false,
+  // })
+  // incidents!: Incident[];
 
   // Computed properties
 

@@ -2,8 +2,8 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DataRequestEntity } from './entities/data-request.entity';
-import { CreateDataRequestDto, UpdateDataRequestDto } from './dto/index';
-import { DataRequestStatus, DataRequestType } from './enums/index';
+import { CreateDataRequestDto, UpdateDataRequestDto } from './dto/lgpdDto';
+import { DataRequestStatus, DataRequestType } from './enums/lgpdEnums';
 
 @Injectable()
 export class DataRequestService {

@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Discussões Gerais
+    url: https://github.com/Whiskyrie/NexusTransit/discussions
+    about: Para perguntas gerais, ideias e discussões sobre o projeto
+  - name: Questões de Segurança
+    url: mailto:security@nexustransit.com
+    about: Para reportar vulnerabilidades de segurança (não use issues públicas)
+  - name: Documentação
+    url: https://docs.nexustransit.com
+    about: Consulte nossa documentação oficial
