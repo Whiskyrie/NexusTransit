@@ -3,6 +3,9 @@ import { BaseEntity } from '../../../database/entities/base.entity';
 import { DriverStatus } from '../enums/driver-status.enum';
 import { DriverLicense } from './driver-license.entity';
 import { DriverDocument } from './driver-document.entity';
+import { Delivery } from '../../deliveries/entities/delivery.entity';
+import { DeliveryAttempt } from '../../deliveries/entities/delivery-attempt.entity';
+import { DeliveryStatusHistory } from '../../deliveries/entities/delivery-status-history.entity';
 
 /**
  * Driver Entity - Sistema de gerenciamento de motoristas
@@ -71,4 +74,13 @@ export class Driver extends BaseEntity {
 
   @OneToMany(() => DriverDocument, document => document.driver)
   documents!: DriverDocument[];
+
+  @OneToMany(() => Delivery, delivery => delivery.driver)
+  deliveries!: Delivery[];
+
+  @OneToMany(() => DeliveryAttempt, attempt => attempt.driver)
+  delivery_attempts!: DeliveryAttempt[];
+
+  @OneToMany(() => DeliveryStatusHistory, history => history.driver)
+  status_changes!: DeliveryStatusHistory[];
 }

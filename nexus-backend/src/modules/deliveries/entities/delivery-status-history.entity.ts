@@ -109,42 +109,42 @@ export class DeliveryStatusHistory extends BaseEntity {
   status_metadata?: {
     // Para status PICKED_UP
     pickup_data?: {
-      pickup_location?: string;
-      package_condition?: 'GOOD' | 'DAMAGED' | 'SEALED';
-      photos_taken?: number;
-      documents_verified?: string[];
+      pickup_location?: string | undefined;
+      package_condition?: 'GOOD' | 'DAMAGED' | 'SEALED' | undefined;
+      photos_taken?: number | undefined;
+      documents_verified?: string[] | undefined;
     };
     // Para status IN_TRANSIT
     transit_data?: {
-      route_id?: string;
-      estimated_arrival?: Date;
-      checkpoints_passed?: string[];
-      current_location?: string;
+      route_id?: string | undefined;
+      estimated_arrival?: Date | undefined;
+      checkpoints_passed?: string[] | undefined;
+      current_location?: string | undefined;
     };
     // Para status DELIVERED
     delivery_data?: {
-      recipient_name?: string;
-      recipient_document?: string;
-      delivery_time?: Date;
-      proof_types?: string[];
-      photos_count?: number;
-      signature_obtained?: boolean;
+      recipient_name?: string | undefined;
+      recipient_document?: string | undefined;
+      delivery_time?: Date | undefined;
+      proof_types?: string[] | undefined;
+      photos_count?: number | undefined;
+      signature_obtained?: boolean | undefined;
     };
     // Para status FAILED
     failure_data?: {
-      failure_reason?: string;
-      retry_attempt?: number;
-      next_retry_date?: Date;
-      customer_notified?: boolean;
-      additional_info?: string;
+      failure_reason?: string | undefined;
+      retry_attempt?: number | undefined;
+      next_retry_date?: Date | undefined;
+      customer_notified?: boolean | undefined;
+      additional_info?: string | undefined;
     };
     // Para status CANCELLED
     cancellation_data?: {
-      cancellation_reason?: string;
-      refund_requested?: boolean;
-      refund_amount?: number;
-      customer_notified?: boolean;
-      penalty_applied?: boolean;
+      cancellation_reason?: string | undefined;
+      refund_requested?: boolean | undefined;
+      refund_amount?: number | undefined;
+      customer_notified?: boolean | undefined;
+      penalty_applied?: boolean | undefined;
     };
   };
 
