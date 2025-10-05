@@ -15,8 +15,9 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { DeliveryStatus } from '../enums/delivery-status.enum';
 import { DeliveryPriority } from '../enums/delivery-priority.enum';
+import { BaseFilterDto } from '../../../common/dto/base-filter.dto';
 
-export class DeliveryFilterDto {
+export class DeliveryFilterDto extends BaseFilterDto {
   @ApiProperty({
     description: 'Número da página',
     example: 1,
@@ -134,7 +135,7 @@ export class DeliveryFilterDto {
   priorities?: DeliveryPriority[];
 
   @ApiProperty({
-    description: 'Filtrar por ID do cliente',
+    description: 'ID do cliente',
     example: '123e4567-e89b-12d3-a456-426614174000',
     required: false,
   })
@@ -143,7 +144,7 @@ export class DeliveryFilterDto {
   customer_id?: string;
 
   @ApiProperty({
-    description: 'Filtrar por ID do motorista',
+    description: 'ID do motorista',
     example: '123e4567-e89b-12d3-a456-426614174001',
     required: false,
   })
@@ -152,7 +153,7 @@ export class DeliveryFilterDto {
   driver_id?: string;
 
   @ApiProperty({
-    description: 'Filtrar por ID do veículo',
+    description: 'ID do veículo',
     example: '123e4567-e89b-12d3-a456-426614174002',
     required: false,
   })
@@ -199,24 +200,6 @@ export class DeliveryFilterDto {
   @IsString()
   @Length(8, 9)
   delivery_postal_code?: string;
-
-  @ApiProperty({
-    description: 'Data inicial de criação',
-    example: '2024-01-01T00:00:00Z',
-    required: false,
-  })
-  @IsOptional()
-  @IsDateString()
-  created_from?: string;
-
-  @ApiProperty({
-    description: 'Data final de criação',
-    example: '2024-01-31T23:59:59Z',
-    required: false,
-  })
-  @IsOptional()
-  @IsDateString()
-  created_to?: string;
 
   @ApiProperty({
     description: 'Data inicial de entrega agendada',

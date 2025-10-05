@@ -21,280 +21,11 @@ import {
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { DeliveryPriority } from '../enums/delivery-priority.enum';
-
-// DTOs aninhados para validação
-class AddressDto {
-  @ApiProperty({
-    description: 'Rua/Avenida',
-    example: 'Rua das Flores',
-  })
-  @IsString()
-  @IsNotEmpty()
-  @Length(5, 100)
-  street!: string;
-
-  @ApiProperty({
-    description: 'Número',
-    example: '123',
-  })
-  @IsString()
-  @IsNotEmpty()
-  @Length(1, 20)
-  number!: string;
-
-  @ApiProperty({
-    description: 'Complemento',
-    example: 'Apto 101',
-    required: false,
-  })
-  @IsOptional()
-  @IsString()
-  @Length(0, 50)
-  complement?: string;
-
-  @ApiProperty({
-    description: 'Bairro',
-    example: 'Centro',
-    required: false,
-  })
-  @IsOptional()
-  @IsString()
-  @Length(2, 50)
-  neighborhood?: string;
-
-  @ApiProperty({
-    description: 'Cidade',
-    example: 'São Paulo',
-  })
-  @IsString()
-  @IsNotEmpty()
-  @Length(2, 50)
-  city!: string;
-
-  @ApiProperty({
-    description: 'Estado',
-    example: 'SP',
-  })
-  @IsString()
-  @IsNotEmpty()
-  @Length(2, 2)
-  state!: string;
-
-  @ApiProperty({
-    description: 'CEP',
-    example: '01234-567',
-  })
-  @IsString()
-  @IsNotEmpty()
-  @Length(8, 9)
-  postal_code!: string;
-
-  @ApiProperty({
-    description: 'País',
-    example: 'Brasil',
-    required: false,
-  })
-  @IsOptional()
-  @IsString()
-  @Length(2, 50)
-  country?: string;
-
-  @ApiProperty({
-    description: 'Latitude',
-    example: -23.5505,
-    required: false,
-  })
-  @IsOptional()
-  @IsNumber()
-  @Min(-90)
-  @Max(90)
-  latitude?: number;
-
-  @ApiProperty({
-    description: 'Longitude',
-    example: -46.6333,
-    required: false,
-  })
-  @IsOptional()
-  @IsNumber()
-  @Min(-180)
-  @Max(180)
-  longitude?: number;
-
-  @ApiProperty({
-    description: 'Instruções especiais',
-    example: 'Entregar na portaria',
-    required: false,
-  })
-  @IsOptional()
-  @IsString()
-  @Length(0, 200)
-  instructions?: string;
-}
-
-class ContactDto {
-  @ApiProperty({
-    description: 'Nome do contato',
-    example: 'João Silva',
-  })
-  @IsString()
-  @IsNotEmpty()
-  @Length(3, 100)
-  name!: string;
-
-  @ApiProperty({
-    description: 'Telefone',
-    example: '11987654321',
-  })
-  @IsString()
-  @IsNotEmpty()
-  @Length(10, 20)
-  phone!: string;
-
-  @ApiProperty({
-    description: 'Email',
-    example: 'joao@example.com',
-    required: false,
-  })
-  @IsOptional()
-  @IsEmail()
-  email?: string;
-
-  @ApiProperty({
-    description: 'Documento (CPF/CNPJ)',
-    example: '12345678901',
-    required: false,
-  })
-  @IsOptional()
-  @IsString()
-  @Length(11, 14)
-  document?: string;
-}
-
-class DimensionsDto {
-  @ApiProperty({
-    description: 'Comprimento em cm',
-    example: 30,
-  })
-  @IsNumber()
-  @IsPositive()
-  @Min(1)
-  @Max(200)
-  length!: number;
-
-  @ApiProperty({
-    description: 'Largura em cm',
-    example: 20,
-  })
-  @IsNumber()
-  @IsPositive()
-  @Min(1)
-  @Max(200)
-  width!: number;
-
-  @ApiProperty({
-    description: 'Altura em cm',
-    example: 15,
-  })
-  @IsNumber()
-  @IsPositive()
-  @Min(1)
-  @Max(200)
-  height!: number;
-
-  @ApiProperty({
-    description: 'Unidade de medida',
-    example: 'cm',
-    enum: ['cm', 'in'],
-    required: false,
-  })
-  @IsOptional()
-  @IsEnum(['cm', 'in'])
-  unit?: 'cm' | 'in';
-}
-
-class ProductInfoDto {
-  @ApiProperty({
-    description: 'Categoria do produto',
-    example: 'Eletrônicos',
-    required: false,
-  })
-  @IsOptional()
-  @IsString()
-  @Length(2, 50)
-  category?: string;
-
-  @ApiProperty({
-    description: 'Nível de fragilidade',
-    example: 'MEDIUM',
-    enum: ['LOW', 'MEDIUM', 'HIGH'],
-    required: false,
-  })
-  @IsOptional()
-  @IsEnum(['LOW', 'MEDIUM', 'HIGH'])
-  fragility?: 'LOW' | 'MEDIUM' | 'HIGH';
-
-  @ApiProperty({
-    description: 'Produto perecível',
-    example: false,
-    required: false,
-  })
-  @IsOptional()
-  @IsBoolean()
-  perishable?: boolean;
-
-  @ApiProperty({
-    description: 'Empilhável',
-    example: true,
-    required: false,
-  })
-  @IsOptional()
-  @IsBoolean()
-  stackable?: boolean;
-
-  @ApiProperty({
-    description: 'Manuseio especial (mínimo 1 instrução)',
-    example: ['Fragile', 'This side up'],
-    required: false,
-  })
-  @IsOptional()
-  @IsArray()
-  @ArrayMinSize(1)
-  @ArrayMaxSize(10)
-  @IsString({ each: true })
-  special_handling?: string[];
-
-  @ApiProperty({
-    description: 'Tags do produto (mínimo 1 tag)',
-    example: ['electronics', 'gift', 'urgent'],
-    required: false,
-  })
-  @IsOptional()
-  @IsArray()
-  @ArrayMinSize(1)
-  @ArrayMaxSize(20)
-  @IsString({ each: true })
-  tags?: string[];
-}
-
-// DTO para janelas de tempo
-class TimeWindowDto {
-  @ApiProperty({
-    description: 'Hora de início',
-    example: '09:00',
-  })
-  @IsString()
-  @IsNotEmpty()
-  start!: string;
-
-  @ApiProperty({
-    description: 'Hora de fim',
-    example: '12:00',
-  })
-  @IsString()
-  @IsNotEmpty()
-  end!: string;
-}
+import { AddressDto } from './address.dto';
+import { ContactDto } from './contact.dto';
+import { DimensionsDto } from './dimensions.dto';
+import { ProductInfoDto } from './product-info.dto';
+import { TimeWindowDto } from './time-window.dto';
 
 export class CreateDeliveryDto {
   @ApiProperty({
@@ -421,6 +152,24 @@ export class CreateDeliveryDto {
   recipient_contact?: ContactDto;
 
   @ApiProperty({
+    description: 'Email do remetente (opcional)',
+    example: 'remetente@example.com',
+    required: false,
+  })
+  @IsOptional()
+  @IsEmail()
+  sender_email?: string;
+
+  @ApiProperty({
+    description: 'Email do destinatário (opcional)',
+    example: 'destinatario@example.com',
+    required: false,
+  })
+  @IsOptional()
+  @IsEmail()
+  recipient_email?: string;
+
+  @ApiProperty({
     description: 'Data/hora agendada para coleta',
     example: '2024-01-15T09:00:00Z',
   })
@@ -500,6 +249,51 @@ export class CreateDeliveryDto {
   @ValidateNested({ each: true })
   @Type(() => TimeWindowDto)
   time_windows?: TimeWindowDto[];
+
+  @ApiProperty({
+    description: 'Requer assinatura na entrega',
+    example: true,
+    required: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  requires_signature?: boolean;
+
+  @ApiProperty({
+    description: 'Requer foto na entrega',
+    example: false,
+    required: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  requires_photo?: boolean;
+
+  @ApiProperty({
+    description: 'Requer documento de identificação',
+    example: false,
+    required: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  requires_id?: boolean;
+
+  @ApiProperty({
+    description: 'Produto é frágil',
+    example: true,
+    required: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  is_fragile?: boolean;
+
+  @ApiProperty({
+    description: 'Entrega urgente',
+    example: false,
+    required: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  is_urgent?: boolean;
 
   @ApiProperty({
     description: 'Configurações especiais',
