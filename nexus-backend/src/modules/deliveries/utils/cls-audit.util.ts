@@ -1,15 +1,5 @@
 import type { ClsService } from 'nestjs-cls';
-
-/**
- * Interface para contexto de auditoria
- */
-export interface AuditContext {
-  userId?: string | undefined;
-  userEmail?: string | undefined;
-  ipAddress?: string | undefined;
-  userAgent?: string | undefined;
-  requestId?: string | undefined;
-}
+import type { AuditContext } from '../interfaces/auditable.interface';
 
 /**
  * Utilitários para trabalhar com ClsService e contexto de auditoria em entregas

@@ -1,4 +1,4 @@
-import type { Coordinates } from '../validators/coordinates.validator';
+import type { Coordinates } from '../interfaces/address.interface';
 import { DeliveryPriority } from '../enums/delivery-priority.enum';
 
 /**

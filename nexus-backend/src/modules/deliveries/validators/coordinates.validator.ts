@@ -4,14 +4,7 @@ import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
 } from 'class-validator';
-
-/**
- * Interface para coordenadas geográficas
- */
-export interface Coordinates {
-  latitude: number;
-  longitude: number;
-}
+import type { Coordinates } from '../interfaces/address.interface';
 
 /**
  * Validador customizado para coordenadas geográficas

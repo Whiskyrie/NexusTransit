@@ -4,19 +4,7 @@ import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
 } from 'class-validator';
-
-/**
- * Interface para endereço brasileiro completo
- */
-export interface BrazilianAddress {
-  street: string;
-  number: string;
-  complement?: string;
-  neighborhood: string;
-  city: string;
-  state: string;
-  postal_code: string;
-}
+import type { BrazilianAddress } from '../interfaces/address.interface';
 
 /**
  * Validador customizado para endereços brasileiros completos

@@ -1,5 +1,5 @@
-import { normalizeCEP, type BrazilianAddress } from '../validators/address.validator';
-import type { Coordinates } from '../validators/coordinates.validator';
+import { normalizeCEP } from '../validators/address.validator';
+import type { BrazilianAddress, Coordinates } from '../interfaces/address.interface';
 
 /**
  * Utilitários para manipulação e validação de endereços

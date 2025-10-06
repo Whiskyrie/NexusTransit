@@ -1,10 +1,4 @@
-/**
- * Interface para janela de tempo de entrega
- */
-export interface TimeWindow {
-  start: Date;
-  end: Date;
-}
+import type { TimeWindow } from '../interfaces/time-window.interface';
 
 /**
  * Utilitários para validação e manipulação de janelas de tempo de entrega
