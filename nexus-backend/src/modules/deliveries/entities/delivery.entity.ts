@@ -316,6 +316,30 @@ export class Delivery extends BaseEntity {
     accuracy?: number;
   };
 
+  @Column({
+    type: 'jsonb',
+    nullable: true,
+    comment: 'Metadados adicionais da entrega',
+  })
+  metadata?: {
+    delivery_attempts?: number;
+    last_attempt_at?: Date;
+    failure_reasons?: string[];
+    [key: string]: unknown;
+  };
+
+  @Column({
+    type: 'jsonb',
+    nullable: true,
+    comment: 'Detalhes do item para entrega',
+  })
+  item_details?: {
+    weight_kg?: number;
+    volume_m3?: number;
+    quantity?: number;
+    [key: string]: unknown;
+  };
+
   // Relacionamentos de histórico
   @OneToMany(() => DeliveryAttempt, attempt => attempt.delivery, { cascade: true })
   attempts!: DeliveryAttempt[];
