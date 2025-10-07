@@ -2,12 +2,20 @@ import { Entity, Column, OneToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from '../../../database/entities/base.entity';
 import { CNHCategory } from '../enums/cnh-category.enum';
 import { Driver } from './driver.entity';
+import { Auditable } from '../decorators/auditable.decorator';
 
 /**
  * Driver License Entity
  * Entidade para armazenar informações da CNH do motorista
  */
 @Entity('driver_licenses')
+@Auditable({
+  trackCreation: true,
+  trackUpdates: true,
+  trackDeletion: false,
+  excludeFields: ['updated_at', 'created_at'],
+  entityDisplayName: 'CNH',
+})
 export class DriverLicense extends BaseEntity {
   @Column({
     type: 'varchar',

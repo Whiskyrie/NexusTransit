@@ -2,6 +2,7 @@ import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from '../../../database/entities/base.entity';
 import { Driver } from './driver.entity';
 import { DocumentType } from '../enums/document-type.enum';
+import { Auditable } from '../decorators/auditable.decorator';
 
 /**
  * Driver Document Entity - Sistema de documentos do motorista
@@ -13,6 +14,13 @@ import { DocumentType } from '../enums/document-type.enum';
  * - Histórico de versões
  */
 @Entity('driver_documents')
+@Auditable({
+  trackCreation: true,
+  trackUpdates: true,
+  trackDeletion: true,
+  excludeFields: ['file_path', 'updated_at', 'created_at'],
+  entityDisplayName: 'Documento do Motorista',
+})
 export class DriverDocument extends BaseEntity {
   @Column({
     type: 'varchar',
