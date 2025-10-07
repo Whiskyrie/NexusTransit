@@ -4,27 +4,8 @@ import { Repository } from 'typeorm';
 import { Delivery } from '../entities/delivery.entity';
 import { DeliveryPriority } from '../enums/delivery-priority.enum';
 import type { Coordinates } from '../interfaces/address.interface';
+import type { RouteDelivery, OptimizedRoute } from '../interfaces/route-optimization.interface';
 import { DistanceCalculator } from '../utils/distance-calculator.util';
-
-/**
- * Interface para representar uma entrega em uma rota
- */
-export interface RouteDelivery {
-  id: string;
-  coordinates: Coordinates;
-  priority: DeliveryPriority;
-  estimatedDuration: number; // em minutos
-}
-
-/**
- * Interface para representar uma rota otimizada
- */
-export interface OptimizedRoute {
-  deliveries: RouteDelivery[];
-  totalDistance: number; // em km
-  totalTime: number; // em minutos
-  sequence: string[]; // IDs das entregas na ordem otimizada
-}
 
 /**
  * Serviço de otimização de rotas de entrega

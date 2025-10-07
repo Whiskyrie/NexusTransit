@@ -1,20 +1,6 @@
 import { DeliveryStatus } from '../enums/delivery-status.enum';
 import { NotificationType } from '../interfaces/notification.interface';
-
-/**
- * Interface para variáveis de template
- */
-export interface TemplateVariables {
-  trackingCode: string;
-  customerName?: string;
-  driverId?: string;
-  driverName?: string;
-  estimatedTime?: string;
-  deliveryAddress?: string;
-  deliveryDate?: string;
-  statusMessage?: string;
-  [key: string]: string | undefined;
-}
+import type { TemplateVariables } from '../interfaces/template-variables.interface';
 
 /**
  * Templates de email por tipo de notificação

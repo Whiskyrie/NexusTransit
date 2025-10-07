@@ -4,27 +4,7 @@ import { Repository } from 'typeorm';
 import { Delivery } from '../entities/delivery.entity';
 import { DeliveryStatus } from '../enums/delivery-status.enum';
 import { NotificationType, type DeliveryNotification } from '../interfaces/notification.interface';
-
-/**
- * Interface para destinatário de notificação
- */
-export interface NotificationRecipient {
-  id: string;
-  email?: string | undefined;
-  phone?: string | undefined;
-  name: string;
-}
-
-/**
- * Interface para opções de notificação
- */
-export interface NotificationOptions {
-  sendEmail?: boolean;
-  sendSms?: boolean;
-  sendPush?: boolean;
-  immediate?: boolean;
-  scheduledFor?: Date | undefined;
-}
+import type { NotificationOptions } from '../interfaces/notification-recipient.interface';
 
 /**
  * Serviço de notificações de entregas

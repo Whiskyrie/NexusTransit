@@ -10,24 +10,12 @@ import { ClsService } from 'nestjs-cls';
 import { AuditLogService } from '../../audit/audit-log.service';
 import { AuditAction, AuditCategory } from '../../audit/enums/auditEnums';
 import type { CreateAuditLogDto } from '../../audit/dto/auditDto';
-import { ClsAuditUtils, type AuditContext } from '../utils/cls-audit.util';
-
-/**
- * Interface para entidades auditáveis
- */
-interface AuditableEntity {
-  id: string;
-  created_at?: Date;
-  updated_at?: Date;
-}
-
-/**
- * Interface para metadados de auditoria
- */
-interface AuditMetadata {
-  changedColumns?: string[];
-  oldValues?: Record<string, unknown> | null;
-}
+import { ClsAuditUtils } from '../utils/cls-audit.util';
+import type {
+  AuditContext,
+  AuditableEntity,
+  AuditMetadata,
+} from '../interfaces/auditable.interface';
 
 /**
  * Subscriber para auditoria automática de entregas

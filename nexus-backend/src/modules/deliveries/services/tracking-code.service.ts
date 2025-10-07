@@ -2,16 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Delivery } from '../entities/delivery.entity';
-
-/**
- * Interface para código de rastreamento parseado
- */
-export interface ParsedTrackingCode {
-  prefix: string;
-  date: string;
-  sequence: string;
-  fullCode: string;
-}
+import type { ParsedTrackingCode } from '../interfaces/tracking-code.interface';
 
 /**
  * Serviço para geração e validação de códigos de rastreamento de entregas

@@ -2,30 +2,8 @@ import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } fr
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { Request } from 'express';
-
-/**
- * Enum para tipos de notificação
- */
-export enum NotificationType {
-  STATUS_CHANGE = 'STATUS_CHANGE',
-  ASSIGNMENT = 'ASSIGNMENT',
-  DELIVERY_CREATED = 'DELIVERY_CREATED',
-  DELIVERY_COMPLETED = 'DELIVERY_COMPLETED',
-  DELIVERY_FAILED = 'DELIVERY_FAILED',
-  DELIVERY_CANCELLED = 'DELIVERY_CANCELLED',
-}
-
-/**
- * Interface para payload de notificação
- */
-export interface NotificationPayload {
-  type: NotificationType;
-  deliveryId?: string;
-  userId?: string;
-  customerId?: string;
-  driverId?: string;
-  metadata?: Record<string, unknown>;
-}
+import { NotificationType } from '../interfaces/notification.interface';
+import type { NotificationPayload } from '../interfaces/notification-payload.interface';
 
 /**
  * Interceptor para disparar notificações automáticas em eventos de entregas

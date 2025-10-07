@@ -3,16 +3,7 @@ import { Observable } from 'rxjs';
 import { ClsService } from 'nestjs-cls';
 import { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-
-/**
- * Interface para usuário autenticado na requisição
- */
-export interface RequestUser {
-  id: string;
-  email: string;
-  name?: string;
-  roles?: string[];
-}
+import type { RequestUser } from '../interfaces/request-user.interface';
 
 /**
  * Interceptor para configurar contexto de auditoria em entregas

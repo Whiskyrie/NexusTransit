@@ -10,15 +10,7 @@ import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { Request } from 'express';
 import { DeliveryStatus, DeliveryStatusTransitions } from '../enums/delivery-status.enum';
-
-/**
- * Interface para o body da requisição de atualização de status
- */
-interface UpdateDeliveryStatusBody {
-  status?: DeliveryStatus;
-  current_status?: DeliveryStatus;
-  [key: string]: unknown;
-}
+import type { UpdateDeliveryStatusBody } from '../interfaces/delivery-status-update.interface';
 
 /**
  * Interceptor para validar e rastrear mudanças de status de entregas

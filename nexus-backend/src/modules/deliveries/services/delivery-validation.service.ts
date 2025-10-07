@@ -7,15 +7,7 @@ import type { TimeWindow } from '../interfaces/time-window.interface';
 import { TimeWindowUtils } from '../utils/time-window.util';
 import { AddressUtils } from '../utils/address.util';
 import type { BrazilianAddress, Coordinates } from '../interfaces/address.interface';
-
-/**
- * Interface para resultado de validação
- */
-export interface ValidationResult {
-  valid: boolean;
-  errors: string[];
-  warnings?: string[];
-}
+import type { ValidationResult } from '../interfaces/validation-result.interface';
 
 /**
  * Serviço de validação de entregas

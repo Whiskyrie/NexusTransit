@@ -1,27 +1,10 @@
 import { SetMetadata } from '@nestjs/common';
+import type { AuditableOptions } from '../interfaces/auditable.interface';
 
 /**
  * Chave para metadados de entidades auditáveis
  */
 export const AUDITABLE_ENTITY_KEY = 'auditable_delivery_entity';
-
-/**
- * Interface para opções de auditoria
- */
-export interface AuditableOptions {
-  /** Se deve registrar operações CREATE */
-  trackCreation?: boolean;
-  /** Se deve registrar operações UPDATE */
-  trackUpdates?: boolean;
-  /** Se deve registrar operações DELETE */
-  trackDeletion?: boolean;
-  /** Campos que devem ser ignorados na auditoria */
-  excludeFields?: string[];
-  /** Se deve registrar valores antigos em updates */
-  trackOldValues?: boolean;
-  /** Nome personalizado para a entidade nos logs */
-  entityDisplayName?: string;
-}
 
 /**
  * Opções padrão para auditoria
