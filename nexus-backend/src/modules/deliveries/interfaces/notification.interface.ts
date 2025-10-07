@@ -5,6 +5,7 @@ import type { DeliveryStatus } from '../enums/delivery-status.enum';
  */
 export enum NotificationType {
   STATUS_CHANGE = 'STATUS_CHANGE',
+  ASSIGNMENT = 'ASSIGNMENT',
   DELIVERY_CREATED = 'DELIVERY_CREATED',
   DELIVERY_ASSIGNED = 'DELIVERY_ASSIGNED',
   DELIVERY_COMPLETED = 'DELIVERY_COMPLETED',

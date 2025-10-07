@@ -24,6 +24,20 @@ export const EMAIL_TEMPLATES: Record<
     `,
   },
 
+  [NotificationType.ASSIGNMENT]: {
+    subject: 'Motorista Atribuído - Pedido {{trackingCode}}',
+    body: `
+      <h2>Olá {{customerName}},</h2>
+      <p>Um motorista foi atribuído à sua entrega!</p>
+      <p>Código de rastreamento: <strong>{{trackingCode}}</strong></p>
+      <p>Motorista: {{driverName}}</p>
+      <p>Previsão de entrega: {{estimatedTime}}</p>
+      <p>Para acompanhar sua entrega em tempo real, acesse: <a href="{{trackingUrl}}">{{trackingUrl}}</a></p>
+      <br>
+      <p>Atenciosamente,<br>Equipe NexusTransit</p>
+    `,
+  },
+
   [NotificationType.DELIVERY_CREATED]: {
     subject: 'Entrega Criada - Pedido {{trackingCode}}',
     body: `
@@ -101,6 +115,9 @@ export const SMS_TEMPLATES: Record<NotificationType, string> = {
   [NotificationType.STATUS_CHANGE]:
     'NexusTransit: Status atualizado - {{trackingCode}}. {{statusMessage}}. Acompanhe: {{trackingUrl}}',
 
+  [NotificationType.ASSIGNMENT]:
+    'NexusTransit: Motorista atribuído! Código: {{trackingCode}}. Motorista: {{driverName}}. Previsão: {{estimatedTime}}. Rastreie: {{trackingUrl}}',
+
   [NotificationType.DELIVERY_CREATED]:
     'NexusTransit: Entrega criada! Código: {{trackingCode}}. Previsão: {{deliveryDate}}. Rastreie em: {{trackingUrl}}',
 
@@ -132,6 +149,12 @@ export const PUSH_TEMPLATES: Record<
     title: 'Status Atualizado',
     body: 'Sua entrega {{trackingCode}} teve o status atualizado: {{statusMessage}}',
     data: { type: 'status_change' },
+  },
+
+  [NotificationType.ASSIGNMENT]: {
+    title: 'Motorista Atribuído',
+    body: 'Motorista {{driverName}} foi atribuído à sua entrega {{trackingCode}}',
+    data: { type: 'assignment' },
   },
 
   [NotificationType.DELIVERY_CREATED]: {

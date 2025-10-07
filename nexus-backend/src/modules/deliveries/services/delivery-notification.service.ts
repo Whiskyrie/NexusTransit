@@ -299,6 +299,7 @@ export class DeliveryNotificationService {
       [NotificationType.DELIVERY_COMPLETED]: 'Sua entrega foi concluída',
       [NotificationType.DELIVERY_FAILED]: 'Houve um problema com sua entrega',
       [NotificationType.DELIVERY_CANCELLED]: 'Sua entrega foi cancelada',
+      [NotificationType.ASSIGNMENT]: '',
     };
 
     return messages[type] ?? 'Notificação de entrega';
