@@ -3,7 +3,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { DriversService } from './drivers.service';
 import { DriversController } from './drivers.controller';
-import { Driver, DriverLicense, DriverDocument } from './entities/driverEntities';
+import { DriverDocument } from './entities/driver-document.entity';
+import { Driver } from './entities/driver.entity';
+import { DriverLicense } from './entities/driver-license.entity';
 import { DriverLicenseService } from './services/driver-license.service';
 
 // Interceptors
