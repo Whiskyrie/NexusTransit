@@ -3,13 +3,7 @@ import { Observable } from 'rxjs';
 import { ClsService } from 'nestjs-cls';
 import { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-
-export interface RequestUser {
-  id: string;
-  email: string;
-  name?: string;
-  roles?: string[];
-}
+import { RequestUser } from '../interfaces/request-user.interface';
 
 @Injectable()
 export class AuditContextInterceptor implements NestInterceptor {

@@ -10,14 +10,7 @@ import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { Request } from 'express';
 import { DriverStatus } from '../enums/driver-status.enum';
-
-/**
- * Interface para o body de atualização de status
- */
-interface UpdateDriverStatusBody {
-  status?: DriverStatus;
-  current_status?: DriverStatus;
-}
+import { UpdateDriverStatusBody } from '../interfaces/driver-status-update.interface';
 
 /**
  * Mapa de transições válidas de status para motoristas
