@@ -13,6 +13,7 @@ import { CNHCategory } from './enums/cnh-category.enum';
 import { DriverLicenseService } from './services/driver-license.service';
 import { convertDateFormat, validateMinimumAge } from './utils/date.util';
 import { MINIMUM_DRIVER_AGE } from './constants/driver.constants';
+import { DriverLicenseUpdateData } from './interfaces/driver-license.interface';
 
 @Injectable()
 export class DriversService {
@@ -204,11 +205,7 @@ export class DriversService {
       updateDriverDto.cnh_expiration_date
     ) {
       if (driver.license) {
-        const updateData: Partial<{
-          license_number: string;
-          category: string;
-          expiration_date: string;
-        }> = {};
+        const updateData: DriverLicenseUpdateData = {};
 
         if (updateDriverDto.cnh_number) {
           updateData.license_number = updateDriverDto.cnh_number;
