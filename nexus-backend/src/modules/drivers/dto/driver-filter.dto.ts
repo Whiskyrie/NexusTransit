@@ -1,4 +1,5 @@
 import { IsOptional, IsEnum, IsString, IsBoolean } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { DriverStatus } from '../enums/driver-status.enum';
 
@@ -49,6 +50,18 @@ export class DriverFilterDto {
   })
   @IsOptional()
   @IsBoolean()
+  @Transform(({ value }) => {
+    if (value === 'true') {
+      return true;
+    }
+    if (value === 'false') {
+      return false;
+    }
+    if (typeof value === 'boolean') {
+      return value;
+    }
+    return undefined;
+  })
   is_active?: boolean;
 
   @ApiProperty({
