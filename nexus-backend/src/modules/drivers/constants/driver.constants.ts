@@ -31,3 +31,34 @@ export const CPF_LENGTH = 11;
  * Tamanho da CNH normalizada (somente números)
  */
 export const CNH_LENGTH = 11;
+
+/**
+ * Chave para metadados de rastreamento de status
+ */
+export const TRACK_STATUS_KEY = 'track_driver_status';
+
+/**
+ * Chave para metadados de validação de CNH
+ */
+export const VALIDATE_CNH_KEY = 'validate_cnh';
+
+/**
+ * Chave para metadados de rastreamento de atividade
+ */
+export const TRACK_ACTIVITY_KEY = 'track_driver_activity';
+
+/**
+ * Campos sensíveis que não devem ser logados
+ */
+export const SENSITIVE_FIELDS = ['cpf', 'email', 'phone'] as const;
+
+/**
+ * Status válidos para motoristas
+ */
+export const DRIVER_VALID_STATUSES = [
+  'available',
+  'on_route',
+  'unavailable',
+  'blocked',
+  'vacation',
+] as const;
