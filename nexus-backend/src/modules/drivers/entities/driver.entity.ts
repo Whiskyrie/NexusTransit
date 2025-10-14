@@ -6,6 +6,7 @@ import { DriverDocument } from './driver-document.entity';
 import { Delivery } from '../../deliveries/entities/delivery.entity';
 import { DeliveryAttempt } from '../../deliveries/entities/delivery-attempt.entity';
 import { DeliveryStatusHistory } from '../../deliveries/entities/delivery-status-history.entity';
+import { Auditable } from '../decorators/auditable.decorator';
 
 /**
  * Driver Entity - Sistema de gerenciamento de motoristas
@@ -17,6 +18,13 @@ import { DeliveryStatusHistory } from '../../deliveries/entities/delivery-status
  * - Sistema de status operacional
  */
 @Entity('drivers')
+@Auditable({
+  trackCreation: true,
+  trackUpdates: true,
+  trackDeletion: true,
+  excludeFields: ['cpf', 'email', 'phone', 'updated_at', 'created_at'],
+  entityDisplayName: 'Motorista',
+})
 export class Driver extends BaseEntity {
   @Column({
     type: 'varchar',

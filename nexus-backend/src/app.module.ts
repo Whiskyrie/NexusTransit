@@ -1,5 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ClsModule } from 'nestjs-cls';
+import { randomUUID } from 'crypto';
+import type { Request } from 'express';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
@@ -28,6 +31,17 @@ import configurations from './config/configurations';
       isGlobal: true,
       envFilePath: '.env',
       cache: true,
+    }),
+    ClsModule.forRoot({
+      global: true,
+      middleware: {
+        mount: true,
+        generateId: true,
+        idGenerator: (req: Request) => {
+          const requestId = req.headers['x-request-id'];
+          return typeof requestId === 'string' ? requestId : randomUUID();
+        },
+      },
     }),
     DatabaseModule, // Configuração TypeORM + PostgreSQL
     HealthModule, // Health checks e monitoramento

@@ -10,6 +10,7 @@ import {
   DEFAULT_CNH_ISSUING_AUTHORITY,
   DEFAULT_CNH_ISSUING_STATE,
 } from '../constants/driver.constants';
+import { DriverLicenseUpdateData } from '../interfaces/driver-license.interface';
 
 /**
  * Service responsável pela gestão de CNH (Carteira Nacional de Habilitação)
@@ -78,14 +79,7 @@ export class DriverLicenseService {
    */
   async updateDriverLicense(
     licenseId: string,
-    updateData: Partial<{
-      license_number: string;
-      category: string;
-      expiration_date: string;
-      issuing_authority: string;
-      issuing_state: string;
-      is_active: boolean;
-    }>,
+    updateData: DriverLicenseUpdateData,
   ): Promise<DriverLicense> {
     const license = await this.driverLicenseRepository.findOne({
       where: { id: licenseId },

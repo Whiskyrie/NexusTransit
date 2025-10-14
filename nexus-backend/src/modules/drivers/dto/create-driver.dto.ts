@@ -109,11 +109,11 @@ export class CreateDriverDto {
   status?: DriverStatus;
 
   @ApiProperty({
-    description: 'Indica se o motorista está ativo',
+    description: 'Status ativo/inativo do motorista',
     example: true,
     required: false,
   })
   @IsOptional()
   @IsBoolean()
-  is_active?: boolean;
+  is_active?: boolean = true;
 }

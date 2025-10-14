@@ -1,4 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
   HealthCheckService,
   HealthCheck,
@@ -8,6 +9,7 @@ import {
   HealthCheckResult,
 } from '@nestjs/terminus';
 
+@ApiTags('Health')
 @Controller('health')
 export class HealthController {
   constructor(
@@ -19,6 +21,18 @@ export class HealthController {
 
   @Get()
   @HealthCheck()
+  @ApiOperation({
+    summary: 'Health check geral',
+    description: 'Verifica o status geral da aplicação (database, memória, disco)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Aplicação saudável',
+  })
+  @ApiResponse({
+    status: 503,
+    description: 'Aplicação com problemas',
+  })
   check(): Promise<HealthCheckResult> {
     return this.health.check([
       // Verificar conexão com PostgreSQL
@@ -38,6 +52,18 @@ export class HealthController {
 
   @Get('ready')
   @HealthCheck()
+  @ApiOperation({
+    summary: 'Readiness check',
+    description: 'Verifica se a aplicação está pronta para receber requisições',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Aplicação pronta',
+  })
+  @ApiResponse({
+    status: 503,
+    description: 'Aplicação não está pronta',
+  })
   readiness(): Promise<HealthCheckResult> {
     return this.health.check([
       // Verificar se o banco está pronto para receber queries
@@ -47,6 +73,18 @@ export class HealthController {
 
   @Get('live')
   @HealthCheck()
+  @ApiOperation({
+    summary: 'Liveness check',
+    description: 'Verifica se a aplicação está em execução',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Aplicação viva',
+  })
+  @ApiResponse({
+    status: 503,
+    description: 'Aplicação com problemas',
+  })
   liveness(): Promise<HealthCheckResult> {
     return this.health.check([
       // Verificar se a aplicação está viva
@@ -56,6 +94,18 @@ export class HealthController {
 
   @Get('database')
   @HealthCheck()
+  @ApiOperation({
+    summary: 'Database check',
+    description: 'Verifica a conexão com o banco de dados',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Banco de dados conectado',
+  })
+  @ApiResponse({
+    status: 503,
+    description: 'Banco de dados desconectado',
+  })
   database(): Promise<HealthCheckResult> {
     return this.health.check([() => this.db.pingCheck('database')]);
   }

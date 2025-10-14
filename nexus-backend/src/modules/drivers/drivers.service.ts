@@ -13,6 +13,7 @@ import { CNHCategory } from './enums/cnh-category.enum';
 import { DriverLicenseService } from './services/driver-license.service';
 import { convertDateFormat, validateMinimumAge } from './utils/date.util';
 import { MINIMUM_DRIVER_AGE } from './constants/driver.constants';
+import { DriverLicenseUpdateData } from './interfaces/driver-license.interface';
 
 @Injectable()
 export class DriversService {
@@ -204,11 +205,7 @@ export class DriversService {
       updateDriverDto.cnh_expiration_date
     ) {
       if (driver.license) {
-        const updateData: Partial<{
-          license_number: string;
-          category: string;
-          expiration_date: string;
-        }> = {};
+        const updateData: DriverLicenseUpdateData = {};
 
         if (updateDriverDto.cnh_number) {
           updateData.license_number = updateDriverDto.cnh_number;
@@ -250,14 +247,20 @@ export class DriversService {
       id: driver.id,
       cpf: driver.cpf,
       full_name: driver.full_name,
-      birth_date: driver.birth_date?.toISOString().split('T')[0] ?? '',
+      birth_date:
+        typeof driver.birth_date === 'string'
+          ? driver.birth_date
+          : (driver.birth_date?.toISOString().split('T')[0] ?? ''),
       email: driver.email,
       phone: driver.phone,
       status: driver.status,
       is_active: driver.is_active,
       cnh_number: driver.license?.license_number ?? '',
       cnh_category: driver.license?.category ?? CNHCategory.B,
-      cnh_expiration_date: driver.license?.expiration_date?.toISOString().split('T')[0] ?? '',
+      cnh_expiration_date:
+        typeof driver.license?.expiration_date === 'string'
+          ? driver.license.expiration_date
+          : (driver.license?.expiration_date?.toISOString().split('T')[0] ?? ''),
       created_at: driver.created_at.toISOString(),
       updated_at: driver.updated_at.toISOString(),
     };
