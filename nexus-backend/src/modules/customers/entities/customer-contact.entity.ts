@@ -1,20 +1,26 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  CreateDateColumn,
-  UpdateDateColumn,
-  Index,
-} from 'typeorm';
+import { Entity, Column, ManyToOne, Index } from 'typeorm';
+import { BaseEntity } from '../../../database/entities/base.entity';
 import { ContactType } from '../enums/contact-type.enum';
 import { Customer } from './customer.entity';
+import { Auditable } from '../decorators/auditable.decorator';
 
+/**
+ * CustomerContact Entity - Contatos adicionais de clientes
+ *
+ * Features:
+ * - Múltiplos contatos por cliente
+ * - Tipos de contato (email, telefone, etc)
+ * - Contato principal
+ */
 @Entity('customer_contacts')
-export class CustomerContact {
-  @PrimaryGeneratedColumn('uuid')
-  id!: string;
-
+@Auditable({
+  trackCreation: true,
+  trackUpdates: true,
+  trackDeletion: true,
+  excludeFields: ['updated_at', 'created_at'],
+  entityDisplayName: 'Contato do Cliente',
+})
+export class CustomerContact extends BaseEntity {
   @Column({ type: 'uuid' })
   @Index()
   customerId!: string;
@@ -41,10 +47,4 @@ export class CustomerContact {
     onDelete: 'CASCADE',
   })
   customer!: Customer;
-
-  @CreateDateColumn({ type: 'timestamp with time zone' })
-  createdAt!: Date;
-
-  @UpdateDateColumn({ type: 'timestamp with time zone' })
-  updatedAt!: Date;
 }
