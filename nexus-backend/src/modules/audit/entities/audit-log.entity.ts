@@ -1,12 +1,12 @@
-import { Entity, Column, CreateDateColumn, Index } from 'typeorm';
+import { Entity, Column, Index } from 'typeorm';
 import { BaseEntity } from '../../../database/entities/base.entity';
-import { AuditAction, AuditCategory } from '../enums/auditEnums';
+import { AuditAction, AuditCategory } from '../enums';
 
 @Entity('audit_logs')
-@Index(['userId', 'createdAt'])
-@Index(['action', 'createdAt'])
-@Index(['category', 'createdAt'])
-@Index(['createdAt'])
+@Index(['userId', 'created_at'])
+@Index(['action', 'created_at'])
+@Index(['category', 'created_at'])
+@Index(['created_at'])
 export class AuditLogEntity extends BaseEntity {
   @Column({ type: 'enum', enum: AuditAction })
   action!: AuditAction;
@@ -65,9 +65,6 @@ export class AuditLogEntity extends BaseEntity {
 
   @Column({ name: 'correlation_id', type: 'uuid', nullable: true })
   correlationId!: string | null;
-
-  @CreateDateColumn({ name: 'created_at' })
-  createdAt!: Date;
 
   // LGPD compliance fields
   @Column({ name: 'data_subject_id', type: 'uuid', nullable: true })
