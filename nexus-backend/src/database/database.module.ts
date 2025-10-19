@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { createDataSource } from './data-source';
 import type { DatabaseConfig } from '../config/database.config';
+import { DataSource } from 'typeorm';
 
 /** 
     Database Module - Configures TypeORM integration with NestJS
@@ -24,6 +25,14 @@ import type { DatabaseConfig } from '../config/database.config';
         return dataSource.options;
       },
       inject: [ConfigService],
+      dataSourceFactory: async options => {
+        if (!options) {
+          throw new Error('DataSource options not found');
+        }
+        const dataSource = new DataSource(options);
+        await dataSource.initialize();
+        return dataSource;
+      },
     }),
   ],
   exports: [TypeOrmModule],
