@@ -1,9 +1,21 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindManyOptions, Between, Like, FindOptionsWhere } from 'typeorm';
-import { AuditLogEntity } from './entities/auditEntities';
-import { CreateAuditLogDto, QueryAuditLogsDto } from './dto/auditDto';
-import { AuditAction } from './enums/auditEnums';
+import {
+  Between,
+  Like,
+  MoreThanOrEqual,
+  Repository,
+  FindManyOptions,
+  FindOptionsWhere,
+} from 'typeorm';
+import { AuditLogEntity } from './entities';
+import { CreateAuditLogDto, QueryAuditLogsDto } from './dto';
+import { AuditAction } from './enums';
+import {
+  AUDIT_RETENTION_DAYS,
+  AUDIT_DEFAULT_PAGE_SIZE,
+  AUDIT_MAX_LOGS_PER_QUERY,
+} from './constants/audit.constants';
 
 @Injectable()
 export class AuditLogService {
@@ -14,6 +26,9 @@ export class AuditLogService {
     private readonly auditLogRepository: Repository<AuditLogEntity>,
   ) {}
 
+  /**
+   * Cria um novo log de auditoria
+   */
   async createLog(createAuditLogDto: CreateAuditLogDto): Promise<AuditLogEntity> {
     try {
       const auditLog = this.auditLogRepository.create(createAuditLogDto);
@@ -29,6 +44,9 @@ export class AuditLogService {
     }
   }
 
+  /**
+   * Busca logs com filtros e paginação
+   */
   async findLogs(queryDto: QueryAuditLogsDto): Promise<{
     logs: AuditLogEntity[];
     total: number;
@@ -46,10 +64,13 @@ export class AuditLogService {
       endDate,
       search,
       page = 1,
-      limit = 10,
-      sortBy = 'createdAt',
+      limit = AUDIT_DEFAULT_PAGE_SIZE,
+      sortBy = 'created_at',
       sortOrder = 'DESC',
     } = queryDto;
+
+    // Limitar máximo de resultados por consulta
+    const safeLimit = Math.min(limit, AUDIT_MAX_LOGS_PER_QUERY);
 
     const whereConditions: FindOptionsWhere<AuditLogEntity> = {};
 
@@ -78,21 +99,20 @@ export class AuditLogService {
     }
 
     if (startDate && endDate) {
-      whereConditions.createdAt = Between(new Date(startDate), new Date(endDate));
+      whereConditions.created_at = Between(new Date(startDate), new Date(endDate));
     } else if (startDate) {
-      whereConditions.createdAt = new Date(startDate);
+      whereConditions.created_at = MoreThanOrEqual(new Date(startDate));
     }
 
     if (search) {
-      // Simple text search in description field
       whereConditions.description = Like(`%${search}%`);
     }
 
     const options: FindManyOptions<AuditLogEntity> = {
       where: whereConditions,
       order: { [sortBy]: sortOrder },
-      skip: (page - 1) * limit,
-      take: limit,
+      skip: (page - 1) * safeLimit,
+      take: safeLimit,
     };
 
     const [logs, total] = await this.auditLogRepository.findAndCount(options);
@@ -101,54 +121,80 @@ export class AuditLogService {
       logs,
       total,
       page,
-      totalPages: Math.ceil(total / limit),
+      totalPages: Math.ceil(total / safeLimit),
     };
   }
 
+  /**
+   * Busca log por ID
+   */
   async findLogById(id: string): Promise<AuditLogEntity | null> {
     return this.auditLogRepository.findOne({ where: { id } });
   }
 
+  /**
+   * Busca logs de um usuário específico
+   */
   async findLogsByUserId(userId: string, limit = 50): Promise<AuditLogEntity[]> {
+    const safeLimit = Math.min(limit, AUDIT_MAX_LOGS_PER_QUERY);
+
     return this.auditLogRepository.find({
       where: { userId },
-      order: { createdAt: 'DESC' },
-      take: limit,
+      order: { created_at: 'DESC' },
+      take: safeLimit,
     });
   }
 
+  /**
+   * Busca logs de um recurso específico
+   */
   async findLogsByResource(
     resourceType: string,
     resourceId: string,
     limit = 50,
   ): Promise<AuditLogEntity[]> {
+    const safeLimit = Math.min(limit, AUDIT_MAX_LOGS_PER_QUERY);
+
     return this.auditLogRepository.find({
       where: { resourceType, resourceId },
-      order: { createdAt: 'DESC' },
-      take: limit,
+      order: { created_at: 'DESC' },
+      take: safeLimit,
     });
   }
 
+  /**
+   * Remove logs expirados baseado no período de retenção
+   */
   async deleteExpiredLogs(): Promise<number> {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const retentionDate = new Date();
+    retentionDate.setDate(retentionDate.getDate() - AUDIT_RETENTION_DAYS);
 
     const result = await this.auditLogRepository
       .createQueryBuilder()
       .delete()
-      .where('created_at < :date', { date: thirtyDaysAgo })
-      .andWhere('retention_period_days IS NULL OR retention_period_days <= 30')
+      .where('created_at < :date', { date: retentionDate })
+      .andWhere('retention_period_days IS NULL OR retention_period_days <= :retentionDays', {
+        retentionDays: AUDIT_RETENTION_DAYS,
+      })
       .execute();
 
-    this.logger.log(`Deleted ${result.affected} expired audit logs`);
-    return result.affected ?? 0;
+    const deletedCount = result.affected ?? 0;
+    this.logger.log(`Deleted ${deletedCount} expired audit logs`);
+
+    return deletedCount;
   }
 
-  async getStatistics(days = 30): Promise<{
+  /**
+   * Obtém estatísticas de auditoria
+   */
+  async getStatistics(days = AUDIT_RETENTION_DAYS): Promise<{
     totalLogs: number;
     loginAttempts: number;
     failedLogins: number;
     successfulLogins: number;
+    createOperations: number;
+    updateOperations: number;
+    deleteOperations: number;
     topActions: { action: string; count: number }[];
     topCategories: { category: string; count: number }[];
   }> {
@@ -156,20 +202,41 @@ export class AuditLogService {
     startDate.setDate(startDate.getDate() - days);
 
     const totalLogs = await this.auditLogRepository.count({
-      where: { createdAt: Between(startDate, new Date()) },
+      where: { created_at: Between(startDate, new Date()) },
     });
 
     const loginAttempts = await this.auditLogRepository.count({
       where: {
         action: AuditAction.LOGIN,
-        createdAt: Between(startDate, new Date()),
+        created_at: Between(startDate, new Date()),
       },
     });
 
     const failedLogins = await this.auditLogRepository.count({
       where: {
         action: AuditAction.FAILED_LOGIN,
-        createdAt: Between(startDate, new Date()),
+        created_at: Between(startDate, new Date()),
+      },
+    });
+
+    const createOperations = await this.auditLogRepository.count({
+      where: {
+        action: AuditAction.CREATE,
+        created_at: Between(startDate, new Date()),
+      },
+    });
+
+    const updateOperations = await this.auditLogRepository.count({
+      where: {
+        action: AuditAction.UPDATE,
+        created_at: Between(startDate, new Date()),
+      },
+    });
+
+    const deleteOperations = await this.auditLogRepository.count({
+      where: {
+        action: AuditAction.DELETE,
+        created_at: Between(startDate, new Date()),
       },
     });
 
@@ -179,7 +246,7 @@ export class AuditLogService {
       .createQueryBuilder('audit')
       .select('audit.action', 'action')
       .addSelect('COUNT(*)', 'count')
-      .where('audit.createdAt >= :startDate', { startDate })
+      .where('audit.created_at >= :startDate', { startDate })
       .groupBy('audit.action')
       .orderBy('count', 'DESC')
       .limit(5)
@@ -189,7 +256,7 @@ export class AuditLogService {
       .createQueryBuilder('audit')
       .select('audit.category', 'category')
       .addSelect('COUNT(*)', 'count')
-      .where('audit.createdAt >= :startDate', { startDate })
+      .where('audit.created_at >= :startDate', { startDate })
       .groupBy('audit.category')
       .orderBy('count', 'DESC')
       .limit(5)
@@ -200,6 +267,9 @@ export class AuditLogService {
       loginAttempts,
       failedLogins,
       successfulLogins,
+      createOperations,
+      updateOperations,
+      deleteOperations,
       topActions: topActionsQuery.map(item => ({
         action: item.action,
         count: parseInt(item.count, 10),
