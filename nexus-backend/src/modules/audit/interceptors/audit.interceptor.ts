@@ -3,7 +3,7 @@ import { Observable } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
 import { Request, Response } from 'express';
 import { AuditLogService } from '../audit-log.service';
-import { AuditAction, AuditCategory } from '../enums/auditEnums';
+import { AuditAction, AuditCategory } from '../enums';
 
 interface RequestWithUser extends Request {
   user?: {

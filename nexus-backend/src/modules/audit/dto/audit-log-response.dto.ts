@@ -1,204 +1,201 @@
-import {
-  IsEnum,
-  IsOptional,
-  IsString,
-  IsUUID,
-  IsObject,
-  IsNumber,
-  IsBoolean,
-} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { AuditAction, AuditCategory } from '../enums';
+import { Exclude, Expose } from 'class-transformer';
+import type { AuditAction, AuditCategory } from '../enums';
 
 /**
- * DTO para criação de log de auditoria
+ * DTO de resposta para logs de auditoria
+ *
+ * Utilizado para retornar dados de auditoria em endpoints da API
  */
-export class CreateAuditLogDto {
+@Expose()
+export class AuditLogResponseDto {
+  @ApiProperty({
+    description: 'ID único do log de auditoria',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+    format: 'uuid',
+  })
+  id!: string;
+
   @ApiProperty({
     description: 'Ação executada',
-    enum: AuditAction,
-    example: AuditAction.CREATE,
+    enum: [
+      'CREATE',
+      'READ',
+      'UPDATE',
+      'DELETE',
+      'LOGIN',
+      'LOGOUT',
+      'PASSWORD_CHANGE',
+      'FAILED_LOGIN',
+      'ACCESS_DENIED',
+    ],
+    example: 'CREATE',
   })
-  @IsEnum(AuditAction)
   action!: AuditAction;
 
   @ApiProperty({
     description: 'Categoria da operação auditada',
-    enum: AuditCategory,
-    example: AuditCategory.DELIVERY_MANAGEMENT,
+    enum: [
+      'AUTH',
+      'USER_MANAGEMENT',
+      'VEHICLE_MANAGEMENT',
+      'ROUTE_MANAGEMENT',
+      'DELIVERY_MANAGEMENT',
+      'CUSTOMER_MANAGEMENT',
+      'DRIVER_MANAGEMENT',
+      'INCIDENT_MANAGEMENT',
+      'SYSTEM',
+    ],
+    example: 'DELIVERY_MANAGEMENT',
   })
-  @IsEnum(AuditCategory)
   category!: AuditCategory;
 
   @ApiPropertyOptional({
     description: 'ID do usuário que executou a ação',
     example: '123e4567-e89b-12d3-a456-426614174000',
     format: 'uuid',
+    nullable: true,
   })
-  @IsOptional()
-  @IsUUID()
-  userId?: string;
+  userId!: string | null;
 
   @ApiPropertyOptional({
     description: 'Email do usuário que executou a ação',
     example: 'usuario@example.com',
+    nullable: true,
   })
-  @IsOptional()
-  @IsString()
-  userEmail?: string;
+  userEmail!: string | null;
 
   @ApiPropertyOptional({
     description: 'Role/função do usuário',
     example: 'ADMIN',
+    nullable: true,
   })
-  @IsOptional()
-  @IsString()
-  userRole?: string;
+  userRole!: string | null;
 
   @ApiProperty({
     description: 'Tipo do recurso afetado',
     example: 'Delivery',
   })
-  @IsString()
   resourceType!: string;
 
   @ApiPropertyOptional({
     description: 'ID do recurso afetado',
     example: '789e0123-e89b-12d3-a456-426614174000',
+    nullable: true,
   })
-  @IsOptional()
-  @IsString()
-  resourceId?: string;
+  resourceId!: string | null;
 
   @ApiPropertyOptional({
     description: 'Endereço IP de origem da requisição',
     example: '192.168.1.1',
+    nullable: true,
   })
-  @IsOptional()
-  @IsString()
-  ipAddress?: string;
+  ipAddress!: string | null;
 
   @ApiPropertyOptional({
     description: 'User Agent do cliente',
     example: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+    nullable: true,
   })
-  @IsOptional()
-  @IsString()
-  userAgent?: string;
+  userAgent!: string | null;
 
   @ApiPropertyOptional({
     description: 'Método HTTP da requisição',
     example: 'POST',
+    nullable: true,
   })
-  @IsOptional()
-  @IsString()
-  requestMethod?: string;
+  requestMethod!: string | null;
 
   @ApiPropertyOptional({
     description: 'URL da requisição',
     example: '/api/deliveries',
+    nullable: true,
   })
-  @IsOptional()
-  @IsString()
-  requestUrl?: string;
+  requestUrl!: string | null;
 
   @ApiPropertyOptional({
     description: 'Código de status HTTP da resposta',
     example: 201,
+    nullable: true,
   })
-  @IsOptional()
-  @IsNumber()
-  statusCode?: number;
+  statusCode!: number | null;
 
   @ApiPropertyOptional({
     description: 'Tempo de execução em milissegundos',
     example: 150,
+    nullable: true,
   })
-  @IsOptional()
-  @IsNumber()
-  executionTimeMs?: number;
+  executionTimeMs!: number | null;
 
   @ApiPropertyOptional({
     description: 'Descrição textual da operação',
     example: 'Criou uma nova entrega com ID 789',
+    nullable: true,
   })
-  @IsOptional()
-  @IsString()
-  description?: string;
+  description!: string | null;
 
   @ApiPropertyOptional({
     description: 'Metadados adicionais em formato JSON',
     example: { changedFields: ['status', 'driver_id'] },
+    nullable: true,
   })
-  @IsOptional()
-  @IsObject()
-  metadata?: Record<string, unknown>;
+  metadata!: Record<string, unknown> | null;
 
   @ApiPropertyOptional({
     description: 'Valores antigos antes da modificação (apenas para UPDATE)',
     example: { status: 'pending', driver_id: null },
+    nullable: true,
   })
-  @IsOptional()
-  @IsObject()
-  oldValues?: Record<string, unknown>;
+  oldValues!: Record<string, unknown> | null;
 
   @ApiPropertyOptional({
     description: 'Valores novos após a modificação',
     example: { status: 'in_progress', driver_id: '123' },
+    nullable: true,
   })
-  @IsOptional()
-  @IsObject()
-  newValues?: Record<string, unknown>;
+  newValues!: Record<string, unknown> | null;
 
   @ApiPropertyOptional({
     description: 'ID da sessão',
     example: 'sess_123456789',
+    nullable: true,
   })
-  @IsOptional()
-  @IsString()
-  sessionId?: string;
+  sessionId!: string | null;
 
   @ApiPropertyOptional({
     description: 'ID de correlação para rastreamento distribuído',
     example: '550e8400-e29b-41d4-a716-446655440001',
     format: 'uuid',
+    nullable: true,
   })
-  @IsOptional()
-  @IsUUID()
-  correlationId?: string;
+  correlationId!: string | null;
 
-  // LGPD compliance fields
-  @ApiPropertyOptional({
-    description: 'ID do titular dos dados (data subject) - LGPD',
-    example: '123e4567-e89b-12d3-a456-426614174000',
-    format: 'uuid',
+  @ApiProperty({
+    description: 'Data e hora de criação do log',
+    example: '2024-01-15T10:30:00Z',
+    type: 'string',
+    format: 'date-time',
   })
-  @IsOptional()
-  @IsUUID()
-  dataSubjectId?: string;
+  createdAt!: Date;
 
-  @ApiPropertyOptional({
-    description: 'Base legal para o processamento - LGPD',
-    example: 'Consentimento do titular',
-  })
-  @IsOptional()
-  @IsString()
-  legalBasis?: string;
+  // Campos LGPD (ocultados por padrão em respostas públicas)
+  @Exclude()
+  dataSubjectId?: string | null;
+
+  @Exclude()
+  legalBasis?: string | null;
 
   @ApiPropertyOptional({
-    description: 'Indica se o log contém dados sensíveis - LGPD',
+    description: 'Indica se o log contém dados sensíveis',
     example: false,
     default: false,
   })
-  @IsOptional()
-  @IsBoolean()
-  sensitiveData?: boolean;
+  sensitiveData!: boolean;
 
   @ApiPropertyOptional({
-    description: 'Período de retenção customizado em dias',
+    description: 'Período de retenção em dias',
     example: 30,
+    nullable: true,
   })
-  @IsOptional()
-  @IsNumber()
-  retentionPeriodDays?: number;
+  retentionPeriodDays!: number | null;
 }
