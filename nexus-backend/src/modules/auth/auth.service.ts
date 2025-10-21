@@ -8,7 +8,8 @@ import { LoginResponseDto } from './dto/login-response.dto';
 import { UserResponseDto } from './dto/user-response.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { User } from '../users/entities/user.entity';
-import { AuditLogService, AuditAction, AuditCategory } from '../audit/auditModule';
+import { AuditLogService } from '../audit/audit-log.service';
+import { AuditAction, AuditCategory } from '../audit/enums';
 
 @Injectable()
 export class AuthService {

@@ -8,13 +8,15 @@ import { Driver } from './entities/driver.entity';
 import { DriverLicense } from './entities/driver-license.entity';
 import { DriverLicenseService } from './services/driver-license.service';
 
+// Módulos
+import { AuditModule } from '../audit/audit.module';
+
 // Interceptors
 import { AuditContextInterceptor } from './interceptors/audit-context.interceptor';
 import { DriverStatusInterceptor } from './interceptors/driver-status.interceptor';
 import { LicenseValidationInterceptor } from './interceptors/license-validation.interceptor';
 
 // Subscribers
-import { DriverAuditSubscriber } from './subscribers/driver-audit.subscriber';
 import { DriverLicenseSubscriber } from './subscribers/driver-license.subscriber';
 import { DriverDocumentSubscriber } from './subscribers/driver-document.subscriber';
 
@@ -23,7 +25,7 @@ import { ClsAuditUtils } from './utils/cls-audit.util';
 import { AuditableUtils } from './utils/auditable.util';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Driver, DriverLicense, DriverDocument])],
+  imports: [TypeOrmModule.forFeature([Driver, DriverLicense, DriverDocument]), AuditModule],
   controllers: [DriversController],
   providers: [
     // Services
@@ -49,7 +51,6 @@ import { AuditableUtils } from './utils/auditable.util';
     },
 
     // Subscribers
-    DriverAuditSubscriber,
     DriverLicenseSubscriber,
     DriverDocumentSubscriber,
   ],
