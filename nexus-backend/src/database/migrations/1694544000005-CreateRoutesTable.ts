@@ -38,6 +38,14 @@ export class CreateRoutesTable1694544000005 implements MigrationInterface {
             default: 'uuid_generate_v4()',
           },
           {
+            name: 'route_code',
+            type: 'varchar',
+            length: '20',
+            isUnique: true,
+            isNullable: false,
+            comment: 'Código único da rota',
+          },
+          {
             name: 'name',
             type: 'varchar',
             length: '255',
@@ -220,6 +228,10 @@ export class CreateRoutesTable1694544000005 implements MigrationInterface {
         ],
         indices: [
           {
+            name: 'IDX_routes_route_code',
+            columnNames: ['route_code'],
+         },
+          {
             name: 'IDX_routes_name',
             columnNames: ['name'],
           },
@@ -311,6 +323,7 @@ export class CreateRoutesTable1694544000005 implements MigrationInterface {
     // Adicionar comentários na tabela
     await queryRunner.query(`
       COMMENT ON TABLE routes IS 'Sistema de gerenciamento de rotas do Nexus Transit';
+      COMMENT ON COLUMN routes.route_code IS 'Código único da rota (ex: RT-20240115-001)';
       COMMENT ON COLUMN routes.name IS 'Nome identificador da rota';
       COMMENT ON COLUMN routes.description IS 'Descrição detalhada da rota';
       COMMENT ON COLUMN routes.origin_address IS 'Endereço de origem completo';
