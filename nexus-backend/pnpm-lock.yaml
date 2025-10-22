@@ -80,6 +80,9 @@ importers:
       dotenv:
         specifier: ^17.2.2
         version: 17.2.2
+      geolib:
+        specifier: ^3.3.4
+        version: 3.3.4
       keyv:
         specifier: ^5.5.1
         version: 5.5.1
@@ -141,6 +144,9 @@ importers:
       '@types/express':
         specifier: ^5.0.0
         version: 5.0.3
+      '@types/geolib':
+        specifier: ^2.0.25
+        version: 2.0.25
       '@types/jest':
         specifier: ^30.0.0
         version: 30.0.0
@@ -1614,6 +1620,10 @@ packages:
   '@types/express@5.0.3':
     resolution: {integrity: sha512-wGA0NX93b19/dZC1J18tKWVIYWyyF2ZjT9vin/NRu0qzzvfVzWjs04iq2rQ3H65vCTQYlRqs3YHfY7zjdV+9Kw==}
 
+  '@types/geolib@2.0.25':
+    resolution: {integrity: sha512-EhgigPRKXSkS3k9GUnM4niTqHhxCseH3Xzf6LggZkFbnYSNU9YCBj0EmjfiPRVcjlqafctcJHmKlqKkmQCDq5Q==}
+    deprecated: This is a stub types definition. geolib provides its own type definitions, so you do not need this installed.
+
   '@types/http-errors@2.0.5':
     resolution: {integrity: sha512-r8Tayk8HJnX0FztbZN7oVqGccWgw98T/0neJphO91KkmOzug1KkofZURD4UaD5uH8AqcFLfdPErnBod0u71/qg==}
 
@@ -2700,6 +2710,9 @@ packages:
   gensync@1.0.0-beta.2:
     resolution: {integrity: sha512-3hN7NaskYvMDLQY55gnW3NQ+mesEAepTqlg+VEbj7zzqEMBVNhzcGYYeqFo/TlYz6eQiFcp1HcsCZO+nGgS8zg==}
     engines: {node: '>=6.9.0'}
+
+  geolib@3.3.4:
+    resolution: {integrity: sha512-EicrlLLL3S42gE9/wde+11uiaYAaeSVDwCUIv2uMIoRBfNJCn8EsSI+6nS3r4TCKDO6+RQNM9ayLq2at+oZQWQ==}
 
   get-caller-file@2.0.5:
     resolution: {integrity: sha512-DyFP3BM/3YHTQOCUL/w0OZHR0lpKeGrxotcHWcqNEdnltqFwXVfhEBQ94eIo34AfQpo0rGki4cyIiftY06h2Fg==}
@@ -6228,6 +6241,10 @@ snapshots:
       '@types/express-serve-static-core': 5.0.7
       '@types/serve-static': 1.15.8
 
+  '@types/geolib@2.0.25':
+    dependencies:
+      geolib: 3.3.4
+
   '@types/http-errors@2.0.5': {}
 
   '@types/istanbul-lib-coverage@2.0.6': {}
@@ -7393,6 +7410,8 @@ snapshots:
   generic-pool@3.9.0: {}
 
   gensync@1.0.0-beta.2: {}
+
+  geolib@3.3.4: {}
 
   get-caller-file@2.0.5: {}
 
