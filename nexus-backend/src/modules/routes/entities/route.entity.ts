@@ -272,7 +272,13 @@ export class Route extends BaseEntity {
   optimization_data?: {
     algorithm_used?: string;
     optimization_score?: number;
-    alternative_routes?: any[];
+    alternative_routes?: {
+      route_id?: string;
+      distance_km?: number;
+      duration_minutes?: number;
+      cost_estimate?: number;
+      coordinates?: string;
+    }[];
     traffic_conditions?: string;
     weather_conditions?: string;
   };
