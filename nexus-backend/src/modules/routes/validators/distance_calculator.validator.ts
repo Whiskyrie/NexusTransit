@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { getDistance } from 'geolib';
+import type { GeolibInputCoordinates } from 'geolib/es/types';
 
 /**
  * Service para cálculo de distâncias e métricas de rota
@@ -13,7 +14,7 @@ export class DistanceCalculatorService {
 
   /**
    * Calcula distância entre duas coordenadas (em km)
-   * 
+   *
    * @param origin Coordenadas de origem "POINT(lat lng)"
    * @param destination Coordenadas de destino "POINT(lat lng)"
    * @returns Distância em quilômetros
@@ -23,20 +24,27 @@ export class DistanceCalculatorService {
       const originCoords = this.parseCoordinates(origin);
       const destCoords = this.parseCoordinates(destination);
 
-      // getDistance retorna em metros
-      const distanceMeters = getDistance(originCoords, destCoords);
-      
+      // getDistance retorna distância em metros (sempre número)
+      const distanceMeters: number = getDistance(originCoords, destCoords);
+
+      // Validar se o resultado é um número válido
+      if (typeof distanceMeters !== 'number' || distanceMeters === null || isNaN(distanceMeters)) {
+        this.logger.warn('Não foi possível calcular distância entre coordenadas');
+        return 0;
+      }
+
       // Converter para km e arredondar com 2 casas decimais
       return Math.round((distanceMeters / 1000) * 100) / 100;
-    } catch (error) {
-      this.logger.error('Erro ao calcular distância:', error);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      this.logger.error('Erro ao calcular distância:', errorMessage);
       return 0;
     }
   }
 
   /**
    * Calcula distância total de uma rota com múltiplas paradas
-   * 
+   *
    * @param coordinates Array de coordenadas "POINT(lat lng)"
    * @returns Distância total em km
    */
@@ -66,40 +74,36 @@ export class DistanceCalculatorService {
 
   /**
    * Calcula tempo estimado baseado em distância e velocidade média
-   * 
+   *
    * @param distanceKm Distância em km
    * @param avgSpeedKmh Velocidade média (padrão: 50 km/h urbano)
    * @param delayFactor Fator de atraso (1.0 = sem atraso, 1.3 = 30% atraso)
    * @returns Tempo em minutos
    */
-  calculateEstimatedDuration(
-    distanceKm: number,
-    avgSpeedKmh: number = 50,
-    delayFactor: number = 1.2,
-  ): number {
+  calculateEstimatedDuration(distanceKm: number, avgSpeedKmh = 50, delayFactor = 1.2): number {
     if (distanceKm <= 0 || avgSpeedKmh <= 0) {
       return 0;
     }
 
     // Tempo = distância / velocidade (em horas)
     const timeHours = distanceKm / avgSpeedKmh;
-    
+
     // Converter para minutos e aplicar fator de atraso
     const timeMinutes = timeHours * 60 * delayFactor;
-    
+
     return Math.ceil(timeMinutes);
   }
 
   /**
    * Calcula consumo estimado de combustível
-   * 
+   *
    * @param distanceKm Distância em km
    * @param vehicleConsumption Consumo do veículo (km/l)
    * @returns Litros necessários
    */
   calculateFuelConsumption(
     distanceKm: number,
-    vehicleConsumption: number = 10, // padrão: 10 km/l
+    vehicleConsumption = 10, // padrão: 10 km/l
   ): number {
     if (distanceKm <= 0 || vehicleConsumption <= 0) {
       return 0;
@@ -111,33 +115,29 @@ export class DistanceCalculatorService {
 
   /**
    * Calcula custo estimado de combustível
-   * 
+   *
    * @param distanceKm Distância em km
    * @param vehicleConsumption Consumo (km/l)
    * @param fuelPricePerLiter Preço por litro
    * @returns Custo estimado
    */
-  calculateFuelCost(
-    distanceKm: number,
-    vehicleConsumption: number = 10,
-    fuelPricePerLiter: number = 5.50,
-  ): number {
+  calculateFuelCost(distanceKm: number, vehicleConsumption = 10, fuelPricePerLiter = 5.5): number {
     const fuelNeeded = this.calculateFuelConsumption(distanceKm, vehicleConsumption);
     const cost = fuelNeeded * fuelPricePerLiter;
-    
+
     return Math.round(cost * 100) / 100;
   }
 
   /**
    * Parse coordenadas do formato PostGIS POINT
-   * 
+   *
    * @param point String "POINT(lat lng)"
-   * @returns Objeto { latitude, longitude }
+   * @returns Objeto compatível com geolib
    */
-  private parseCoordinates(point: string): { latitude: number; longitude: number } {
+  private parseCoordinates(point: string): GeolibInputCoordinates {
     // Formato: "POINT(-23.561414 -46.656250)"
-    const matches = point.match(/POINT\(([-\d.]+)\s+([-\d.]+)\)/);
-    
+    const matches = /POINT\(([-\d.]+)\s+([-\d.]+)\)/.exec(point);
+
     if (!matches || matches.length < 3) {
       throw new Error(`Formato de coordenadas inválido: ${point}`);
     }
