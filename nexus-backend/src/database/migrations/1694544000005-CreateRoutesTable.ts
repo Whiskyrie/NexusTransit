@@ -230,7 +230,7 @@ export class CreateRoutesTable1694544000005 implements MigrationInterface {
           {
             name: 'IDX_routes_route_code',
             columnNames: ['route_code'],
-         },
+          },
           {
             name: 'IDX_routes_name',
             columnNames: ['name'],

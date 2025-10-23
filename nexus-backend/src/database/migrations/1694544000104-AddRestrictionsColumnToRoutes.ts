@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner, TableColumn } from 'typeorm';
+import { type MigrationInterface, type QueryRunner, TableColumn } from 'typeorm';
 
 export class AddRestrictionsColumnToRoutes1694544000104 implements MigrationInterface {
   name = 'AddRestrictionsColumnToRoutes1694544000104';
@@ -26,9 +26,9 @@ export class AddRestrictionsColumnToRoutes1694544000104 implements MigrationInte
         COMMENT ON COLUMN routes.restrictions IS 'Restrições específicas da rota: weight_limit_kg, height_limit_m, width_limit_m, hazmat_allowed, toll_roads_allowed, night_delivery_allowed';
       `);
 
-      console.log('✅ Coluna restrictions adicionada com sucesso');
+      console.warn('Coluna restrictions adicionada com sucesso');
     } else {
-      console.log('ℹ️ Coluna restrictions já existe, pulando...');
+      console.warn('Coluna restrictions já existe, pulando...');
     }
   }
 

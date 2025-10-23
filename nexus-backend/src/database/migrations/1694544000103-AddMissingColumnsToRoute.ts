@@ -1,4 +1,10 @@
-import { MigrationInterface, QueryRunner, TableColumn, TableForeignKey, TableIndex } from 'typeorm';
+import {
+  type MigrationInterface,
+  type QueryRunner,
+  TableColumn,
+  TableForeignKey,
+  TableIndex,
+} from 'typeorm';
 
 export class AddMissingColumnsToRoutes1694544000103 implements MigrationInterface {
   name = 'AddMissingColumnsToRoutes1694544000103';

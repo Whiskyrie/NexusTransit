@@ -1,5 +1,4 @@
-import { MigrationInterface, QueryRunner, TableColumn, TableIndex } from 'typeorm';
-
+import { type MigrationInterface, type QueryRunner, TableIndex, TableColumn } from 'typeorm';
 export class AddRouteCodeColumn1694544000102 implements MigrationInterface {
   name = 'AddRouteCodeColumn1694544000102';
 
@@ -70,7 +69,7 @@ export class AddRouteCodeColumn1694544000102 implements MigrationInterface {
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     const table = await queryRunner.getTable('routes');
-    const index = table?.indices.find((idx) => idx.name === 'IDX_routes_route_code');
+    const index = table?.indices.find(idx => idx.name === 'IDX_routes_route_code');
 
     if (index) {
       await queryRunner.dropIndex('routes', 'IDX_routes_route_code');
