@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere, ILike, Between } from 'typeorm';
 import { Route } from './entities/route.entity';
@@ -34,7 +29,7 @@ export class RoutesService {
     private readonly distanceCalculator: DistanceCalculatorService,
   ) {}
 
-    async create(createDto: CreateRouteDto): Promise<RouteResponseDto> {
+  async create(createDto: CreateRouteDto): Promise<RouteResponseDto> {
     this.logger.log(`Criando rota: ${createDto.route_code}`);
 
     await this.validatorService.validateUniqueRouteCode(createDto.route_code);
@@ -96,23 +91,44 @@ export class RoutesService {
     };
 
     // Adicionar campos opcionais APENAS se tiverem valor
-    if (routeData.description) preparedData.description = routeData.description;
-    if (routeData.status) preparedData.status = routeData.status;
-    if (routeData.origin_coordinates) preparedData.origin_coordinates = routeData.origin_coordinates;
-    if (routeData.destination_coordinates) preparedData.destination_coordinates = routeData.destination_coordinates;
-    if (routeData.planned_start_time) preparedData.planned_start_time = routeData.planned_start_time;
-    if (routeData.planned_end_time) preparedData.planned_end_time = routeData.planned_end_time;
-    if (routeData.total_load_kg) preparedData.total_load_kg = routeData.total_load_kg;
-    if (routeData.total_volume_m3) preparedData.total_volume_m3 = routeData.total_volume_m3;
-    if (routeData.difficulty_level) preparedData.difficulty_level = routeData.difficulty_level;
-    if (routeData.notes) preparedData.notes = routeData.notes;
+    if (routeData.description) {
+      preparedData.description = routeData.description;
+    }
+    if (routeData.status) {
+      preparedData.status = routeData.status;
+    }
+    if (routeData.origin_coordinates) {
+      preparedData.origin_coordinates = routeData.origin_coordinates;
+    }
+    if (routeData.destination_coordinates) {
+      preparedData.destination_coordinates = routeData.destination_coordinates;
+    }
+    if (routeData.planned_start_time) {
+      preparedData.planned_start_time = routeData.planned_start_time;
+    }
+    if (routeData.planned_end_time) {
+      preparedData.planned_end_time = routeData.planned_end_time;
+    }
+    if (routeData.total_load_kg) {
+      preparedData.total_load_kg = routeData.total_load_kg;
+    }
+    if (routeData.total_volume_m3) {
+      preparedData.total_volume_m3 = routeData.total_volume_m3;
+    }
+    if (routeData.difficulty_level) {
+      preparedData.difficulty_level = routeData.difficulty_level;
+    }
+    if (routeData.notes) {
+      preparedData.notes = routeData.notes;
+    }
 
     // Adicionar valores calculados
     if (calculatedDistance !== undefined || routeData.estimated_distance_km !== undefined) {
       preparedData.estimated_distance_km = routeData.estimated_distance_km ?? calculatedDistance;
     }
     if (calculatedDuration !== undefined || routeData.estimated_duration_minutes !== undefined) {
-      preparedData.estimated_duration_minutes = routeData.estimated_duration_minutes ?? calculatedDuration;
+      preparedData.estimated_duration_minutes =
+        routeData.estimated_duration_minutes ?? calculatedDuration;
     }
 
     const route = this.routeRepository.create(preparedData);
@@ -180,7 +196,7 @@ export class RoutesService {
     const totalPages = Math.ceil(total / limit);
 
     return {
-      data: routes.map((route) => this.mapToResponseDto(route)),
+      data: routes.map(route => this.mapToResponseDto(route)),
       meta: {
         page,
         limit,
@@ -248,26 +264,66 @@ export class RoutesService {
 
     const changedFields = this.getChangedFields(route, updateDto);
 
-    if (updateDto.route_code) route.route_code = updateDto.route_code;
-    if (updateDto.name) route.name = updateDto.name;
-    if (updateDto.description !== undefined) route.description = updateDto.description;
-    if (updateDto.vehicle_id) route.vehicle_id = updateDto.vehicle_id;
-    if (updateDto.driver_id) route.driver_id = updateDto.driver_id;
-    if (updateDto.status) route.status = updateDto.status;
-    if (updateDto.type) route.type = updateDto.type;
-    if (updateDto.origin_address) route.origin_address = updateDto.origin_address;
-    if (updateDto.origin_coordinates !== undefined) route.origin_coordinates = updateDto.origin_coordinates;
-    if (updateDto.destination_address) route.destination_address = updateDto.destination_address;
-    if (updateDto.destination_coordinates !== undefined) route.destination_coordinates = updateDto.destination_coordinates;
-    if (updateDto.planned_date) route.planned_date = new Date(updateDto.planned_date);
-    if (updateDto.planned_start_time !== undefined) route.planned_start_time = updateDto.planned_start_time;
-    if (updateDto.planned_end_time !== undefined) route.planned_end_time = updateDto.planned_end_time;
-    if (updateDto.estimated_distance_km !== undefined) route.estimated_distance_km = updateDto.estimated_distance_km;
-    if (updateDto.estimated_duration_minutes !== undefined) route.estimated_duration_minutes = updateDto.estimated_duration_minutes;
-    if (updateDto.total_load_kg !== undefined) route.total_load_kg = updateDto.total_load_kg;
-    if (updateDto.total_volume_m3 !== undefined) route.total_volume_m3 = updateDto.total_volume_m3;
-    if (updateDto.difficulty_level !== undefined) route.difficulty_level = updateDto.difficulty_level;
-    if (updateDto.notes !== undefined) route.notes = updateDto.notes;
+    if (updateDto.route_code) {
+      route.route_code = updateDto.route_code;
+    }
+    if (updateDto.name) {
+      route.name = updateDto.name;
+    }
+    if (updateDto.description !== undefined) {
+      route.description = updateDto.description;
+    }
+    if (updateDto.vehicle_id) {
+      route.vehicle_id = updateDto.vehicle_id;
+    }
+    if (updateDto.driver_id) {
+      route.driver_id = updateDto.driver_id;
+    }
+    if (updateDto.status) {
+      route.status = updateDto.status;
+    }
+    if (updateDto.type) {
+      route.type = updateDto.type;
+    }
+    if (updateDto.origin_address) {
+      route.origin_address = updateDto.origin_address;
+    }
+    if (updateDto.origin_coordinates !== undefined) {
+      route.origin_coordinates = updateDto.origin_coordinates;
+    }
+    if (updateDto.destination_address) {
+      route.destination_address = updateDto.destination_address;
+    }
+    if (updateDto.destination_coordinates !== undefined) {
+      route.destination_coordinates = updateDto.destination_coordinates;
+    }
+    if (updateDto.planned_date) {
+      route.planned_date = new Date(updateDto.planned_date);
+    }
+    if (updateDto.planned_start_time !== undefined) {
+      route.planned_start_time = updateDto.planned_start_time;
+    }
+    if (updateDto.planned_end_time !== undefined) {
+      route.planned_end_time = updateDto.planned_end_time;
+    }
+    if (updateDto.estimated_distance_km !== undefined) {
+      route.estimated_distance_km = updateDto.estimated_distance_km;
+    }
+    if (updateDto.estimated_duration_minutes !== undefined) {
+      route.estimated_duration_minutes = updateDto.estimated_duration_minutes;
+    }
+    if (updateDto.total_load_kg !== undefined) {
+      route.total_load_kg = updateDto.total_load_kg;
+    }
+    if (updateDto.total_volume_m3 !== undefined) {
+      route.total_volume_m3 = updateDto.total_volume_m3;
+    }
+    if (updateDto.difficulty_level !== undefined) {
+      route.difficulty_level = updateDto.difficulty_level;
+    }
+    if (updateDto.notes !== undefined) {
+      route.notes = updateDto.notes;
+    }
 
     await this.routeRepository.save(route);
 
@@ -470,7 +526,7 @@ export class RoutesService {
   private getChangedFields(original: Route, updated: UpdateRouteDto): any[] {
     const changed: any[] = [];
 
-    Object.keys(updated).forEach((key) => {
+    Object.keys(updated).forEach(key => {
       const oldValue = (original as any)[key];
       const newValue = (updated as any)[key];
 
