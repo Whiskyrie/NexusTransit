@@ -38,20 +38,14 @@ import { DriversModule } from '../drivers/drivers.module';
 @Module({
   imports: [
     // Registrar entidades do módulo
-    TypeOrmModule.forFeature([
-      Route,
-      RouteStop,
-      RouteHistory,
-    ]),
+    TypeOrmModule.forFeature([Route, RouteStop, RouteHistory]),
 
     // Importar módulos relacionados para validações
     VehiclesModule,
     DriversModule,
   ],
 
-  controllers: [
-    RoutesController,
-  ],
+  controllers: [RoutesController],
 
   providers: [
     // Service principal
