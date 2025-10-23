@@ -279,11 +279,13 @@ export class RouteStop extends BaseEntity {
    * Calcula duração real da parada em minutos
    */
   getActualDuration(): number | null {
-    if (!this.actual_arrival_time || !this.actual_departure_time) return null;
-    
+    if (!this.actual_arrival_time || !this.actual_departure_time) {
+      return null;
+    }
+
     const arrival = new Date(this.actual_arrival_time).getTime();
     const departure = new Date(this.actual_departure_time).getTime();
-    
+
     return Math.floor((departure - arrival) / (1000 * 60));
   }
 
@@ -291,14 +293,16 @@ export class RouteStop extends BaseEntity {
    * Verifica se está atrasada
    */
   isDelayed(): boolean {
-    if (!this.planned_arrival_time || !this.actual_arrival_time) return false;
-    
+    if (!this.planned_arrival_time || !this.actual_arrival_time) {
+      return false;
+    }
+
     const planned = new Date(`1970-01-01T${this.planned_arrival_time}`);
     const actual = new Date(this.actual_arrival_time);
-    
+
     const plannedMinutes = planned.getHours() * 60 + planned.getMinutes();
     const actualMinutes = actual.getHours() * 60 + actual.getMinutes();
-    
+
     return actualMinutes > plannedMinutes;
   }
 
@@ -306,14 +310,16 @@ export class RouteStop extends BaseEntity {
    * Calcula atraso em minutos
    */
   getDelayMinutes(): number {
-    if (!this.planned_arrival_time || !this.actual_arrival_time) return 0;
-    
+    if (!this.planned_arrival_time || !this.actual_arrival_time) {
+      return 0;
+    }
+
     const planned = new Date(`1970-01-01T${this.planned_arrival_time}`);
     const actual = new Date(this.actual_arrival_time);
-    
+
     const plannedMinutes = planned.getHours() * 60 + planned.getMinutes();
     const actualMinutes = actual.getHours() * 60 + actual.getMinutes();
-    
+
     return Math.max(0, actualMinutes - plannedMinutes);
   }
 }

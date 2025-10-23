@@ -337,10 +337,7 @@ export class Route extends BaseEntity {
    * Verifica se a rota está em status final
    */
   isFinalStatus(): boolean {
-    return [
-      RouteStatus.COMPLETED,
-      RouteStatus.CANCELLED,
-    ].includes(this.status);
+    return [RouteStatus.COMPLETED, RouteStatus.CANCELLED].includes(this.status);
   }
 
   /**
@@ -389,12 +386,12 @@ export class Route extends BaseEntity {
    * Calcula progresso da rota (%)
    */
   getProgressPercentage(): number {
-    if (!this.stops || this.stops.length === 0) return 0;
-    
-    const completedStops = this.stops.filter(stop => 
-      stop.actual_arrival_time !== null
-    ).length;
-    
+    if (!this.stops || this.stops.length === 0) {
+      return 0;
+    }
+
+    const completedStops = this.stops.filter(stop => stop.actual_arrival_time !== null).length;
+
     return Math.round((completedStops / this.stops.length) * 100);
   }
 
@@ -402,12 +399,14 @@ export class Route extends BaseEntity {
    * Calcula tempo estimado restante em minutos
    */
   getEstimatedTimeRemaining(): number | null {
-    if (!this.estimated_duration_minutes || !this.actual_start_time) return null;
-    
+    if (!this.estimated_duration_minutes || !this.actual_start_time) {
+      return null;
+    }
+
     const elapsed = Math.floor(
-      (new Date().getTime() - new Date(this.actual_start_time).getTime()) / (1000 * 60)
+      (new Date().getTime() - new Date(this.actual_start_time).getTime()) / (1000 * 60),
     );
-    
+
     return Math.max(0, this.estimated_duration_minutes - elapsed);
   }
 
@@ -415,11 +414,14 @@ export class Route extends BaseEntity {
    * Verifica se está atrasada
    */
   isDelayed(): boolean {
-    if (!this.planned_end_time || !this.actual_start_time) return false;
-    
+    if (!this.planned_end_time || !this.actual_start_time) {
+      return false;
+    }
+
     const now = new Date();
-    const plannedEnd = new Date(`${this.planned_date}T${this.planned_end_time}`);
-    
+    const dateString = `${this.planned_date.toISOString().split('T')[0]}T${this.planned_end_time}`;
+    const plannedEnd = new Date(dateString);
+
     return now > plannedEnd && !this.isFinalStatus();
   }
 
@@ -427,8 +429,10 @@ export class Route extends BaseEntity {
    * Calcula utilização de capacidade (%)
    */
   getCapacityUtilization(): number | null {
-    if (!this.max_vehicle_capacity_kg || !this.total_load_kg) return null;
-    
+    if (!this.max_vehicle_capacity_kg || !this.total_load_kg) {
+      return null;
+    }
+
     return Math.round((this.total_load_kg / this.max_vehicle_capacity_kg) * 100);
   }
 }
