@@ -33,8 +33,8 @@ export class CustomerResponseDto {
       addresses: customer.addresses,
       contacts: customer.contacts,
       preferences: customer.preferences,
-      createdAt: customer.createdAt,
-      updatedAt: customer.updatedAt,
+      createdAt: customer.created_at,
+      updatedAt: customer.updated_at,
     };
   }
 }
