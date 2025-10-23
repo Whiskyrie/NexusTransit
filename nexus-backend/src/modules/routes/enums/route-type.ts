@@ -1,6 +1,6 @@
 /**
  * Tipo da rota
- * 
+ *
  * Classifica a natureza geográfica e operacional da rota
  */
 export enum RouteType {
@@ -34,11 +34,14 @@ export const RouteTypeDescriptions: Record<RouteType, string> = {
 /**
  * Características operacionais por tipo
  */
-export const RouteTypeCharacteristics: Record<RouteType, {
-  maxSpeed: number;
-  requiresSpecialVehicle: boolean;
-  estimatedDelayFactor: number;
-}> = {
+export const RouteTypeCharacteristics: Record<
+  RouteType,
+  {
+    maxSpeed: number;
+    requiresSpecialVehicle: boolean;
+    estimatedDelayFactor: number;
+  }
+> = {
   [RouteType.URBAN]: {
     maxSpeed: 60,
     requiresSpecialVehicle: false,

@@ -1,6 +1,6 @@
 /**
  * Status da rota
- * 
+ *
  * Define os diferentes estados que uma rota pode ter durante seu ciclo de vida
  */
 export enum RouteStatus {
@@ -25,10 +25,7 @@ export const RouteStatusDescriptions: Record<RouteStatus, string> = {
 /**
  * Status finais (não permitem mais transições)
  */
-export const FinalRouteStatuses = [
-  RouteStatus.COMPLETED,
-  RouteStatus.CANCELLED,
-];
+export const FinalRouteStatuses = [RouteStatus.COMPLETED, RouteStatus.CANCELLED];
 
 /**
  * Transições válidas de status

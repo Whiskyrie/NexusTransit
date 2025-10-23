@@ -1,6 +1,6 @@
 /**
  * Status da ordem de serviço
- * 
+ *
  * Define os diferentes estados que uma ordem pode ter durante seu ciclo de vida
  */
 export enum OrderStatus {
@@ -9,7 +9,7 @@ export enum OrderStatus {
   IN_PROGRESS = 'IN_PROGRESS',
   DELIVERED = 'DELIVERED',
   CANCELLED = 'CANCELLED',
-  FAILED = 'FAILED'
+  FAILED = 'FAILED',
 }
 
 /**
@@ -27,10 +27,7 @@ export const OrderStatusDescriptions: Record<OrderStatus, string> = {
 /**
  * Status finais (que não permitem mais transições)
  */
-export const FinalOrderStatuses = [
-  OrderStatus.DELIVERED,
-  OrderStatus.CANCELLED,
-];
+export const FinalOrderStatuses = [OrderStatus.DELIVERED, OrderStatus.CANCELLED];
 
 /**
  * Transições válidas de status
