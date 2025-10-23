@@ -34,7 +34,7 @@ import { CancelRouteDto } from './dto/cancel_route.dto';
 
 /**
  * Controller de rotas
- * 
+ *
  * Gerencia todas as operações relacionadas a rotas de entrega:
  * - CRUD completo
  * - Operações de status (iniciar, pausar, retomar, finalizar, cancelar)
@@ -77,7 +77,8 @@ export class RoutesController {
   @Get()
   @ApiOperation({
     summary: 'Listar rotas',
-    description: 'Lista rotas com filtros, paginação e busca. Retorna rotas com informações de veículo e motorista.',
+    description:
+      'Lista rotas com filtros, paginação e busca. Retorna rotas com informações de veículo e motorista.',
   })
   @ApiQuery({
     name: 'page',
@@ -156,7 +157,8 @@ export class RoutesController {
   @Get(':id')
   @ApiOperation({
     summary: 'Buscar rota por ID',
-    description: 'Retorna detalhes completos da rota incluindo paradas, veículo, motorista e endereços',
+    description:
+      'Retorna detalhes completos da rota incluindo paradas, veículo, motorista e endereços',
   })
   @ApiParam({
     name: 'id',
@@ -175,16 +177,15 @@ export class RoutesController {
   @ApiUnauthorizedResponse({
     description: 'Token de autenticação inválido ou ausente',
   })
-  async findOne(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<RouteResponseDto> {
+  async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<RouteResponseDto> {
     return this.routesService.findOne(id);
   }
 
   @Patch(':id')
   @ApiOperation({
     summary: 'Atualizar rota',
-    description: 'Atualiza campos específicos da rota. Apenas rotas com status PLANNED podem ser editadas.',
+    description:
+      'Atualiza campos específicos da rota. Apenas rotas com status PLANNED podem ser editadas.',
   })
   @ApiParam({
     name: 'id',
@@ -281,9 +282,7 @@ export class RoutesController {
   @ApiForbiddenResponse({
     description: 'Usuário não possui permissão para iniciar rotas',
   })
-  async start(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<RouteResponseDto> {
+  async start(@Param('id', ParseUUIDPipe) id: string): Promise<RouteResponseDto> {
     return this.routesService.startRoute(id);
   }
 
@@ -315,9 +314,7 @@ export class RoutesController {
   @ApiForbiddenResponse({
     description: 'Usuário não possui permissão para pausar rotas',
   })
-  async pause(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<RouteResponseDto> {
+  async pause(@Param('id', ParseUUIDPipe) id: string): Promise<RouteResponseDto> {
     return this.routesService.pauseRoute(id);
   }
 
@@ -349,16 +346,15 @@ export class RoutesController {
   @ApiForbiddenResponse({
     description: 'Usuário não possui permissão para retomar rotas',
   })
-  async resume(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<RouteResponseDto> {
+  async resume(@Param('id', ParseUUIDPipe) id: string): Promise<RouteResponseDto> {
     return this.routesService.resumeRoute(id);
   }
 
   @Post(':id/complete')
   @ApiOperation({
     summary: 'Finalizar rota',
-    description: 'Finaliza uma rota em execução. Registra horário de término e calcula duração real.',
+    description:
+      'Finaliza uma rota em execução. Registra horário de término e calcula duração real.',
   })
   @ApiParam({
     name: 'id',
@@ -383,16 +379,15 @@ export class RoutesController {
   @ApiForbiddenResponse({
     description: 'Usuário não possui permissão para finalizar rotas',
   })
-  async complete(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<RouteResponseDto> {
+  async complete(@Param('id', ParseUUIDPipe) id: string): Promise<RouteResponseDto> {
     return this.routesService.completeRoute(id);
   }
 
   @Post(':id/cancel')
   @ApiOperation({
     summary: 'Cancelar rota',
-    description: 'Cancela uma rota com motivo obrigatório. Rotas finalizadas não podem ser canceladas.',
+    description:
+      'Cancela uma rota com motivo obrigatório. Rotas finalizadas não podem ser canceladas.',
   })
   @ApiParam({
     name: 'id',
