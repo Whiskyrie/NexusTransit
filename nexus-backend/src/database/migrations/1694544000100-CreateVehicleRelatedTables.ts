@@ -182,13 +182,13 @@ export class CreateVehicleRelatedTables1694544000100 implements MigrationInterfa
           },
           {
             name: 'maintenance_type',
-            type: 'enum ',
+            type: 'maintenance_type_enum',
             enum: ['preventive', 'corrective', 'review', 'emergency', 'inspection', 'other'],
             comment: 'Tipo de manutenção realizada',
           },
           {
             name: 'status',
-            type: 'enum',
+            type: 'maintenance_status_enum',
             enum: ['scheduled', 'in_progress', 'completed', 'cancelled'],
             default: "'scheduled'",
             comment: 'Status atual da manutenção',

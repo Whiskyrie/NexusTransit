@@ -7,6 +7,7 @@ import { Delivery } from '../../deliveries/entities/delivery.entity';
 import { DeliveryAttempt } from '../../deliveries/entities/delivery-attempt.entity';
 import { DeliveryStatusHistory } from '../../deliveries/entities/delivery-status-history.entity';
 import { Auditable } from '../decorators/auditable.decorator';
+import { Route } from '../../routes/entities/route.entity';
 
 /**
  * Driver Entity - Sistema de gerenciamento de motoristas
@@ -91,4 +92,7 @@ export class Driver extends BaseEntity {
 
   @OneToMany(() => DeliveryStatusHistory, history => history.driver)
   status_changes!: DeliveryStatusHistory[];
+
+  @OneToMany(() => Route, route => route.driver)
+  routes!: Route[];
 }

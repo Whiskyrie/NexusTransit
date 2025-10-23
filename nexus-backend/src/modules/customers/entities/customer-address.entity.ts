@@ -6,9 +6,11 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Index,
+  OneToMany,
 } from 'typeorm';
 import { AddressType } from '../enums/address-type.enum';
 import { Customer } from './customer.entity';
+import { RouteStop } from '@/modules/routes/entities/route_stop.entity';
 
 @Entity('customer_addresses')
 export class CustomerAddress {
@@ -62,6 +64,9 @@ export class CustomerAddress {
 
   @ManyToOne(() => Customer, customer => customer.addresses, { onDelete: 'CASCADE' })
   customer!: Customer;
+
+  @OneToMany(() => RouteStop, stop => stop.customer_address)
+  route_stops!: RouteStop[];
 
   @CreateDateColumn({ type: 'timestamp with time zone' })
   createdAt!: Date;

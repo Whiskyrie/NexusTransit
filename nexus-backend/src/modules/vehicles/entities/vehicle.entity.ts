@@ -8,6 +8,7 @@ import { VehicleMaintenance } from './vehicle-maintenance.entity';
 import { VehicleDriverHistory } from './vehicle-driver-history.entity';
 import { Auditable } from '../decorators/auditable.decorator';
 import { Delivery } from '../../deliveries/entities/delivery.entity';
+import { Route } from '../../routes/entities/route.entity';
 
 /**
  * Vehicle Entity - Sistema de gerenciamento de veículos
@@ -191,6 +192,9 @@ export class Vehicle extends BaseEntity {
 
   @OneToMany(() => Delivery, delivery => delivery.vehicle)
   deliveries!: Delivery[];
+
+  @OneToMany(() => Route, route => route.vehicle)
+  routes!: Route[];
 
   // TODO: Adicionar relacionamento com Incident quando a entidade estiver implementada
   // @OneToMany(() => Incident, incident => incident.vehicle, {
