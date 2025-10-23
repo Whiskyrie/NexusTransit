@@ -65,7 +65,7 @@ export class CustomerAddress {
   @ManyToOne(() => Customer, customer => customer.addresses, { onDelete: 'CASCADE' })
   customer!: Customer;
 
-  @OneToMany(() => RouteStop, (stop) => stop.customer_address)
+  @OneToMany(() => RouteStop, stop => stop.customer_address)
   route_stops!: RouteStop[];
 
   @CreateDateColumn({ type: 'timestamp with time zone' })

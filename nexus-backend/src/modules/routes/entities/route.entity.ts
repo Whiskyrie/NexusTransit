@@ -1,7 +1,7 @@
 import { Entity, Column, ManyToOne, OneToMany, Index, JoinColumn } from 'typeorm';
 import { BaseEntity } from '../../../database/entities/base.entity';
 import { Auditable } from '../../vehicles/decorators/auditable.decorator';
-import { RouteStatus } from '../enums/route-status'
+import { RouteStatus } from '../enums/route-status';
 import { RouteType } from '../enums/route-type';
 import { Vehicle } from '../../vehicles/entities/vehicle.entity';
 import { Driver } from '../../drivers/entities/driver.entity';
@@ -59,7 +59,7 @@ export class Route extends BaseEntity {
   description?: string;
 
   // Relacionamento com Veículo
-  @ManyToOne(() => Vehicle, (vehicle) => vehicle.routes, {
+  @ManyToOne(() => Vehicle, vehicle => vehicle.routes, {
     nullable: false,
     onDelete: 'RESTRICT',
   })
@@ -73,7 +73,7 @@ export class Route extends BaseEntity {
   vehicle_id!: string;
 
   // Relacionamento com Motorista
-  @ManyToOne(() => Driver, (driver) => driver.routes, {
+  @ManyToOne(() => Driver, driver => driver.routes, {
     nullable: false,
     onDelete: 'RESTRICT',
   })
@@ -315,12 +315,12 @@ export class Route extends BaseEntity {
   cancelled_at?: Date;
 
   // Relacionamentos
-  @OneToMany(() => RouteStop, (stop) => stop.route, {
+  @OneToMany(() => RouteStop, stop => stop.route, {
     cascade: true,
   })
   stops?: RouteStop[];
 
-  @OneToMany(() => RouteHistory, (history) => history.route, {
+  @OneToMany(() => RouteHistory, history => history.route, {
     cascade: true,
   })
   history?: RouteHistory[];

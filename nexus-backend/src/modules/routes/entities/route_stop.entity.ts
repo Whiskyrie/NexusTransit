@@ -28,7 +28,7 @@ import { CustomerAddress } from '../../customers/entities/customer-address.entit
 })
 export class RouteStop extends BaseEntity {
   // Relacionamento com Rota
-  @ManyToOne(() => Route, (route) => route.stops, {
+  @ManyToOne(() => Route, route => route.stops, {
     nullable: false,
     onDelete: 'CASCADE',
   })
@@ -42,7 +42,7 @@ export class RouteStop extends BaseEntity {
   route_id!: string;
 
   // Relacionamento com Endereço do Cliente
-  @ManyToOne(() => CustomerAddress, (address) => address.route_stops, {
+  @ManyToOne(() => CustomerAddress, address => address.route_stops, {
     nullable: false,
     onDelete: 'RESTRICT',
   })

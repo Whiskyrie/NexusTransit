@@ -19,7 +19,7 @@ import { RouteStatus } from '../enums/route-status';
 @Index(['user_id'])
 export class RouteHistory extends BaseEntity {
   // Relacionamento com Rota
-  @ManyToOne(() => Route, (route) => route.history, {
+  @ManyToOne(() => Route, route => route.history, {
     nullable: false,
     onDelete: 'CASCADE',
   })
