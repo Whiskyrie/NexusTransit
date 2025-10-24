@@ -6,8 +6,8 @@ import {
   UpdateDateColumn,
   Index,
   OneToMany,
-  BaseEntity,
 } from 'typeorm';
+import { BaseEntity } from '@/database/entities/base.entity';
 import { AddressType } from '../enums/address-type.enum';
 import { Customer } from './customer.entity';
 import { RouteStop } from '@/modules/routes/entities/route_stop.entity';

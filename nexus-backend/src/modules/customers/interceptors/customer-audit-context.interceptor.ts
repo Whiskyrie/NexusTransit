@@ -3,13 +3,8 @@ import { Observable } from 'rxjs';
 import { ClsService } from 'nestjs-cls';
 import { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-
-interface RequestUser {
-  id: string;
-  email: string;
-  name?: string;
-  roles?: string[];
-}
+import { RequestUser } from '../interfaces/request-user.interface';
+import { RequestBody } from '../interfaces/request-body.interface';
 
 /**
  * Interceptor para configurar contexto de auditoria específico para operações com clientes
@@ -86,7 +81,6 @@ export class CustomerAuditContextInterceptor implements NestInterceptor {
     return (
       (forwardedFor ? forwardedFor.split(',')[0] : undefined) ??
       realIp ??
-      request.connection?.remoteAddress ??
       request.socket?.remoteAddress ??
       '0.0.0.0'
     );
@@ -107,8 +101,9 @@ export class CustomerAuditContextInterceptor implements NestInterceptor {
     }
 
     // Extrair do body (para operações de criação/atualização)
-    if (request.body && typeof request.body.customerId === 'string') {
-      return request.body.customerId;
+    const body = request.body as RequestBody;
+    if (body && typeof body.customerId === 'string') {
+      return body.customerId;
     }
 
     return undefined;
