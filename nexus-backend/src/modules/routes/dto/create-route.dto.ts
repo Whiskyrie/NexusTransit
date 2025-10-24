@@ -23,7 +23,7 @@ import { RouteType } from '../enums/route-type';
 /**
  * DTO para criar parada de rota
  */
-class CreateRouteStopDto {
+export class CreateRouteStopDto {
   @ApiProperty({
     description: 'ID do endereço do cliente',
     example: '123e4567-e89b-12d3-a456-426614174000',
@@ -331,7 +331,7 @@ export class CreateRouteDto {
   optimization_data?: {
     algorithm_used?: string;
     optimization_score?: number;
-    alternative_routes?: any[];
+    alternative_routes?: Record<string, unknown>[];
     traffic_conditions?: string;
     weather_conditions?: string;
   };
