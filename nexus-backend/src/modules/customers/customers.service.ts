@@ -4,6 +4,7 @@ import {
   BadRequestException,
   ConflictException,
   InternalServerErrorException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, Like, FindOptionsWhere } from 'typeorm';
@@ -21,6 +22,8 @@ import { GeocodingService } from './services/geocoding.service';
 
 @Injectable()
 export class CustomersService {
+  private readonly logger = new Logger(CustomersService.name);
+
   constructor(
     @InjectRepository(Customer)
     private readonly customerRepository: Repository<Customer>,
@@ -36,6 +39,8 @@ export class CustomersService {
   ) {}
 
   async create(createCustomerDto: CreateCustomerDto): Promise<Customer> {
+    this.logger.log('Criando novo cliente...');
+
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -136,10 +141,17 @@ export class CustomersService {
 
       await queryRunner.commitTransaction();
 
+      this.logger.log(`Cliente criado com sucesso: ${savedCustomer.id} - ${savedCustomer.name}`);
+
       // Return customer with all relations
       return this.findOne(savedCustomer.id);
     } catch (error) {
       await queryRunner.rollbackTransaction();
+
+      this.logger.error(
+        `Erro ao criar cliente: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
+        error instanceof Error ? error.stack : '',
+      );
 
       if (error instanceof ConflictException || error instanceof BadRequestException) {
         throw error;
@@ -158,6 +170,8 @@ export class CustomersService {
     limit: number;
     totalPages: number;
   }> {
+    this.logger.debug(`Buscando clientes com filtros: ${JSON.stringify(filter)}`);
+
     const {
       page = 1,
       limit = 10,
@@ -165,7 +179,7 @@ export class CustomersService {
       status,
       type,
       category,
-      sortBy = 'createdAt',
+      sortBy = 'created_at',
       sortOrder = 'DESC',
     } = filter;
 
@@ -202,6 +216,8 @@ export class CustomersService {
 
     const totalPages = Math.ceil(total / limit);
 
+    this.logger.debug(`${total} clientes encontrados`);
+
     return {
       data,
       total,
@@ -212,12 +228,15 @@ export class CustomersService {
   }
 
   async findOne(id: string): Promise<Customer> {
+    this.logger.debug(`Buscando cliente: ${id}`);
+
     const customer = await this.customerRepository.findOne({
       where: { id },
       relations: ['addresses', 'contacts', 'preferences'],
     });
 
     if (!customer) {
+      this.logger.warn(`Cliente não encontrado: ${id}`);
       throw new NotFoundException(`Customer with ID ${id} not found`);
     }
 
@@ -225,6 +244,8 @@ export class CustomersService {
   }
 
   async update(id: string, updateCustomerDto: UpdateCustomerDto): Promise<Customer> {
+    this.logger.log(`Atualizando cliente: ${id}`);
+
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -314,12 +335,19 @@ export class CustomersService {
 
       await queryRunner.commitTransaction();
 
+      this.logger.log(`Cliente atualizado com sucesso: ${id}`);
+
       // Return updated customer with all relations
       return this.findOne(id);
     } catch (error) {
       await queryRunner.rollbackTransaction();
 
-      if (error instanceof NotFoundException || error instanceof ConflictException) {
+      this.logger.error(
+        `Erro ao atualizar cliente ${id}: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
+        error instanceof Error ? error.stack : '',
+      );
+
+      if (error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
 
@@ -330,18 +358,27 @@ export class CustomersService {
   }
 
   async remove(id: string): Promise<void> {
+    this.logger.log(`Removendo cliente: ${id}`);
+
     const customer = await this.customerRepository.findOne({ where: { id } });
 
     if (!customer) {
+      this.logger.warn(`Cliente não encontrado para remoção: ${id}`);
       throw new NotFoundException(`Customer with ID ${id} not found`);
     }
 
     try {
-      // Soft delete by setting status to INACTIVE and deletedAt
+      // Soft delete by setting status to INACTIVE and deleted_at
       customer.status = CustomerStatus.INACTIVE;
-      customer.deletedAt = new Date();
+      customer.deleted_at = new Date();
       await this.customerRepository.save(customer);
-    } catch {
+
+      this.logger.log(`Cliente removido com sucesso: ${id}`);
+    } catch (error) {
+      this.logger.error(
+        `Erro ao remover cliente ${id}: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
+        error instanceof Error ? error.stack : '',
+      );
       throw new InternalServerErrorException('Failed to delete customer');
     }
   }
@@ -356,13 +393,13 @@ export class CustomersService {
       throw new NotFoundException(`Customer with ID ${id} not found`);
     }
 
-    if (!customer.deletedAt) {
+    if (!customer.deleted_at) {
       throw new BadRequestException('Customer is not deleted');
     }
 
     try {
       customer.status = CustomerStatus.ACTIVE;
-      delete customer.deletedAt;
+      delete customer.deleted_at;
       await this.customerRepository.save(customer);
 
       return this.findOne(id);
@@ -475,7 +512,7 @@ export class CustomersService {
 
     return this.addressRepository.find({
       where,
-      order: { isPrimary: 'DESC', createdAt: 'ASC' },
+      order: { isPrimary: 'DESC', created_at: 'ASC' },
     });
   }
 

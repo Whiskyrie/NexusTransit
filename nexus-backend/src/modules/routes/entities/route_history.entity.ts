@@ -71,8 +71,8 @@ export class RouteHistory extends BaseEntity {
   })
   changed_fields?: {
     field_name: string;
-    old_value: any;
-    new_value: any;
+    old_value: unknown;
+    new_value: unknown;
   }[];
 
   // Informações do Usuário
@@ -123,7 +123,7 @@ export class RouteHistory extends BaseEntity {
   metadata?: {
     source?: string; // 'web', 'mobile', 'api', 'system'
     reason?: string;
-    additional_info?: Record<string, any>;
+    additional_info?: Record<string, unknown>;
   };
 
   // Observações
