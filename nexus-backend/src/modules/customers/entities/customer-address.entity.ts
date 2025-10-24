@@ -1,7 +1,16 @@
-import { Entity, Column, ManyToOne, Index } from 'typeorm';
-import { BaseEntity } from '../../../database/entities/base.entity';
+import {
+  Entity,
+  Column,
+  ManyToOne,
+  CreateDateColumn,
+  UpdateDateColumn,
+  Index,
+  OneToMany,
+  BaseEntity,
+} from 'typeorm';
 import { AddressType } from '../enums/address-type.enum';
 import { Customer } from './customer.entity';
+import { RouteStop } from '@/modules/routes/entities/route_stop.entity';
 import { Auditable } from '../decorators/auditable.decorator';
 
 /**
@@ -69,4 +78,13 @@ export class CustomerAddress extends BaseEntity {
 
   @ManyToOne(() => Customer, customer => customer.addresses, { onDelete: 'CASCADE' })
   customer!: Customer;
+
+  @OneToMany(() => RouteStop, stop => stop.customer_address)
+  route_stops!: RouteStop[];
+
+  @CreateDateColumn({ type: 'timestamp with time zone' })
+  createdAt!: Date;
+
+  @UpdateDateColumn({ type: 'timestamp with time zone' })
+  updatedAt!: Date;
 }
