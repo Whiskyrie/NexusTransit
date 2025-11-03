@@ -1,21 +1,28 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  CreateDateColumn,
-  UpdateDateColumn,
-  Index,
-} from 'typeorm';
+import { Entity, Column, ManyToOne, Index } from 'typeorm';
+import { BaseEntity } from '../../../database/entities/base.entity';
 import { DeliveryPreference } from '../enums/delivery-preference.enum';
 import { NotificationChannel } from '../enums/notification-channel.enum';
 import { Customer } from './customer.entity';
+import { Auditable } from '../decorators/auditable.decorator';
 
+/**
+ * CustomerPreferences Entity - Preferências de entrega e notificação
+ *
+ * Features:
+ * - Preferências de entrega personalizadas
+ * - Canais de notificação preferidos
+ * - Janelas de tempo para entrega
+ * - Itens restritos e instruções especiais
+ */
 @Entity('customer_preferences')
-export class CustomerPreferences {
-  @PrimaryGeneratedColumn('uuid')
-  id!: string;
-
+@Auditable({
+  trackCreation: true,
+  trackUpdates: true,
+  trackDeletion: true,
+  excludeFields: ['updated_at', 'created_at'],
+  entityDisplayName: 'Preferências do Cliente',
+})
+export class CustomerPreferences extends BaseEntity {
   @Column({ type: 'uuid' })
   @Index()
   customerId!: string;
@@ -46,10 +53,4 @@ export class CustomerPreferences {
 
   @ManyToOne(() => Customer, customer => customer.preferences, { onDelete: 'CASCADE' })
   customer: Customer = new Customer();
-
-  @CreateDateColumn({ type: 'timestamp with time zone' })
-  createdAt!: Date;
-
-  @UpdateDateColumn({ type: 'timestamp with time zone' })
-  updatedAt!: Date;
 }

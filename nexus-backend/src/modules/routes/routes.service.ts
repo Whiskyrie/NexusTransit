@@ -4,7 +4,7 @@ import { Repository, FindOptionsWhere, ILike, Between } from 'typeorm';
 import { Route } from './entities/route.entity';
 import { RouteStop } from './entities/route_stop.entity';
 import { RouteHistory } from './entities/route_history.entity';
-import { CreateRouteDto } from './dto/create-route.dto';
+import { CreateRouteDto, CreateRouteStopDto } from './dto/create-route.dto';
 import { UpdateRouteDto } from './dto/update-route.dto';
 import { RouteFilterDto } from './dto/filter-route.dto';
 import { RouteResponseDto } from './dto/route-response.dto';
@@ -13,6 +13,12 @@ import { RouteValidatorService } from './validators/route.validator';
 import { DistanceCalculatorService } from './validators/distance_calculator.validator';
 import { RouteStatus } from './enums/route-status';
 import { RouteType } from './enums/route-type';
+
+interface ChangedField {
+  field_name: string;
+  old_value: unknown;
+  new_value: unknown;
+}
 
 @Injectable()
 export class RoutesService {
@@ -79,7 +85,7 @@ export class RoutesService {
     const { stops, ...routeData } = createDto;
 
     // Criar objeto LIMPO - sem campos undefined
-    const preparedData: Record<string, any> = {
+    const preparedData: Partial<Route> = {
       route_code: routeData.route_code,
       name: routeData.name,
       vehicle_id: routeData.vehicle_id,
@@ -123,12 +129,14 @@ export class RoutesService {
     }
 
     // Adicionar valores calculados
-    if (calculatedDistance !== undefined || routeData.estimated_distance_km !== undefined) {
-      preparedData.estimated_distance_km = routeData.estimated_distance_km ?? calculatedDistance;
+    const finalDistance = routeData.estimated_distance_km ?? calculatedDistance;
+    if (finalDistance !== undefined) {
+      preparedData.estimated_distance_km = finalDistance;
     }
-    if (calculatedDuration !== undefined || routeData.estimated_duration_minutes !== undefined) {
-      preparedData.estimated_duration_minutes =
-        routeData.estimated_duration_minutes ?? calculatedDuration;
+
+    const finalDuration = routeData.estimated_duration_minutes ?? calculatedDuration;
+    if (finalDuration !== undefined) {
+      preparedData.estimated_duration_minutes = finalDuration;
     }
 
     const route = this.routeRepository.create(preparedData);
@@ -495,7 +503,7 @@ export class RoutesService {
     return route;
   }
 
-  private async createRouteStops(routeId: string, stopsDto: any[]): Promise<void> {
+  private async createRouteStops(routeId: string, stopsDto: CreateRouteStopDto[]): Promise<void> {
     for (const stopDto of stopsDto) {
       const stop = this.routeStopRepository.create({
         route_id: routeId,
@@ -512,7 +520,7 @@ export class RoutesService {
       description: string;
       previous_status?: RouteStatus;
       new_status?: RouteStatus;
-      changed_fields?: any[];
+      changed_fields?: ChangedField[];
     },
   ): Promise<void> {
     const history = this.routeHistoryRepository.create({
@@ -523,12 +531,12 @@ export class RoutesService {
     await this.routeHistoryRepository.save(history);
   }
 
-  private getChangedFields(original: Route, updated: UpdateRouteDto): any[] {
-    const changed: any[] = [];
+  private getChangedFields(original: Route, updated: UpdateRouteDto): ChangedField[] {
+    const changed: ChangedField[] = [];
 
-    Object.keys(updated).forEach(key => {
-      const oldValue = (original as any)[key];
-      const newValue = (updated as any)[key];
+    (Object.keys(updated) as (keyof UpdateRouteDto)[]).forEach(key => {
+      const oldValue = original[key as keyof Route];
+      const newValue = updated[key];
 
       if (oldValue !== newValue && newValue !== undefined) {
         changed.push({

@@ -1,6 +1,5 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
   Column,
   ManyToOne,
   CreateDateColumn,
@@ -8,15 +7,30 @@ import {
   Index,
   OneToMany,
 } from 'typeorm';
+import { BaseEntity } from '@/database/entities/base.entity';
 import { AddressType } from '../enums/address-type.enum';
 import { Customer } from './customer.entity';
 import { RouteStop } from '@/modules/routes/entities/route_stop.entity';
+import { Auditable } from '../decorators/auditable.decorator';
 
+/**
+ * CustomerAddress Entity - Endereços de clientes
+ *
+ * Features:
+ * - Múltiplos endereços por cliente
+ * - Geocodificação (latitude/longitude)
+ * - Tipos de endereço (residencial, comercial, etc)
+ * - Endereço principal
+ */
 @Entity('customer_addresses')
-export class CustomerAddress {
-  @PrimaryGeneratedColumn('uuid')
-  id!: string;
-
+@Auditable({
+  trackCreation: true,
+  trackUpdates: true,
+  trackDeletion: true,
+  excludeFields: ['updated_at', 'created_at'],
+  entityDisplayName: 'Endereço do Cliente',
+})
+export class CustomerAddress extends BaseEntity {
   @Column({ type: 'uuid' })
   @Index()
   customerId!: string;
