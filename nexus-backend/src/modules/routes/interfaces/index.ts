@@ -8,3 +8,5 @@
 
 export * from './audit-context.interface';
 export * from './route-validation.interface';
+export * from './route-metrics.interface';
+export * from './route.interface';
