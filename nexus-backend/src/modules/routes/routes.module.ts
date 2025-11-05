@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 
 // Controllers
 import { RoutesController } from './routes.controller';
@@ -15,6 +16,19 @@ import { DistanceCalculatorService } from './validators/distance_calculator.vali
 import { Route } from './entities/route.entity';
 import { RouteStop } from './entities/route_stop.entity';
 import { RouteHistory } from './entities/route_history.entity';
+
+// Interceptors
+import {
+  AuditContextInterceptor,
+  RouteStatusInterceptor,
+  RouteValidationInterceptor,
+} from './interceptors';
+
+// Subscribers
+import { RouteSubscriber, RouteStopSubscriber } from './subscribers';
+
+// Utils
+import { ClsAuditUtils } from './utils';
 
 // Módulos relacionados
 import { VehiclesModule } from '../vehicles/vehicles.module';
@@ -54,6 +68,27 @@ import { DriversModule } from '../drivers/drivers.module';
     // Validators
     RouteValidatorService,
     DistanceCalculatorService,
+
+    // Interceptors globais
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: AuditContextInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: RouteStatusInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: RouteValidationInterceptor,
+    },
+
+    // Subscribers TypeORM
+    RouteSubscriber,
+    RouteStopSubscriber,
+
+    // Utils
+    ClsAuditUtils,
   ],
 
   exports: [
@@ -66,6 +101,9 @@ import { DriversModule } from '../drivers/drivers.module';
     // Exportar validators para reutilização
     RouteValidatorService,
     DistanceCalculatorService,
+
+    // Exportar utils para uso em outros módulos
+    ClsAuditUtils,
   ],
 })
 export class RoutesModule {}
