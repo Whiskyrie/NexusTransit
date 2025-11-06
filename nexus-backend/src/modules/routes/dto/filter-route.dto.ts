@@ -2,7 +2,7 @@ import { IsOptional, IsEnum, IsDateString, IsUUID, IsString } from 'class-valida
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { BaseFilterDto } from '../../../common/dto/base-filter.dto';
 import { RouteStatus } from '../enums/route-status';
-import { RouteType } from '../enums/route-type';
+import { RouteType } from '../enums/route.type';
 
 /**
  * DTO para filtrar rotas

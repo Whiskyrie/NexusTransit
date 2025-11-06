@@ -12,7 +12,13 @@ import { PaginatedResponseDto } from '../../common/dto/paginated-response.dto';
 import { RouteValidatorService } from './validators/route.validator';
 import { DistanceCalculatorService } from './validators/distance_calculator.validator';
 import { RouteStatus } from './enums/route-status';
-import { RouteType } from './enums/route-type';
+import { RouteType } from './enums/route.type';
+import { ROUTE_TYPE_CHARACTERISTICS } from './constants/route-calculation.constants';
+import {
+  ROUTE_PAGINATION_DEFAULTS,
+  ROUTE_DATE_DEFAULTS,
+  ROUTE_VALIDATION_DEFAULTS,
+} from './constants/route-defaults.constants';
 
 interface ChangedField {
   field_name: string;

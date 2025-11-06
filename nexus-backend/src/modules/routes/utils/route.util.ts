@@ -17,7 +17,7 @@ import type {
   Coordinates,
   RouteTypeCharacteristics,
 } from '../interfaces/route-metrics.interface';
-import type { RouteType } from '../enums/route-type';
+import type { RouteType } from '../enums/route.type';
 
 /**
  * Constantes para cálculos de rotas
