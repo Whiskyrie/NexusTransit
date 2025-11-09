@@ -1,13 +1,14 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere, ILike, Between } from 'typeorm';
+import { plainToInstance } from 'class-transformer';
 import { Route } from './entities/route.entity';
 import { RouteStop } from './entities/route_stop.entity';
 import { RouteHistory } from './entities/route_history.entity';
 import { CreateRouteDto, CreateRouteStopDto } from './dto/create-route.dto';
 import { UpdateRouteDto } from './dto/update-route.dto';
 import { RouteFilterDto } from './dto/filter-route.dto';
-import { RouteResponseDto } from './dto/route-response.dto';
+import { RouteResponseDto, RouteStopResponseDto } from './dto/route-response.dto';
 import { PaginatedResponseDto } from '../../common/dto/paginated-response.dto';
 import { RouteValidatorService } from './validators/route.validator';
 import { DistanceCalculatorService } from './validators/distance_calculator.validator';
@@ -569,15 +570,48 @@ export class RoutesService {
     delayFactor: number;
   } {
     const characteristics = ROUTE_TYPE_CHARACTERISTICS[type];
+
+    if (!characteristics) {
+      this.logger.warn(
+        `Características não encontradas para tipo de rota: ${type}. Usando valores padrão.`,
+      );
+      return {
+        avgSpeed: 60,
+        delayFactor: 1.2,
+      };
+    }
+
     return {
       avgSpeed: characteristics.avgSpeed,
       delayFactor: characteristics.delayFactor,
     };
   }
 
+  /**
+   * Mapeia a entidade Route para RouteResponseDto
+   *
+   * Usa plainToInstance do class-transformer para:
+   * - Aplicar transformações automaticamente (@Transform)
+   * - Excluir campos marcados com @Exclude
+   * - Incluir apenas campos marcados com @Expose
+   * - Converter nested objects (@Type)
+   */
   private mapToResponseDto(route: Route): RouteResponseDto {
-    const dto = new RouteResponseDto();
-    Object.assign(dto, route);
-    return dto;
+    return plainToInstance(RouteResponseDto, route, {
+      excludeExtraneousValues: true,
+    });
+  }
+
+  /**
+   * Mapeia a entidade RouteStop para RouteStopResponseDto
+   *
+   * Usa plainToInstance para mapeamento seguro
+   * Método auxiliar disponível para uso futuro em endpoints específicos de paradas
+   */
+  // @ts-expect-error - Método reservado para uso futuro
+  private mapStopToResponseDto(stop: RouteStop): RouteStopResponseDto {
+    return plainToInstance(RouteStopResponseDto, stop, {
+      excludeExtraneousValues: true,
+    });
   }
 }
