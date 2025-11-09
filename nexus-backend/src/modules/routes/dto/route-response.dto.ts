@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude, Type } from 'class-transformer';
 import { RouteStatus } from '../enums/route-status';
-import { RouteType } from '../enums/route-type';
+import { RouteType } from '../enums/route.type';
 
 /**
  * DTO para parada da rota na resposta

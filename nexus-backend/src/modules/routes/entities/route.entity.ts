@@ -2,7 +2,7 @@ import { Entity, Column, ManyToOne, OneToMany, Index, JoinColumn } from 'typeorm
 import { BaseEntity } from '../../../database/entities/base.entity';
 import { Auditable } from '../../vehicles/decorators/auditable.decorator';
 import { RouteStatus } from '../enums/route-status';
-import { RouteType } from '../enums/route-type';
+import { RouteType } from '../enums/route.type';
 import { Vehicle } from '../../vehicles/entities/vehicle.entity';
 import { Driver } from '../../drivers/entities/driver.entity';
 import { RouteStop } from './route_stop.entity';

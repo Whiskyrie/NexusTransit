@@ -7,7 +7,7 @@
  */
 
 import type { RouteStatus } from '../enums/route-status';
-import type { RouteType } from '../enums/route-type';
+import type { RouteType } from '../enums/route.type';
 
 /**
  * Interface completa para Route

@@ -12,7 +12,13 @@ import { PaginatedResponseDto } from '../../common/dto/paginated-response.dto';
 import { RouteValidatorService } from './validators/route.validator';
 import { DistanceCalculatorService } from './validators/distance_calculator.validator';
 import { RouteStatus } from './enums/route-status';
-import { RouteType } from './enums/route-type';
+import { RouteType } from './enums/route.type';
+import { ROUTE_TYPE_CHARACTERISTICS } from './constants/route-calculation.constants';
+import {
+  ROUTE_PAGINATION_DEFAULTS,
+  ROUTE_DATE_DEFAULTS,
+  ROUTE_VALIDATION_DEFAULTS,
+} from './constants/route-defaults.constants';
 
 interface ChangedField {
   field_name: string;
@@ -158,7 +164,12 @@ export class RoutesService {
   }
 
   async findAll(filterDto: RouteFilterDto): Promise<PaginatedResponseDto<RouteResponseDto>> {
-    const { page = 1, limit = 10, search, ...filters } = filterDto;
+    const {
+      page = ROUTE_PAGINATION_DEFAULTS.DEFAULT_PAGE,
+      limit = ROUTE_PAGINATION_DEFAULTS.DEFAULT_LIMIT,
+      search,
+      ...filters
+    } = filterDto;
 
     const where: FindOptionsWhere<Route> = {};
 
@@ -185,10 +196,10 @@ export class RoutesService {
     if (filters.planned_date_from || filters.planned_date_to) {
       const startDate = filters.planned_date_from
         ? new Date(filters.planned_date_from)
-        : new Date('1900-01-01');
+        : new Date(ROUTE_DATE_DEFAULTS.MIN_DATE);
       const endDate = filters.planned_date_to
         ? new Date(filters.planned_date_to)
-        : new Date('2100-12-31');
+        : new Date(ROUTE_DATE_DEFAULTS.MAX_DATE);
 
       where.planned_date = Between(startDate, endDate);
     }
@@ -234,7 +245,10 @@ export class RoutesService {
 
     this.logger.log(`Atualizando rota: ${id}`);
 
-    if (!route.canBeEdited() && Object.keys(updateDto).length > 0) {
+    if (
+      !route.canBeEdited() &&
+      Object.keys(updateDto).length > ROUTE_VALIDATION_DEFAULTS.MAX_CHANGES_PER_UPDATE
+    ) {
       throw new BadRequestException(
         `Rota não pode ser editada no status ${route.status}. Apenas rotas PLANNED podem ser editadas.`,
       );
@@ -554,15 +568,11 @@ export class RoutesService {
     avgSpeed: number;
     delayFactor: number;
   } {
-    const characteristics = {
-      [RouteType.URBAN]: { avgSpeed: 40, delayFactor: 1.3 },
-      [RouteType.INTERSTATE]: { avgSpeed: 90, delayFactor: 1.1 },
-      [RouteType.RURAL]: { avgSpeed: 60, delayFactor: 1.4 },
-      [RouteType.EXPRESS]: { avgSpeed: 100, delayFactor: 1.0 },
-      [RouteType.LOCAL]: { avgSpeed: 30, delayFactor: 1.2 },
+    const characteristics = ROUTE_TYPE_CHARACTERISTICS[type];
+    return {
+      avgSpeed: characteristics.avgSpeed,
+      delayFactor: characteristics.delayFactor,
     };
-
-    return characteristics[type];
   }
 
   private mapToResponseDto(route: Route): RouteResponseDto {
