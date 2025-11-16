@@ -1,7 +1,5 @@
-import { Entity, Column, ManyToOne, Index } from 'typeorm';
+import { Entity, Column, ManyToOne, Index, JoinColumn } from 'typeorm';
 import { BaseEntity } from '../../../database/entities/base.entity';
-import { DeliveryPreference } from '../enums/delivery-preference.enum';
-import { NotificationChannel } from '../enums/notification-channel.enum';
 import { Customer } from './customer.entity';
 import { Auditable } from '../decorators/auditable.decorator';
 
@@ -23,34 +21,38 @@ import { Auditable } from '../decorators/auditable.decorator';
   entityDisplayName: 'Preferências do Cliente',
 })
 export class CustomerPreferences extends BaseEntity {
-  @Column({ type: 'uuid' })
+  @Column({ name: 'customer_id', type: 'uuid' })
   @Index()
   customerId!: string;
 
-  @Column({ type: 'enum', enum: DeliveryPreference, default: DeliveryPreference.STANDARD })
-  deliveryPreference: DeliveryPreference = DeliveryPreference.STANDARD;
+  @Column({ name: 'preferred_delivery_days', type: 'text', array: true, nullable: true })
+  preferredDeliveryDays?: string[];
 
-  @Column({ type: 'enum', enum: NotificationChannel, default: NotificationChannel.EMAIL })
-  preferredNotificationChannel: NotificationChannel = NotificationChannel.EMAIL;
+  @Column({ name: 'preferred_delivery_time_start', type: 'time', nullable: true })
+  preferredDeliveryTimeStart?: string;
 
-  @Column({ type: 'jsonb', nullable: true })
-  deliveryTimeWindows?: string[];
+  @Column({ name: 'preferred_delivery_time_end', type: 'time', nullable: true })
+  preferredDeliveryTimeEnd?: string;
 
-  @Column({ type: 'jsonb', nullable: true })
-  restrictedItems?: string[];
+  @Column({ name: 'delivery_instructions', type: 'text', nullable: true })
+  deliveryInstructions?: string;
 
-  @Column({ type: 'boolean', default: false })
-  allowWeekendDelivery = false;
+  @Column({ name: 'notification_channels', type: 'text', array: true, nullable: true })
+  notificationChannels?: string[];
 
-  @Column({ type: 'boolean', default: true })
-  requireSignature = false;
+  @Column({ name: 'delivery_preferences', type: 'jsonb', nullable: true })
+  deliveryPreferences?: Record<string, unknown>;
 
-  @Column({ type: 'jsonb', nullable: true })
-  specialInstructions?: string[];
+  @Column({ name: 'restrictions', type: 'jsonb', nullable: true })
+  restrictions?: Record<string, unknown>;
+
+  @Column({ name: 'is_active', type: 'boolean', default: true })
+  isActive = true;
 
   @Column({ type: 'jsonb', nullable: true })
   metadata?: Record<string, unknown>;
 
   @ManyToOne(() => Customer, customer => customer.preferences, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'customer_id' })
   customer: Customer = new Customer();
 }
