@@ -29,7 +29,7 @@ import { Auditable } from '../decorators/auditable.decorator';
   entityDisplayName: 'Cliente',
 })
 export class Customer extends BaseEntity {
-  @Column({ name: 'tax_id', unique: true, length: 18 })
+  @Column({ unique: true, length: 18 })
   @Index()
   taxId!: string;
 

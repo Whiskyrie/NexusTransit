@@ -52,7 +52,7 @@ export class CustomerFilterDto {
 
   @IsOptional()
   @IsString()
-  sortBy?: string = 'created_at';
+  sortBy?: string = 'createdAt';
 
   @IsOptional()
   @IsString()
