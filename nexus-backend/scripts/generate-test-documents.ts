@@ -82,12 +82,12 @@ function gerarCNPJValido(): string {
 
   // Calcula primeiro dígito verificador
   const peso1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
-  let soma = n.reduce((acc, val, idx) => acc + val * peso1[idx]!, 0);
+  let soma = n.reduce((acc, val, idx) => acc + val * (peso1[idx] ?? 0), 0);
   const dv1 = soma % 11 < 2 ? 0 : 11 - (soma % 11);
 
   // Calcula segundo dígito verificador
   const peso2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
-  soma = n.reduce((acc, val, idx) => acc + val * peso2[idx]!, 0) + dv1 * peso2[12]!;
+  soma = n.reduce((acc, val, idx) => acc + val * (peso2[idx] ?? 0), 0) + dv1 * (peso2[12] ?? 0);
   const dv2 = soma % 11 < 2 ? 0 : 11 - (soma % 11);
 
   return n.join('') + dv1 + dv2;
@@ -95,36 +95,36 @@ function gerarCNPJValido(): string {
 
 // ==================== EXECUÇÃO ====================
 
-console.log('='.repeat(60));
-console.log('📋 DOCUMENTOS VÁLIDOS PARA TESTES');
-console.log('='.repeat(60));
-console.log('');
+console.warn('='.repeat(60));
+console.warn('📋 DOCUMENTOS VÁLIDOS PARA TESTES');
+console.warn('='.repeat(60));
+console.warn('');
 
-console.log('🆔 CPFs Válidos:');
-console.log('   CPF 1:', gerarCPFValido());
-console.log('   CPF 2:', gerarCPFValido());
-console.log('   CPF 3:', gerarCPFValido());
-console.log('   CPF 4:', gerarCPFValido());
-console.log('   CPF 5:', gerarCPFValido());
-console.log('');
+console.warn('🆔 CPFs Válidos:');
+console.warn('   CPF 1:', gerarCPFValido());
+console.warn('   CPF 2:', gerarCPFValido());
+console.warn('   CPF 3:', gerarCPFValido());
+console.warn('   CPF 4:', gerarCPFValido());
+console.warn('   CPF 5:', gerarCPFValido());
+console.warn('');
 
-console.log('🪪  CNHs Válidas:');
-console.log('   CNH 1:', gerarCNHValida());
-console.log('   CNH 2:', gerarCNHValida());
-console.log('   CNH 3:', gerarCNHValida());
-console.log('   CNH 4:', gerarCNHValida());
-console.log('   CNH 5:', gerarCNHValida());
-console.log('');
+console.warn('🪪  CNHs Válidas:');
+console.warn('   CNH 1:', gerarCNHValida());
+console.warn('   CNH 2:', gerarCNHValida());
+console.warn('   CNH 3:', gerarCNHValida());
+console.warn('   CNH 4:', gerarCNHValida());
+console.warn('   CNH 5:', gerarCNHValida());
+console.warn('');
 
-console.log('🏢 CNPJs Válidos:');
-console.log('   CNPJ 1:', gerarCNPJValido());
-console.log('   CNPJ 2:', gerarCNPJValido());
-console.log('   CNPJ 3:', gerarCNPJValido());
-console.log('');
+console.warn('🏢 CNPJs Válidos:');
+console.warn('   CNPJ 1:', gerarCNPJValido());
+console.warn('   CNPJ 2:', gerarCNPJValido());
+console.warn('   CNPJ 3:', gerarCNPJValido());
+console.warn('');
 
-console.log('='.repeat(60));
-console.log('✅ Use esses documentos na sua collection do Postman');
-console.log('='.repeat(60));
+console.warn('='.repeat(60));
+console.warn('✅ Use esses documentos na sua collection do Postman');
+console.warn('='.repeat(60));
 
 // Exporta as funções para uso em outros scripts
 export { gerarCPFValido, gerarCNHValida, gerarCNPJValido };
