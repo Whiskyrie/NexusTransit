@@ -1,4 +1,4 @@
-import { Entity, Column, ManyToOne, Index } from 'typeorm';
+import { Entity, Column, ManyToOne, Index, JoinColumn } from 'typeorm';
 import { BaseEntity } from '../../../database/entities/base.entity';
 import { ContactType } from '../enums/contact-type.enum';
 import { Customer } from './customer.entity';
@@ -21,24 +21,30 @@ import { Auditable } from '../decorators/auditable.decorator';
   entityDisplayName: 'Contato do Cliente',
 })
 export class CustomerContact extends BaseEntity {
-  @Column({ type: 'uuid' })
+  @Column({ name: 'customer_id', type: 'uuid' })
   @Index()
   customerId!: string;
 
   @Column({ length: 100 })
   name!: string;
 
-  @Column({ length: 100 })
-  value!: string;
+  @Column({ length: 100, nullable: true })
+  email?: string;
+
+  @Column({ length: 20, nullable: true })
+  phone?: string;
 
   @Column({ type: 'enum', enum: ContactType })
   type: ContactType = ContactType.EMAIL;
 
-  @Column({ type: 'boolean', default: false })
+  @Column({ name: 'is_primary', type: 'boolean', default: false })
   isPrimary = false;
 
-  @Column({ type: 'boolean', default: true })
+  @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive = false;
+
+  @Column({ type: 'text', nullable: true })
+  notes?: string;
 
   @Column({ type: 'jsonb', nullable: true })
   metadata?: Record<string, unknown>;
@@ -46,5 +52,6 @@ export class CustomerContact extends BaseEntity {
   @ManyToOne(() => Customer, (customer: Customer) => customer.contacts, {
     onDelete: 'CASCADE',
   })
+  @JoinColumn({ name: 'customer_id' })
   customer!: Customer;
 }
