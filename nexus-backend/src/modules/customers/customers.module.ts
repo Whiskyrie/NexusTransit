@@ -43,15 +43,13 @@ import { CustomerAuditContextInterceptor, CustomerStatusInterceptor } from './in
     CustomerContactSubscriber,
     CustomerPreferencesSubscriber,
 
-    // Interceptors (aplicados localmente no módulo)
+    // Interceptors (aplicados localmente apenas no CustomerAuditContextInterceptor)
     {
       provide: APP_INTERCEPTOR,
       useClass: CustomerAuditContextInterceptor,
     },
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: CustomerStatusInterceptor,
-    },
+    // CustomerStatusInterceptor será aplicado diretamente no controller
+    CustomerStatusInterceptor,
   ],
   exports: [CustomersService, TypeOrmModule],
 })

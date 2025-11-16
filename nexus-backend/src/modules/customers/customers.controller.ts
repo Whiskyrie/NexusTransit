@@ -9,6 +9,7 @@ import {
   Query,
   ParseUUIDPipe,
   HttpStatus,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { CustomersService } from './customers.service';
@@ -16,9 +17,11 @@ import { Customer } from './entities/customer.entity';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 import { CustomerFilterDto } from './dto/customer-filter.dto';
+import { CustomerStatusInterceptor } from './interceptors/customer-status.interceptor';
 
 @ApiTags('Customers')
 @Controller('customers')
+@UseInterceptors(CustomerStatusInterceptor)
 export class CustomersController {
   constructor(private readonly customersService: CustomersService) {}
 
@@ -64,7 +67,7 @@ export class CustomersController {
     enum: ['standard', 'premium', 'vip'],
     description: 'Filter by category',
   })
-  @ApiQuery({ name: 'sortBy', required: false, description: 'Sort field (default: createdAt)' })
+  @ApiQuery({ name: 'sortBy', required: false, description: 'Sort field (default: created_at)' })
   @ApiQuery({
     name: 'sortOrder',
     required: false,
