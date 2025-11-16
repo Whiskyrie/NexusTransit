@@ -77,8 +77,7 @@
     "src/**/*",
     "test/**/*",
     "src/**/*.ts",
-    "ormconfig.ts",
-    "scripts/**/*"
+    "ormconfig.ts"
   ],
   "exclude": [
     "node_modules",

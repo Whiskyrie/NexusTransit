@@ -38,8 +38,7 @@ export class CustomerContactSubscriber implements EntitySubscriberInterface<Cust
       `Before insert contact: ${JSON.stringify({
         customerId: entity.customerId,
         type: entity.type,
-        email: entity.email,
-        phone: entity.phone,
+        value: entity.value,
       })}`,
     );
 
@@ -105,17 +104,10 @@ export class CustomerContactSubscriber implements EntitySubscriberInterface<Cust
       );
     }
 
-    // Log de mudança de email
-    if (entity.email !== databaseEntity.email) {
+    // Log de mudança de valor
+    if (entity.value !== databaseEntity.value) {
       this.logger.warn(
-        `Contact email changed: ${databaseEntity.email} → ${entity.email} (${entity.id})`,
-      );
-    }
-
-    // Log de mudança de telefone
-    if (entity.phone !== databaseEntity.phone) {
-      this.logger.warn(
-        `Contact phone changed: ${databaseEntity.phone} → ${entity.phone} (${entity.id})`,
+        `Contact value changed: ${databaseEntity.value} → ${entity.value} (${entity.id})`,
       );
     }
   }
@@ -160,14 +152,14 @@ export class CustomerContactSubscriber implements EntitySubscriberInterface<Cust
    * Valida dados do contato
    */
   private validateContactData(contact: CustomerContact): void {
+    // Validação de valor
+    if (!contact.value || contact.value.trim().length === 0) {
+      throw new Error('Contact value is required');
+    }
+
     // Validação de cliente
     if (!contact.customerId) {
       throw new Error('Customer ID is required');
-    }
-
-    // Validar que pelo menos email ou phone está presente
-    if (!contact.email && !contact.phone) {
-      throw new Error('At least email or phone is required');
     }
 
     // Validação específica por tipo
@@ -178,30 +170,15 @@ export class CustomerContactSubscriber implements EntitySubscriberInterface<Cust
    * Valida contato baseado no tipo
    */
   private validateContactByType(contact: CustomerContact): void {
-    // Validar email se presente
-    if (contact.email) {
-      this.validateEmail(contact.email);
-    }
-
-    // Validar telefone se presente
-    if (contact.phone) {
-      this.validatePhone(contact.phone);
-    }
-
-    // Validar baseado no tipo
     switch (contact.type) {
       case ContactType.EMAIL:
-        if (!contact.email) {
-          throw new Error('Email is required for EMAIL contact type');
-        }
+        this.validateEmail(contact.value);
         break;
 
       case ContactType.PHONE:
       case ContactType.MOBILE:
       case ContactType.WHATSAPP:
-        if (!contact.phone) {
-          throw new Error('Phone is required for PHONE contact type');
-        }
+        this.validatePhone(contact.value);
         break;
 
       default:
@@ -233,14 +210,17 @@ export class CustomerContactSubscriber implements EntitySubscriberInterface<Cust
    * Normaliza dados do contato
    */
   private normalizeContactData(contact: CustomerContact): void {
-    // Normalizar email se presente
-    if (contact.email) {
-      contact.email = contact.email.toLowerCase().trim();
-    }
+    // Normalizar valor baseado no tipo
+    switch (contact.type) {
+      case ContactType.EMAIL:
+        contact.value = contact.value.toLowerCase().trim();
+        break;
 
-    // Normalizar telefone se presente
-    if (contact.phone) {
-      contact.phone = contact.phone.replace(/\D/g, '');
+      case ContactType.PHONE:
+      case ContactType.MOBILE:
+      case ContactType.WHATSAPP:
+        contact.value = contact.value.replace(/\D/g, '');
+        break;
     }
   }
 

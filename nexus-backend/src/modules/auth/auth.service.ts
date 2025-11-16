@@ -1,15 +1,15 @@
-import { Injectable, Logger, UnauthorizedException, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
 import { LoginDto } from './dto/login.dto';
 import { LoginResponseDto } from './dto/login-response.dto';
 import { UserResponseDto } from './dto/user-response.dto';
+import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { User } from '../users/entities/user.entity';
 import { AuditLogService } from '../audit/audit-log.service';
 import { AuditAction, AuditCategory } from '../audit/enums';
-import { generateToken, verifyToken, generateUserPayload } from './utils/token.util';
-import { hashPassword, comparePassword } from './utils/password.util';
 
 @Injectable()
 export class AuthService {
@@ -34,16 +34,19 @@ export class AuthService {
       const user = await this.validateUser(loginDto.email, loginDto.password);
 
       if (!user) {
+        // Log tentativa de login falhada
         await this.logFailedLogin(loginDto.email, 'Invalid credentials', ipAddress, userAgent);
         throw new UnauthorizedException('Credenciais inválidas');
       }
 
       if (!user.is_active) {
+        // Log tentativa de login com usuário inativo
         await this.logFailedLogin(loginDto.email, 'User inactive', ipAddress, userAgent);
         throw new UnauthorizedException('Usuário inativo');
       }
 
       if (!user.email_verified) {
+        // Log tentativa de login com email não verificado
         await this.logFailedLogin(loginDto.email, 'Email not verified', ipAddress, userAgent);
         throw new UnauthorizedException('Email não verificado');
       }
@@ -56,7 +59,13 @@ export class AuthService {
       // Log login bem-sucedido
       await this.logSuccessfulLogin(user, ipAddress, userAgent);
 
-      return this.mapToLoginResponseDto(user, tokens);
+      return {
+        access_token: tokens.accessToken,
+        refresh_token: tokens.refreshToken,
+        token_type: 'Bearer',
+        expires_in: this.getAccessTokenExpiresIn(),
+        user: UserResponseDto.fromUser(user),
+      };
     } catch (error) {
       if (error instanceof UnauthorizedException) {
         throw error;
@@ -66,83 +75,6 @@ export class AuthService {
       await this.logFailedLogin(loginDto.email, 'System error', ipAddress, userAgent);
       throw new UnauthorizedException('Erro interno do servidor');
     }
-  }
-
-  /**
-   * Obtém perfil do usuário autenticado
-   */
-  async getProfile(
-    userId: string,
-    ipAddress?: string,
-    userAgent?: string,
-  ): Promise<UserResponseDto> {
-    try {
-      const user = await this.usersService.findOne(userId);
-
-      if (!user) {
-        throw new NotFoundException('Usuário não encontrado');
-      }
-
-      if (!user.is_active) {
-        throw new UnauthorizedException('Usuário inativo');
-      }
-
-      // Log acesso ao perfil
-      await this.logProfileAccess(user, ipAddress, userAgent);
-
-      return UserResponseDto.fromUser(user);
-    } catch (error) {
-      if (error instanceof NotFoundException || error instanceof UnauthorizedException) {
-        throw error;
-      }
-
-      this.logger.error('Erro ao obter perfil do usuário', error);
-      throw new UnauthorizedException('Erro ao obter perfil');
-    }
-  }
-
-  /**
-   * Gera tokens de acesso e refresh
-   */
-  private async generateTokens(user: User): Promise<{ accessToken: string; refreshToken: string }> {
-    const basePayload = generateUserPayload({
-      id: user.id,
-      email: user.email,
-      roles: user.roles?.map(role => role.name) || [],
-    });
-
-    const accessToken = await generateToken(
-      this.jwtService,
-      this.configService,
-      { ...basePayload, type: 'access' as const },
-      'access',
-    );
-
-    const refreshToken = await generateToken(
-      this.jwtService,
-      this.configService,
-      { ...basePayload, type: 'refresh' as const },
-      'refresh',
-    );
-
-    return { accessToken, refreshToken };
-  }
-
-  /**
-   * Mapeia usuário para DTO de resposta
-   */
-  private mapToLoginResponseDto(
-    user: User,
-    tokens: { accessToken: string; refreshToken: string },
-  ): LoginResponseDto {
-    const response = new LoginResponseDto();
-    response.access_token = tokens.accessToken;
-    response.refresh_token = tokens.refreshToken;
-    response.token_type = 'Bearer';
-    response.expires_in = this.getAccessTokenExpiresIn();
-    response.user = UserResponseDto.fromUser(user);
-
-    return response;
   }
 
   /**
@@ -156,7 +88,7 @@ export class AuthService {
         return null;
       }
 
-      const isPasswordValid = await comparePassword(password, user.password_hash);
+      const isPasswordValid = await bcrypt.compare(password, user.password_hash);
 
       if (!isPasswordValid) {
         return null;
@@ -170,17 +102,43 @@ export class AuthService {
   }
 
   /**
+   * Gera tokens JWT (access e refresh)
+   */
+  async generateTokens(user: User): Promise<{ accessToken: string; refreshToken: string }> {
+    const payload: Omit<JwtPayload, 'iat' | 'exp'> = {
+      sub: user.id,
+      email: user.email,
+      roles: user.roles?.map(role => role.name) || [],
+      type: 'access',
+    };
+
+    const refreshPayload: Omit<JwtPayload, 'iat' | 'exp'> = {
+      sub: user.id,
+      email: user.email,
+      roles: user.roles?.map(role => role.name) || [],
+      type: 'refresh',
+    };
+
+    const [accessToken, refreshToken] = await Promise.all([
+      this.jwtService.signAsync(payload, {
+        expiresIn: this.configService.get('JWT_ACCESS_TOKEN_EXPIRES_IN', '15m'),
+      }),
+      this.jwtService.signAsync(refreshPayload, {
+        expiresIn: this.configService.get('JWT_REFRESH_TOKEN_EXPIRES_IN', '7d'),
+      }),
+    ]);
+
+    return { accessToken, refreshToken };
+  }
+
+  /**
    * Renova access token usando refresh token
    */
-  async refreshToken(
-    refreshToken: string,
-    ipAddress?: string,
-    userAgent?: string,
-  ): Promise<LoginResponseDto> {
+  async refreshToken(refreshToken: string): Promise<{ access_token: string }> {
     try {
-      const payload = await verifyToken(this.jwtService, this.configService, refreshToken);
+      const payload = await this.jwtService.verifyAsync<JwtPayload>(refreshToken);
 
-      if (!payload || payload.type !== 'refresh') {
+      if (payload.type !== 'refresh') {
         throw new UnauthorizedException('Token inválido');
       }
 
@@ -190,16 +148,18 @@ export class AuthService {
         throw new UnauthorizedException('Usuário inválido');
       }
 
-      if (!user.email_verified) {
-        throw new UnauthorizedException('Email não verificado');
-      }
+      const newPayload: Omit<JwtPayload, 'iat' | 'exp'> = {
+        sub: user.id,
+        email: user.email,
+        roles: user.roles?.map(role => role.name) || [],
+        type: 'access',
+      };
 
-      const tokens = await this.generateTokens(user);
+      const accessToken = await this.jwtService.signAsync(newPayload, {
+        expiresIn: this.configService.get('JWT_ACCESS_TOKEN_EXPIRES_IN', '15m'),
+      });
 
-      // Log refresh token
-      await this.logTokenRefresh(user, ipAddress, userAgent);
-
-      return this.mapToLoginResponseDto(user, tokens);
+      return { access_token: accessToken };
     } catch (error) {
       this.logger.error('Erro ao atualizar refresh token', error);
       throw new UnauthorizedException('Refresh token inválido');
@@ -222,11 +182,11 @@ export class AuthService {
   }
 
   /**
-   * Hash da senha usando util
+   * Hash da senha usando bcrypt
    */
-  async hashPasswordForUser(password: string): Promise<string> {
+  async hashPassword(password: string): Promise<string> {
     const saltRounds = this.configService.get<number>('BCRYPT_SALT_ROUNDS', 12);
-    return hashPassword(password, saltRounds);
+    return bcrypt.hash(password, saltRounds);
   }
 
   /**
@@ -288,62 +248,6 @@ export class AuthService {
       await this.auditLogService.createLog(auditData);
     } catch (error) {
       this.logger.error('Failed to log failed login audit', error);
-    }
-  }
-
-  /**
-   * Log auditoria para acesso ao perfil
-   */
-  private async logProfileAccess(
-    user: User,
-    ipAddress?: string,
-    userAgent?: string,
-  ): Promise<void> {
-    try {
-      const auditData = {
-        action: AuditAction.READ,
-        category: AuditCategory.AUTH,
-        userId: user.id,
-        userEmail: user.email,
-        resourceType: 'user_profile',
-        resourceId: user.id,
-        description: `User ${user.email} accessed their profile`,
-        metadata: {
-          timestamp: new Date().toISOString(),
-        },
-        ...(ipAddress && { ipAddress }),
-        ...(userAgent && { userAgent }),
-      };
-
-      await this.auditLogService.createLog(auditData);
-    } catch (error) {
-      this.logger.error('Failed to log profile access audit', error);
-    }
-  }
-
-  /**
-   * Log auditoria para refresh token
-   */
-  private async logTokenRefresh(user: User, ipAddress?: string, userAgent?: string): Promise<void> {
-    try {
-      const auditData = {
-        action: AuditAction.UPDATE,
-        category: AuditCategory.AUTH,
-        userId: user.id,
-        userEmail: user.email,
-        resourceType: 'auth',
-        resourceId: user.id,
-        description: `Token refreshed for user ${user.email}`,
-        metadata: {
-          timestamp: new Date().toISOString(),
-        },
-        ...(ipAddress && { ipAddress }),
-        ...(userAgent && { userAgent }),
-      };
-
-      await this.auditLogService.createLog(auditData);
-    } catch (error) {
-      this.logger.error('Failed to log token refresh audit', error);
     }
   }
 
