@@ -22,6 +22,7 @@ import { RedisModule } from './modules/redis/redis.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { LgpdModule } from './modules/lgpd/lgpd.module';
 import { UploadModule } from './modules/upload/upload.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 import configurations from './config/configurations';
 
 @Module({
@@ -60,6 +61,7 @@ import configurations from './config/configurations';
     AuditModule, // Sistema de auditoria e logs
     LgpdModule,
     UploadModule, // Conformidade LGPD
+    DashboardModule, // Dashboard e métricas
   ],
   controllers: [AppController],
   providers: [AppService],
