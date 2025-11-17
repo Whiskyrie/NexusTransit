@@ -1,12 +1,4 @@
-import {
-  Entity,
-  Column,
-  ManyToOne,
-  CreateDateColumn,
-  UpdateDateColumn,
-  Index,
-  OneToMany,
-} from 'typeorm';
+import { Entity, Column, ManyToOne, Index, OneToMany, JoinColumn } from 'typeorm';
 import { BaseEntity } from '@/database/entities/base.entity';
 import { AddressType } from '../enums/address-type.enum';
 import { Customer } from './customer.entity';
@@ -31,7 +23,7 @@ import { Auditable } from '../decorators/auditable.decorator';
   entityDisplayName: 'Endereço do Cliente',
 })
 export class CustomerAddress extends BaseEntity {
-  @Column({ type: 'uuid' })
+  @Column({ name: 'customer_id', type: 'uuid' })
   @Index()
   customerId!: string;
 
@@ -47,7 +39,7 @@ export class CustomerAddress extends BaseEntity {
   @Column({ length: 50 })
   neighborhood!: string;
 
-  @Column({ length: 8 })
+  @Column({ name: 'zip_code', length: 8 })
   @Index()
   zipCode!: string;
 
@@ -67,24 +59,19 @@ export class CustomerAddress extends BaseEntity {
   @Column({ type: 'enum', enum: AddressType })
   type!: AddressType;
 
-  @Column({ type: 'boolean', default: false })
+  @Column({ name: 'is_primary', type: 'boolean', default: false })
   isPrimary!: boolean;
 
-  @Column({ type: 'boolean', default: true })
+  @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive!: boolean;
 
   @Column({ type: 'jsonb', nullable: true })
   metadata?: Record<string, unknown>;
 
   @ManyToOne(() => Customer, customer => customer.addresses, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'customer_id' })
   customer!: Customer;
 
   @OneToMany(() => RouteStop, stop => stop.customer_address)
   route_stops!: RouteStop[];
-
-  @CreateDateColumn({ type: 'timestamp with time zone' })
-  createdAt!: Date;
-
-  @UpdateDateColumn({ type: 'timestamp with time zone' })
-  updatedAt!: Date;
 }
