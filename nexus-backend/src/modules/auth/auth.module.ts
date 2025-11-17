@@ -34,7 +34,7 @@ import { TokenBlacklistService } from './services/token-blacklist.service';
         return {
           secret,
           signOptions: {
-            expiresIn: configService.get<string>('JWT_ACCESS_TOKEN_EXPIRES_IN', '15m'),
+            expiresIn: configService.get('JWT_ACCESS_TOKEN_EXPIRES_IN', '15m'),
           },
         };
       },
