@@ -21,7 +21,7 @@ import { IsCNH } from '../validators/cnh.validator';
 export class CreateDriverDto {
   @ApiProperty({
     description: 'CPF do motorista (apenas números)',
-    example: '12345678901',
+    example: '43380928828',
     minLength: 11,
     maxLength: 11,
   })
@@ -72,7 +72,7 @@ export class CreateDriverDto {
 
   @ApiProperty({
     description: 'Número da CNH',
-    example: '12345678901',
+    example: '35166528611',
     minLength: 11,
     maxLength: 11,
   })
