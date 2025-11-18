@@ -10,6 +10,7 @@ import {
   ParseUUIDPipe,
   HttpStatus,
   HttpCode,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -31,6 +32,8 @@ import { RouteFilterDto } from './dto/filter-route.dto';
 import { RouteResponseDto } from './dto/route-response.dto';
 import { PaginatedResponseDto } from '../../common/dto/paginated-response.dto';
 import { CancelRouteDto } from './dto/cancel_route.dto';
+import { RouteStatusInterceptor } from './interceptors/route-status.interceptor';
+import { RouteValidationInterceptor } from './interceptors/route-validation.interceptor';
 
 /**
  * Controller de rotas
@@ -44,6 +47,7 @@ import { CancelRouteDto } from './dto/cancel_route.dto';
 @ApiTags('Routes')
 @Controller('routes')
 @ApiBearerAuth()
+@UseInterceptors(RouteStatusInterceptor, RouteValidationInterceptor)
 export class RoutesController {
   constructor(private readonly routesService: RoutesService) {}
 

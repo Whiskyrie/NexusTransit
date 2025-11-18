@@ -1,7 +1,9 @@
 import { Controller, Get } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { RedisService } from './modules/redis/redis.service';
 
-@Controller()
+@ApiTags('App')
+@Controller('api')
 export class AppController {
   constructor(private readonly redisService: RedisService) {}
 

@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { APP_INTERCEPTOR } from '@nestjs/core';
 
 // Controllers
 import { RoutesController } from './routes.controller';
@@ -69,19 +68,10 @@ import { DriversModule } from '../drivers/drivers.module';
     RouteValidatorService,
     DistanceCalculatorService,
 
-    // Interceptors globais
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: AuditContextInterceptor,
-    },
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: RouteStatusInterceptor,
-    },
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: RouteValidationInterceptor,
-    },
+    // Interceptors (não globais, serão aplicados no controller)
+    AuditContextInterceptor,
+    RouteStatusInterceptor,
+    RouteValidationInterceptor,
 
     // Subscribers TypeORM
     RouteSubscriber,
