@@ -9,6 +9,7 @@ import {
   Query,
   ParseUUIDPipe,
   HttpStatus,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { CustomersService } from './customers.service';
@@ -16,9 +17,11 @@ import { Customer } from './entities/customer.entity';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 import { CustomerFilterDto } from './dto/customer-filter.dto';
+import { CustomerAuditContextInterceptor, CustomerStatusInterceptor } from './interceptors';
 
 @ApiTags('Customers')
 @Controller('customers')
+@UseInterceptors(CustomerAuditContextInterceptor, CustomerStatusInterceptor)
 export class CustomersController {
   constructor(private readonly customersService: CustomersService) {}
 
