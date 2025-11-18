@@ -17,11 +17,11 @@ import { Customer } from './entities/customer.entity';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 import { CustomerFilterDto } from './dto/customer-filter.dto';
-import { CustomerStatusInterceptor } from './interceptors/customer-status.interceptor';
+import { CustomerAuditContextInterceptor, CustomerStatusInterceptor } from './interceptors';
 
 @ApiTags('Customers')
 @Controller('customers')
-@UseInterceptors(CustomerStatusInterceptor)
+@UseInterceptors(CustomerAuditContextInterceptor, CustomerStatusInterceptor)
 export class CustomersController {
   constructor(private readonly customersService: CustomersService) {}
 

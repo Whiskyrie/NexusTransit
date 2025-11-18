@@ -21,6 +21,16 @@ import { RouteStatus } from '../enums/route-status';
 import { RouteType } from '../enums/route.type';
 
 /**
+ * Gera uma data futura para exemplos do Swagger
+ * Retorna a data de amanhã no formato YYYY-MM-DD
+ */
+function getExampleFutureDate(): string {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  return tomorrow.toISOString().split('T')[0] as string;
+}
+
+/**
  * DTO para criar parada de rota
  */
 export class CreateRouteStopDto {
@@ -207,7 +217,7 @@ export class CreateRouteDto {
 
   @ApiProperty({
     description: 'Data planejada para execução (YYYY-MM-DD)',
-    example: '2024-01-15',
+    example: getExampleFutureDate(),
   })
   @IsDateString()
   @IsNotEmpty()

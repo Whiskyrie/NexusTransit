@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { HttpModule } from '@nestjs/axios';
-import { APP_INTERCEPTOR } from '@nestjs/core';
 import { AuditModule } from '../audit/audit.module';
 import { CustomersService } from './customers.service';
 import { CustomersController } from './customers.controller';
@@ -43,12 +42,8 @@ import { CustomerAuditContextInterceptor, CustomerStatusInterceptor } from './in
     CustomerContactSubscriber,
     CustomerPreferencesSubscriber,
 
-    // Interceptors (aplicados localmente apenas no CustomerAuditContextInterceptor)
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: CustomerAuditContextInterceptor,
-    },
-    // CustomerStatusInterceptor será aplicado diretamente no controller
+    // Interceptors (disponíveis para uso no controller)
+    CustomerAuditContextInterceptor,
     CustomerStatusInterceptor,
   ],
   exports: [CustomersService, TypeOrmModule],
