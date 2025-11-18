@@ -3,6 +3,7 @@ import { BaseEntity } from '../../../database/entities/base.entity';
 import { Auditable } from '../../vehicles/decorators/auditable.decorator';
 import { Route } from './route.entity';
 import { CustomerAddress } from '../../customers/entities/customer-address.entity';
+import { PointTransformer } from '../../../common/transformers/point.transformer';
 
 /**
  * RouteStop Entity - Pontos de parada em uma rota
@@ -83,6 +84,7 @@ export class RouteStop extends BaseEntity {
     type: 'point',
     nullable: true,
     comment: 'Coordenadas geográficas (lat, lng)',
+    transformer: PointTransformer,
   })
   coordinates?: string;
 

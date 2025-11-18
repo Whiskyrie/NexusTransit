@@ -7,6 +7,7 @@ import { Vehicle } from '../../vehicles/entities/vehicle.entity';
 import { Driver } from '../../drivers/entities/driver.entity';
 import { RouteStop } from './route_stop.entity';
 import { RouteHistory } from './route_history.entity';
+import { PointTransformer } from '../../../common/transformers/point.transformer';
 
 /**
  * Route Entity - Sistema de gerenciamento de rotas
@@ -115,6 +116,7 @@ export class Route extends BaseEntity {
     type: 'point',
     nullable: true,
     comment: 'Coordenadas geográficas de origem (lat, lng)',
+    transformer: PointTransformer,
   })
   origin_coordinates?: string;
 
@@ -129,6 +131,7 @@ export class Route extends BaseEntity {
     type: 'point',
     nullable: true,
     comment: 'Coordenadas geográficas de destino (lat, lng)',
+    transformer: PointTransformer,
   })
   destination_coordinates?: string;
 
