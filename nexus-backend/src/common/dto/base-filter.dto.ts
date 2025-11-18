@@ -14,7 +14,6 @@ import { Type } from 'class-transformer';
 export class BaseFilterDto {
   @ApiPropertyOptional({
     description: 'Termo de busca',
-    example: 'search term',
   })
   @IsOptional()
   @IsString()
