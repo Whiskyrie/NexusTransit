@@ -152,7 +152,7 @@ export class CreateRouteDto {
 
   @ApiProperty({
     description: 'ID do motorista',
-    example: '123e4567-e89b-12d3-a456-426614174000',
+    example: '2d45ff45-6dc6-4650-b27c-67b7f0e11788',
   })
   @IsUUID()
   @IsNotEmpty()
