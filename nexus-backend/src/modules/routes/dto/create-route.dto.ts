@@ -27,7 +27,8 @@ import { RouteType } from '../enums/route.type';
 function getExampleFutureDate(): string {
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
-  return tomorrow.toISOString().split('T')[0] as string;
+  const dateString = tomorrow.toISOString().split('T')[0];
+  return dateString ?? '';
 }
 
 /**
