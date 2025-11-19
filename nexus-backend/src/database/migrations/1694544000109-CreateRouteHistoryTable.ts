@@ -1,4 +1,10 @@
-import { type MigrationInterface, type QueryRunner, Table, TableForeignKey, TableIndex } from 'typeorm';
+import {
+  type MigrationInterface,
+  type QueryRunner,
+  Table,
+  TableForeignKey,
+  TableIndex,
+} from 'typeorm';
 
 export class CreateRouteHistoryTable1694544000109 implements MigrationInterface {
   name = 'CreateRouteHistoryTable1694544000109';
@@ -121,7 +127,7 @@ export class CreateRouteHistoryTable1694544000109 implements MigrationInterface 
           },
         ],
       }),
-      true
+      true,
     );
 
     // Criar Foreign Key
@@ -134,7 +140,7 @@ export class CreateRouteHistoryTable1694544000109 implements MigrationInterface 
         referencedColumnNames: ['id'],
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
-      })
+      }),
     );
 
     // Criar Índices
@@ -143,7 +149,7 @@ export class CreateRouteHistoryTable1694544000109 implements MigrationInterface 
       new TableIndex({
         name: 'IDX_route_history_route_id',
         columnNames: ['route_id'],
-      })
+      }),
     );
 
     await queryRunner.createIndex(
@@ -151,7 +157,7 @@ export class CreateRouteHistoryTable1694544000109 implements MigrationInterface 
       new TableIndex({
         name: 'IDX_route_history_event_type',
         columnNames: ['event_type'],
-      })
+      }),
     );
 
     await queryRunner.createIndex(
@@ -159,7 +165,7 @@ export class CreateRouteHistoryTable1694544000109 implements MigrationInterface 
       new TableIndex({
         name: 'IDX_route_history_created_at',
         columnNames: ['created_at'],
-      })
+      }),
     );
 
     await queryRunner.createIndex(
@@ -167,7 +173,7 @@ export class CreateRouteHistoryTable1694544000109 implements MigrationInterface 
       new TableIndex({
         name: 'IDX_route_history_user_id',
         columnNames: ['user_id'],
-      })
+      }),
     );
 
     // Índice composto para busca por rota + data
@@ -176,7 +182,7 @@ export class CreateRouteHistoryTable1694544000109 implements MigrationInterface 
       new TableIndex({
         name: 'IDX_route_history_route_created',
         columnNames: ['route_id', 'created_at'],
-      })
+      }),
     );
 
     // Comentário na tabela

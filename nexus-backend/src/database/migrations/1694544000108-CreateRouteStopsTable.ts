@@ -1,4 +1,10 @@
-import { type MigrationInterface, type QueryRunner, Table, TableForeignKey, TableIndex } from 'typeorm';
+import {
+  type MigrationInterface,
+  type QueryRunner,
+  Table,
+  TableForeignKey,
+  TableIndex,
+} from 'typeorm';
 
 export class CreateRouteStopsTable1694544000108 implements MigrationInterface {
   name = 'CreateRouteStopsTable1694544000108';
@@ -172,7 +178,7 @@ export class CreateRouteStopsTable1694544000108 implements MigrationInterface {
           },
         ],
       }),
-      true
+      true,
     );
 
     // Criar Foreign Keys
@@ -185,7 +191,7 @@ export class CreateRouteStopsTable1694544000108 implements MigrationInterface {
         referencedColumnNames: ['id'],
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
-      })
+      }),
     );
 
     await queryRunner.createForeignKey(
@@ -197,7 +203,7 @@ export class CreateRouteStopsTable1694544000108 implements MigrationInterface {
         referencedColumnNames: ['id'],
         onDelete: 'RESTRICT',
         onUpdate: 'CASCADE',
-      })
+      }),
     );
 
     // Criar Índices
@@ -206,7 +212,7 @@ export class CreateRouteStopsTable1694544000108 implements MigrationInterface {
       new TableIndex({
         name: 'IDX_route_stops_route_id',
         columnNames: ['route_id'],
-      })
+      }),
     );
 
     await queryRunner.createIndex(
@@ -214,7 +220,7 @@ export class CreateRouteStopsTable1694544000108 implements MigrationInterface {
       new TableIndex({
         name: 'IDX_route_stops_customer_address_id',
         columnNames: ['customer_address_id'],
-      })
+      }),
     );
 
     await queryRunner.createIndex(
@@ -222,7 +228,7 @@ export class CreateRouteStopsTable1694544000108 implements MigrationInterface {
       new TableIndex({
         name: 'IDX_route_stops_sequence_order',
         columnNames: ['sequence_order'],
-      })
+      }),
     );
 
     await queryRunner.createIndex(
@@ -230,7 +236,7 @@ export class CreateRouteStopsTable1694544000108 implements MigrationInterface {
       new TableIndex({
         name: 'IDX_route_stops_status',
         columnNames: ['status'],
-      })
+      }),
     );
 
     // Índice composto para busca por rota + sequência
@@ -239,7 +245,7 @@ export class CreateRouteStopsTable1694544000108 implements MigrationInterface {
       new TableIndex({
         name: 'IDX_route_stops_route_sequence',
         columnNames: ['route_id', 'sequence_order'],
-      })
+      }),
     );
 
     // Comentário na tabela

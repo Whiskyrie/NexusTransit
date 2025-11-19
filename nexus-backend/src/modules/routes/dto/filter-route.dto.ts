@@ -98,7 +98,11 @@ export class RouteFilterDto extends BaseFilterDto {
 
   @ApiPropertyOptional({
     description: 'Data planejada final (YYYY-MM-DD)',
-    example: (() => { const d = new Date(); d.setDate(d.getDate() + 7); return d.toISOString().split('T')[0]; })(),
+    example: (() => {
+      const d = new Date();
+      d.setDate(d.getDate() + 7);
+      return d.toISOString().split('T')[0];
+    })(),
     type: 'string',
     format: 'date',
   })

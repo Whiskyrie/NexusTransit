@@ -9,7 +9,7 @@ import { RequestBody } from '../interfaces/request-body.interface';
 /**
  * Interceptor para configurar contexto de auditoria específico para operações com clientes
  *
- * Extrai e propaga informações do usuário e da requisição para o contexto de auditoria
+ * Extrai e propaga informações do utilizador e da requisição para o contexto de auditoria
  * Adiciona metadados específicos do módulo customers
  *
  * @class CustomerAuditContextInterceptor
@@ -25,7 +25,11 @@ export class CustomerAuditContextInterceptor implements NestInterceptor {
 
     try {
       // Generate or extract request ID
-      const requestId: string = request.get('x-request-id') ?? uuidv4();
+      const requestIdHeader = request.get('x-request-id');
+      const requestId: string =
+        typeof requestIdHeader === 'string' && requestIdHeader.length > 0
+          ? requestIdHeader
+          : uuidv4();
 
       // Extract user information (assuming it's set by auth guard)
       const user = request.user as RequestUser | undefined;
@@ -40,6 +44,7 @@ export class CustomerAuditContextInterceptor implements NestInterceptor {
       const operation = this.extractOperation(request);
 
       // Set basic context in CLS
+      // Utilizando asserção de tipo se necessário pela versão da lib, ou chamada direta
       (this.clsService.set as (key: string, value: unknown) => void)('requestId', requestId);
       this.clsService.set('userId', user?.id);
       this.clsService.set('userEmail', user?.email);
@@ -61,10 +66,18 @@ export class CustomerAuditContextInterceptor implements NestInterceptor {
       response.setHeader('X-Request-ID', requestId);
 
       this.logger.debug(
-        `Contexto de auditoria customers configurado - Request: ${requestId}, User: ${user?.id ?? 'ANONYMOUS'}, Customer: ${customerId ?? 'N/A'}, Operation: ${operation}`,
+        `Contexto de auditoria customers configurado - Request: ${requestId}, User: ${
+          user?.id ?? 'ANONYMOUS'
+        }, Customer: ${customerId ?? 'N/A'}, Operation: ${operation}`,
       );
-    } catch (error) {
-      this.logger.error('Erro ao configurar contexto de auditoria customers:', error);
+    } catch (error: unknown) {
+      // CORREÇÃO ESLINT: Uso de String() e cast explícito
+      // O uso de String() garante que o resultado final é um tipo primitivo seguro,
+      // removendo qualquer vestígio de 'any' que o linter esteja a detetar nas propriedades do erro.
+      const errorStack =
+        error instanceof Error ? String(error.stack ?? error.message) : String(error);
+
+      this.logger.error('Erro ao configurar contexto de auditoria customers:', errorStack);
       // Continue execution even if audit context setup fails
     }
 
