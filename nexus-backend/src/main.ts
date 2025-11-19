@@ -1,12 +1,18 @@
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
-import { Logger, ValidationPipe } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module';
 import type { AppConfig } from './config/app.config';
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule);
+  // Criar app com buffer de logs para aguardar Pino Logger estar pronto
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+
+  // Configurar Pino Logger como logger global
+  const logger = app.get(Logger);
+  app.useLogger(logger);
 
   const configService = app.get(ConfigService);
   const appConfig = configService.get<AppConfig>('app');
@@ -40,6 +46,7 @@ async function bootstrap(): Promise<void> {
     .addTag('Incidents', 'Gerenciamento de incidentes')
     .addTag('LGPD', 'Conformidade LGPD')
     .addTag('Health', 'Health checks')
+    .addTag('Metrics', 'Métricas e monitoramento')
     .addBearerAuth(
       {
         type: 'http',
@@ -70,7 +77,7 @@ async function bootstrap(): Promise<void> {
 
   await app.listen(port);
 
-  const logger = new Logger('Bootstrap');
+  // Log de inicialização usando Pino Logger
   logger.log(`Application is running on: http://localhost:${port}`);
   logger.log(`Swagger documentation available at: http://localhost:${port}/api/docs`);
 }
