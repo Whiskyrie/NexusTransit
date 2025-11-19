@@ -121,12 +121,12 @@ export class QueryAuditLogsDto {
 
   @ApiPropertyOptional({
     description: 'Campo para ordenação',
-    example: 'createdAt',
-    default: 'createdAt',
+    example: 'created_at',
+    default: 'created_at',
   })
   @IsOptional()
   @IsString()
-  sortBy?: string = 'createdAt';
+  sortBy?: string = 'created_at';
 
   @ApiPropertyOptional({
     description: 'Ordem de classificação',

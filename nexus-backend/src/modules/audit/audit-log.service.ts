@@ -108,9 +108,12 @@ export class AuditLogService {
       whereConditions.description = Like(`%${search}%`);
     }
 
+    // Mapear campos de ordenação camelCase para snake_case se necessário
+    const sortColumn = sortBy === 'createdAt' ? 'created_at' : sortBy;
+
     const options: FindManyOptions<AuditLogEntity> = {
       where: whereConditions,
-      order: { [sortBy]: sortOrder },
+      order: { [sortColumn]: sortOrder },
       skip: (page - 1) * safeLimit,
       take: safeLimit,
     };

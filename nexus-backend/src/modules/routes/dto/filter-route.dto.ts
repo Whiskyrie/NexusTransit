@@ -32,7 +32,7 @@ export class RouteFilterDto extends BaseFilterDto {
   @ApiPropertyOptional({
     description: 'Filtrar por status',
     enum: RouteStatus,
-    example: 'IN_PROGRESS',
+    example: RouteStatus.PLANNED,
   })
   @IsOptional()
   @IsEnum(RouteStatus, {
@@ -43,7 +43,7 @@ export class RouteFilterDto extends BaseFilterDto {
   @ApiPropertyOptional({
     description: 'Filtrar por tipo',
     enum: RouteType as object,
-    example: 'URBAN',
+    example: RouteType.URBAN,
   })
   @IsOptional()
   @IsEnum(RouteType as object, {
@@ -53,7 +53,7 @@ export class RouteFilterDto extends BaseFilterDto {
 
   @ApiPropertyOptional({
     description: 'Filtrar por veículo (ID)',
-    example: '123e4567-e89b-12d3-a456-426614174000',
+    example: '16586204-b498-48f5-923c-6821bc040266',
     format: 'uuid',
   })
   @IsOptional()
@@ -64,7 +64,7 @@ export class RouteFilterDto extends BaseFilterDto {
 
   @ApiPropertyOptional({
     description: 'Filtrar por motorista (ID)',
-    example: '123e4567-e89b-12d3-a456-426614174000',
+    example: '2d45ff45-6dc6-4650-b27c-67b7f0e11788',
     format: 'uuid',
   })
   @IsOptional()
@@ -75,7 +75,7 @@ export class RouteFilterDto extends BaseFilterDto {
 
   @ApiPropertyOptional({
     description: 'Data planejada inicial (YYYY-MM-DD)',
-    example: '2024-01-01',
+    example: new Date().toISOString().split('T')[0],
     type: 'string',
     format: 'date',
   })
@@ -98,7 +98,11 @@ export class RouteFilterDto extends BaseFilterDto {
 
   @ApiPropertyOptional({
     description: 'Data planejada final (YYYY-MM-DD)',
-    example: '2024-12-31',
+    example: (() => {
+      const d = new Date();
+      d.setDate(d.getDate() + 7);
+      return d.toISOString().split('T')[0];
+    })(),
     type: 'string',
     format: 'date',
   })
@@ -121,7 +125,7 @@ export class RouteFilterDto extends BaseFilterDto {
 
   @ApiPropertyOptional({
     description: 'Filtrar por distância mínima estimada (km)',
-    example: 10,
+    example: 40,
     minimum: 0,
   })
   @IsOptional()
@@ -136,7 +140,7 @@ export class RouteFilterDto extends BaseFilterDto {
 
   @ApiPropertyOptional({
     description: 'Filtrar por distância máxima estimada (km)',
-    example: 500,
+    example: 50,
     minimum: 0,
   })
   @IsOptional()
@@ -151,7 +155,7 @@ export class RouteFilterDto extends BaseFilterDto {
 
   @ApiPropertyOptional({
     description: 'Filtrar por nível de dificuldade mínimo (1-5)',
-    example: 1,
+    example: 3,
     minimum: 1,
     maximum: 5,
   })

@@ -21,6 +21,16 @@ import { RouteStatus } from '../enums/route-status';
 import { RouteType } from '../enums/route.type';
 
 /**
+ * Gera uma data futura para exemplos do Swagger
+ * Retorna a data de amanhã no formato YYYY-MM-DD
+ */
+function getExampleFutureDate(): string {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  return tomorrow.toISOString().split('T')[0]!;
+}
+
+/**
  * DTO para criar parada de rota
  */
 export class CreateRouteStopDto {
@@ -134,7 +144,7 @@ export class CreateRouteDto {
 
   @ApiProperty({
     description: 'ID do veículo',
-    example: '123e4567-e89b-12d3-a456-426614174000',
+    example: '16586204-b498-48f5-923c-6821bc040266',
   })
   @IsUUID()
   @IsNotEmpty()
@@ -142,7 +152,7 @@ export class CreateRouteDto {
 
   @ApiProperty({
     description: 'ID do motorista',
-    example: '123e4567-e89b-12d3-a456-426614174000',
+    example: '2d45ff45-6dc6-4650-b27c-67b7f0e11788',
   })
   @IsUUID()
   @IsNotEmpty()
@@ -179,7 +189,7 @@ export class CreateRouteDto {
   origin_address!: string;
 
   @ApiPropertyOptional({
-    description: 'Coordenadas de origem (lat, lng)',
+    description: 'Coordenadas de origem (lat, lng) - Formato: POINT(lat lng) ou (lat,lng)',
     example: 'POINT(-23.561414 -46.656250)',
   })
   @IsOptional()
@@ -198,7 +208,7 @@ export class CreateRouteDto {
   destination_address!: string;
 
   @ApiPropertyOptional({
-    description: 'Coordenadas de destino (lat, lng)',
+    description: 'Coordenadas de destino (lat, lng) - Formato: POINT(lat lng) ou (lat,lng)',
     example: 'POINT(-23.551415 -46.656251)',
   })
   @IsOptional()
@@ -207,7 +217,7 @@ export class CreateRouteDto {
 
   @ApiProperty({
     description: 'Data planejada para execução (YYYY-MM-DD)',
-    example: '2024-01-15',
+    example: getExampleFutureDate(),
   })
   @IsDateString()
   @IsNotEmpty()
@@ -273,7 +283,7 @@ export class CreateRouteDto {
 
   @ApiPropertyOptional({
     description: 'Carga total da rota em kg',
-    example: 750,
+    example: 500,
     minimum: 0,
   })
   @IsOptional()
@@ -283,7 +293,7 @@ export class CreateRouteDto {
 
   @ApiPropertyOptional({
     description: 'Volume total da rota em m³',
-    example: 7.5,
+    example: 2,
     minimum: 0,
   })
   @IsOptional()
