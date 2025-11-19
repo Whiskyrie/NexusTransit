@@ -6,6 +6,7 @@ import type { Request } from 'express';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
+import { LoggingModule } from './modules/logging/logging.module';
 import { HealthModule } from './health/health.module';
 import { UsersModule } from './modules/users/users.module';
 import { RolesModule } from './modules/roles/roles.module';
@@ -44,6 +45,7 @@ import configurations from './config/configurations';
       },
     }),
     DatabaseModule, // Configuração TypeORM + PostgreSQL
+    LoggingModule, // Logging estruturado com Pino + Métricas
     HealthModule, // Health checks e monitoramento
     UsersModule, // Sistema de usuários
     RolesModule, // Sistema de papéis e permissões
