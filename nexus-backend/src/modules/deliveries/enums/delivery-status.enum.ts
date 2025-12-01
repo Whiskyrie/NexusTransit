@@ -6,6 +6,9 @@ export enum DeliveryStatus {
   /** Aguardando atribuição de motorista/veículo */
   PENDING = 'PENDING',
 
+  /** Entrega confirmada e aguardando processamento */
+  CONFIRMED = 'CONFIRMED',
+
   /** Entrega atribuída a um motorista */
   ASSIGNED = 'ASSIGNED',
 
@@ -33,6 +36,7 @@ export enum DeliveryStatus {
  */
 export const DeliveryStatusDescriptions: Record<DeliveryStatus, string> = {
   [DeliveryStatus.PENDING]: 'Aguardando atribuição',
+  [DeliveryStatus.CONFIRMED]: 'Confirmada',
   [DeliveryStatus.ASSIGNED]: 'Atribuída ao motorista',
   [DeliveryStatus.PICKED_UP]: 'Produto coletado',
   [DeliveryStatus.IN_TRANSIT]: 'Em trânsito',
@@ -47,7 +51,8 @@ export const DeliveryStatusDescriptions: Record<DeliveryStatus, string> = {
  * Controla o fluxo de trabalho para evitar transições inválidas
  */
 export const DeliveryStatusTransitions: Record<DeliveryStatus, DeliveryStatus[]> = {
-  [DeliveryStatus.PENDING]: [DeliveryStatus.ASSIGNED, DeliveryStatus.CANCELLED],
+  [DeliveryStatus.PENDING]: [DeliveryStatus.CONFIRMED, DeliveryStatus.ASSIGNED, DeliveryStatus.CANCELLED],
+  [DeliveryStatus.CONFIRMED]: [DeliveryStatus.ASSIGNED, DeliveryStatus.CANCELLED],
   [DeliveryStatus.ASSIGNED]: [
     DeliveryStatus.PICKED_UP,
     DeliveryStatus.PENDING,

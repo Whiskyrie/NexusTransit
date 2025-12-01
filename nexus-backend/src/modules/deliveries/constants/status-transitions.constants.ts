@@ -7,7 +7,9 @@ import { DeliveryStatus } from '../enums/delivery-status.enum';
  * Usado para validação de transições de estado.
  */
 export const ALLOWED_STATUS_TRANSITIONS: Record<DeliveryStatus, DeliveryStatus[]> = {
-  [DeliveryStatus.PENDING]: [DeliveryStatus.ASSIGNED, DeliveryStatus.CANCELLED],
+  [DeliveryStatus.PENDING]: [DeliveryStatus.CONFIRMED, DeliveryStatus.ASSIGNED, DeliveryStatus.CANCELLED],
+
+  [DeliveryStatus.CONFIRMED]: [DeliveryStatus.ASSIGNED, DeliveryStatus.CANCELLED],
 
   [DeliveryStatus.ASSIGNED]: [
     DeliveryStatus.PICKED_UP,

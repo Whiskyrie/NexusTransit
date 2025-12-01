@@ -186,6 +186,7 @@ export class DeliveryUtils {
   static calculateDeliveryProgress(delivery: Delivery): number {
     const statusProgress: Record<DeliveryStatus, number> = {
       [DeliveryStatus.PENDING]: 0,
+      [DeliveryStatus.CONFIRMED]: 10,
       [DeliveryStatus.ASSIGNED]: 20,
       [DeliveryStatus.PICKED_UP]: 40,
       [DeliveryStatus.IN_TRANSIT]: 60,

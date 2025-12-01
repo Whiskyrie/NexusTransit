@@ -193,6 +193,7 @@ export const PUSH_TEMPLATES: Record<
  */
 export const STATUS_MESSAGES: Record<DeliveryStatus, string> = {
   [DeliveryStatus.PENDING]: 'Aguardando processamento',
+  [DeliveryStatus.CONFIRMED]: 'Entrega confirmada',
   [DeliveryStatus.ASSIGNED]: 'Motorista atribuído',
   [DeliveryStatus.PICKED_UP]: 'Pedido coletado',
   [DeliveryStatus.IN_TRANSIT]: 'Em trânsito para o destino',

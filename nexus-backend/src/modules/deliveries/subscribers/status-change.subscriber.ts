@@ -85,6 +85,7 @@ export class StatusChangeSubscriber implements EntitySubscriberInterface<Deliver
   private generateStatusChangeNote(oldStatus: DeliveryStatus, newStatus: DeliveryStatus): string {
     const statusDescriptions: Record<DeliveryStatus, string> = {
       [DeliveryStatus.PENDING]: 'Aguardando atribuição',
+      [DeliveryStatus.CONFIRMED]: 'Confirmada',
       [DeliveryStatus.ASSIGNED]: 'Atribuída ao motorista',
       [DeliveryStatus.PICKED_UP]: 'Produto coletado',
       [DeliveryStatus.IN_TRANSIT]: 'Em trânsito',

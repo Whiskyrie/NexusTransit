@@ -76,7 +76,9 @@ export class DashboardService {
       end_date ? new Date(end_date) : undefined,
     );
 
-    this.logger.log(`Calculando overview para período ${period} (${startDate} - ${endDate})`);
+    this.logger.log(`Calculando overview para período ${period}`);
+    this.logger.log(`Data início: ${startDate.toISOString()}`);
+    this.logger.log(`Data fim: ${endDate.toISOString()}`);
 
     // Buscar métricas em paralelo
     const [
@@ -143,9 +145,13 @@ export class DashboardService {
       ],
     });
 
+    this.logger.debug(`Total de entregas encontradas no período: ${deliveries.length}`);
+
     const total = deliveries.length;
     const completed = deliveries.filter((d) => d.status === DeliveryStatus.DELIVERED).length;
-    const pending = deliveries.filter((d) => d.status === DeliveryStatus.PENDING).length;
+    const pending = deliveries.filter(
+      (d) => d.status === DeliveryStatus.PENDING || d.status === 'CONFIRMED' as any
+    ).length;
     const in_progress = deliveries.filter(
       (d) =>
         d.status === DeliveryStatus.IN_TRANSIT ||
@@ -154,6 +160,8 @@ export class DashboardService {
     ).length;
     const cancelled = deliveries.filter((d) => d.status === DeliveryStatus.CANCELLED).length;
     const failed = deliveries.filter((d) => d.status === DeliveryStatus.FAILED).length;
+
+    this.logger.debug(`Entregas - Total: ${total}, Concluídas: ${completed}, Pendentes: ${pending}, Em progresso: ${in_progress}`);
 
     const success_rate = total > 0 ? (completed / total) * 100 : 0;
     const cancellation_rate = total > 0 ? (cancelled / total) * 100 : 0;
@@ -194,7 +202,7 @@ export class DashboardService {
       success_rate: parseFloat(success_rate.toFixed(2)),
       cancellation_rate: parseFloat(cancellation_rate.toFixed(2)),
       average_delivery_time: parseFloat(average_delivery_time.toFixed(2)),
-      average_attempts: 1.2, // TODO: Implementar cálculo real baseado em delivery_attempts
+      average_attempts: 1.0, // TODO: Implementar cálculo real baseado em delivery_attempts quando disponível
       on_time_deliveries,
       delayed_deliveries,
       on_time_rate: parseFloat(on_time_rate.toFixed(2)),
@@ -213,6 +221,8 @@ export class DashboardService {
       where: { is_active: true },
       select: ['id', 'full_name', 'status'],
     });
+
+    this.logger.debug(`Total de motoristas ativos: ${drivers.length}`);
 
     const total_active = drivers.length;
     const available = drivers.filter((d) => d.status === DriverStatus.AVAILABLE).length;
@@ -281,6 +291,8 @@ export class DashboardService {
     const vehicles = await this.vehicleRepository.find({
       select: ['id', 'status', 'next_maintenance_at'],
     });
+
+    this.logger.debug(`Total de veículos: ${vehicles.length}`);
 
     const total = vehicles.length;
     const active = vehicles.filter(
@@ -352,11 +364,11 @@ export class DashboardService {
     const completion_rate = total > 0 ? (completed / total) * 100 : 0;
 
     const total_planned_distance_km = routes.reduce(
-      (sum, r) => sum + (r.estimated_distance_km || 0),
+      (sum, r) => sum + Number(r.estimated_distance_km || 0),
       0,
     );
     const total_actual_distance_km = routes.reduce(
-      (sum, r) => sum + (r.actual_distance_km || 0),
+      (sum, r) => sum + Number(r.actual_distance_km || 0),
       0,
     );
 
@@ -394,11 +406,11 @@ export class DashboardService {
     });
 
     const total_revenue = deliveries.reduce(
-      (sum, d) => sum + (d.delivery_fee || 0),
+      (sum, d) => sum + Number(d.delivery_fee || 0),
       0,
     );
     const total_cost = deliveries.reduce(
-      (sum, d) => sum + (d.total_cost || 0),
+      (sum, d) => sum + Number(d.total_cost || 0),
       0,
     );
     const gross_profit = total_revenue - total_cost;
@@ -451,14 +463,19 @@ export class DashboardService {
       ],
     });
 
+    this.logger.debug(`Calculando performance com ${deliveries.length} entregas`);
+
     const completed = deliveries.filter((d) => d.status === DeliveryStatus.DELIVERED);
 
     // Calcular taxa de sucesso na primeira tentativa
-    // TODO: Implementar baseado em delivery_attempts real
-    const first_attempt_success_rate = 91.2;
+    // TODO: Implementar baseado em delivery_attempts real quando disponível
+    const totalAttempts = completed.length; // Placeholder
+    const firstAttemptSuccess = completed.length; // Placeholder - assumindo sucesso na primeira
+    const first_attempt_success_rate = totalAttempts > 0 ? (firstAttemptSuccess / totalAttempts) * 100 : 0;
 
-    // Calcular tempo médio de resposta (placeholder)
-    const average_response_time = 12.5; // TODO: Implementar cálculo real
+    // Calcular tempo médio de resposta (em minutos desde criação até primeira ação)
+    // TODO: Implementar cálculo real baseado em timestamps de ações
+    const average_response_time = 0; // Placeholder - necessita implementação
 
     // Calcular produtividade
     const hoursInPeriod =
@@ -468,7 +485,11 @@ export class DashboardService {
     // Calcular scores (baseados em múltiplas métricas)
     const operational_efficiency_score = this.calculateEfficiencyScore(deliveries);
     const service_quality_score = this.calculateQualityScore(completed);
-    const customer_satisfaction_score = 89.7; // Placeholder - implementar integração com sistema de feedback
+    
+    // TODO: Implementar integração com sistema de feedback/avaliações do cliente
+    const customer_satisfaction_score = 0; // Placeholder - necessita integração
+
+    this.logger.debug(`Performance Scores - Eficiência: ${operational_efficiency_score}, Qualidade: ${service_quality_score}, Satisfação: ${customer_satisfaction_score}`);
 
     return {
       operational_efficiency_score: parseFloat(operational_efficiency_score.toFixed(2)),

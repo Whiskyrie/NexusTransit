@@ -1,0 +1,142 @@
+# 🐳 NexusTransit - Docker Compose Raiz
+# Orquestra todos os microsserviços da arquitetura
+
+version: '3.9'
+
+networks:
+  nexustransit-network:
+    driver: bridge
+
+volumes:
+  nexustransit_postgres_monolith:
+  nexustransit_users_db:
+  nexustransit_redis:
+
+services:
+  # ==========================================
+  # MONÓLITO (Existente)
+  # ==========================================
+  postgres_monolith:
+    image: postgres:15-alpine
+    container_name: nexustransit-postgres-monolith
+    environment:
+      POSTGRES_USER: nexustransit
+      POSTGRES_PASSWORD: nexustransit_pass
+      POSTGRES_DB: nexustransit
+    ports:
+      - "5432:5432"
+    volumes:
+      - nexustransit_postgres_monolith:/var/lib/postgresql/data
+      - ./nexus-backend/docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - nexustransit-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nexustransit -d nexustransit"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: nexustransit-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - nexustransit_redis:/data
+    networks:
+      - nexustransit-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  nexus-backend:
+    build:
+      context: ./nexus-backend
+      dockerfile: Dockerfile
+    container_name: nexustransit-monolith
+    environment:
+      NODE_ENV: production
+      DATABASE_HOST: postgres_monolith
+      DATABASE_PORT: 5432
+      DATABASE_USER: nexustransit
+      DATABASE_PASSWORD: nexustransit_pass
+      DATABASE_NAME: nexustransit
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres_monolith:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - nexustransit-network
+    restart: unless-stopped
+
+  # ==========================================
+  # MICROSSERVIÇO: USERS SERVICE
+  # ==========================================
+  postgres_users:
+    image: postgres:15-alpine
+    container_name: nexustransit-users-db
+    environment:
+      POSTGRES_USER: nexustransit_users
+      POSTGRES_PASSWORD: nexustransit_users_pass
+      POSTGRES_DB: nexustransit_users_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - nexustransit_users_db:/var/lib/postgresql/data
+    networks:
+      - nexustransit-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nexustransit_users -d nexustransit_users_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  users-service:
+    build:
+      context: ./packages/users-service
+      dockerfile: Dockerfile
+    container_name: nexustransit-users-service
+    environment:
+      NODE_ENV: production
+      PORT: 3003
+      DB_HOST: postgres_users
+      DB_PORT: 5432
+      DB_USERNAME: nexustransit_users
+      DB_PASSWORD: nexustransit_users_pass
+      DB_DATABASE: nexustransit_users_db
+      DB_SYNCHRONIZE: "false"
+      DB_LOGGING: "true"
+    ports:
+      - "3003:3003"
+    depends_on:
+      postgres_users:
+        condition: service_healthy
+    networks:
+      - nexustransit-network
+    restart: unless-stopped
+
+  # ==========================================
+  # FUTUROS MICROSSERVIÇOS
+  # ==========================================
+  # deliveries-service:
+  #   build:
+  #     context: ./packages/deliveries-service
+  #   ...
+  
+  # tracking-service:
+  #   build:
+  #     context: ./packages/tracking-service
+  #   ...
+  
+  # notifications-service:
+  #   build:
+  #     context: ./packages/notifications-service
+  #   ...

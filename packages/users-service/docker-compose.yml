@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database - Banco dedicado do microsserviço Users
+  postgres_users:
+    image: postgres:15-alpine
+    container_name: nexustransit-users-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: nexustransit_users
+      POSTGRES_PASSWORD: nexustransit_users_pass
+      POSTGRES_DB: nexustransit_users_db
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=pt_BR.UTF-8"
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_users_data:/var/lib/postgresql/data
+    networks:
+      - nexustransit-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nexustransit_users -d nexustransit_users_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Users Service - Microsserviço
+  users_service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nexustransit-users-service
+    restart: unless-stopped
+    depends_on:
+      postgres_users:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      PORT: 3003
+      DB_HOST: postgres_users
+      DB_PORT: 5432
+      DB_USERNAME: nexustransit_users
+      DB_PASSWORD: nexustransit_users_pass
+      DB_DATABASE: nexustransit_users_db
+      LOG_LEVEL: debug
+    ports:
+      - "3003:3003"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    networks:
+      - nexustransit-network
+    command: npm run start:dev
+
+volumes:
+  postgres_users_data:
+    name: nexustransit_users_volume
+
+networks:
+  nexustransit-network:
+    name: nexustransit-network
+    driver: bridge
