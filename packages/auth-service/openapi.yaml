@@ -1,0 +1,697 @@
+openapi: 3.1.0
+info:
+  title: NexusTransit Auth Service API
+  version: 1.0.0
+  description: |
+    Microserviço de autenticação e gerenciamento de usuários do NexusTransit.
+    
+    **Responsabilidades:**
+    - Autenticação via JWT (login, refresh, logout)
+    - Gerenciamento de usuários (CRUD)
+    - Controle de papéis e permissões (RBAC)
+    - Validação de tokens e sessões
+    
+    **Schema do banco**: `auth` (PostgreSQL)
+    
+  contact:
+    name: NexusTransit Team
+    url: https://github.com/Whiskyrie/NexusTransit
+  license:
+    name: UNLICENSED
+
+servers:
+  - url: http://localhost:3002
+    description: Development
+  - url: http://localhost:8080/auth
+    description: API Gateway (via monolito)
+
+tags:
+  - name: Authentication
+    description: Endpoints de autenticação JWT
+  - name: Users
+    description: Gerenciamento de usuários
+  - name: Roles
+    description: Gerenciamento de papéis e permissões (RBAC)
+  - name: Health
+    description: Health checks e monitoramento
+
+paths:
+  # ==================== AUTHENTICATION ====================
+  /auth/login:
+    post:
+      summary: Autenticar usuário
+      description: Autentica um usuário com email e senha, retornando tokens JWT (access + refresh)
+      operationId: login
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginDto'
+            examples:
+              admin:
+                summary: Login como admin
+                value:
+                  email: admin@nexustransit.com
+                  password: Admin@123
+              driver:
+                summary: Login como motorista
+                value:
+                  email: driver@nexustransit.com
+                  password: Driver@123
+      responses:
+        '200':
+          description: Login bem-sucedido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+              examples:
+                success:
+                  summary: Login com sucesso
+                  value:
+                    access_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                    refresh_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                    token_type: Bearer
+                    expires_in: 900
+                    user:
+                      id: 550e8400-e29b-41d4-a716-446655440000
+                      name: Admin User
+                      email: admin@nexustransit.com
+                      is_active: true
+                      email_verified: true
+                      roles:
+                        - ADMIN
+        '400':
+          description: Dados de entrada inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                validation_error:
+                  summary: Erro de validação
+                  value:
+                    statusCode: 400
+                    message:
+                      - email must be an email
+                      - password should not be empty
+                    error: Bad Request
+        '401':
+          description: Credenciais inválidas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_credentials:
+                  summary: Credenciais incorretas
+                  value:
+                    statusCode: 401
+                    message: Credenciais inválidas
+                    error: Unauthorized
+        '429':
+          description: Muitas tentativas de login (rate limit)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/refresh:
+    post:
+      summary: Renovar access token
+      description: Renova o access token usando um refresh token válido
+      operationId: refreshToken
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenDto'
+            example:
+              refresh_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+      responses:
+        '200':
+          description: Token renovado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Refresh token ausente ou mal formatado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Refresh token inválido ou expirado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/logout:
+    post:
+      summary: Fazer logout
+      description: Invalida os tokens do usuário (blacklist)
+      operationId: logout
+      tags:
+        - Authentication
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Logout realizado com sucesso
+        '401':
+          description: Token inválido ou ausente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/me:
+    get:
+      summary: Obter perfil do usuário autenticado
+      description: Retorna informações do usuário atualmente autenticado
+      operationId: getProfile
+      tags:
+        - Authentication
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Perfil retornado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                name: Admin User
+                email: admin@nexustransit.com
+                is_active: true
+                email_verified: true
+                created_at: '2024-01-15T10:00:00Z'
+                updated_at: '2024-01-15T10:00:00Z'
+                roles:
+                  - ADMIN
+        '401':
+          description: Token inválido ou ausente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Usuário não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ==================== USERS ====================
+  /users:
+    get:
+      summary: Listar usuários
+      description: Retorna lista de usuários com paginação
+      operationId: listUsers
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/SearchParam'
+      responses:
+        '200':
+          description: Lista de usuários
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserResponse'
+
+    post:
+      summary: Criar usuário
+      description: Cria um novo usuário no sistema
+      operationId: createUser
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserDto'
+            example:
+              name: João Silva
+              email: joao.silva@example.com
+              password: SenhaSegura@123
+              is_active: true
+      responses:
+        '201':
+          description: Usuário criado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: Dados inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Email já cadastrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /users/{id}:
+    get:
+      summary: Obter usuário por ID
+      description: Retorna detalhes de um usuário específico
+      operationId: getUser
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID do usuário
+      responses:
+        '200':
+          description: Usuário encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '404':
+          description: Usuário não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    patch:
+      summary: Atualizar usuário
+      description: Atualiza dados de um usuário
+      operationId: updateUser
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserDto'
+      responses:
+        '200':
+          description: Usuário atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '404':
+          description: Usuário não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Deletar usuário
+      description: Remove um usuário (soft delete)
+      operationId: deleteUser
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Usuário deletado
+        '404':
+          description: Usuário não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ==================== ROLES ====================
+  /roles:
+    get:
+      summary: Listar papéis
+      description: Retorna lista de papéis (roles) disponíveis
+      operationId: listRoles
+      tags:
+        - Roles
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de papéis
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RoleResponse'
+
+    post:
+      summary: Criar papel
+      description: Cria um novo papel no sistema
+      operationId: createRole
+      tags:
+        - Roles
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRoleDto'
+      responses:
+        '201':
+          description: Papel criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleResponse'
+
+  /roles/{id}:
+    get:
+      summary: Obter papel por ID
+      operationId: getRole
+      tags:
+        - Roles
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Papel encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleResponse'
+
+  # ==================== HEALTH ====================
+  /health:
+    get:
+      summary: Health check
+      description: Verifica status do serviço e dependências (DB, Redis)
+      operationId: healthCheck
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Serviço saudável
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  info:
+                    type: object
+                    properties:
+                      database:
+                        type: object
+                        properties:
+                          status:
+                            type: string
+                            example: up
+                      redis:
+                        type: object
+                        properties:
+                          status:
+                            type: string
+                            example: up
+                  details:
+                    type: object
+
+# ==================== COMPONENTS ====================
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtido via /auth/login
+
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      description: Número da página (1-based)
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      example: 1
+
+    LimitParam:
+      name: limit
+      in: query
+      description: Itens por página
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 10
+      example: 10
+
+    SearchParam:
+      name: search
+      in: query
+      description: Termo de busca
+      schema:
+        type: string
+      example: admin
+
+  schemas:
+    # ==================== AUTH DTOs ====================
+    LoginDto:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email do usuário
+          example: admin@nexustransit.com
+        password:
+          type: string
+          minLength: 6
+          maxLength: 100
+          description: Senha do usuário
+          example: Admin@123
+
+    RefreshTokenDto:
+      type: object
+      required:
+        - refresh_token
+      properties:
+        refresh_token:
+          type: string
+          description: Refresh token JWT
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+    LoginResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+          description: Access token JWT
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        refresh_token:
+          type: string
+          description: Refresh token JWT
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        token_type:
+          type: string
+          default: Bearer
+          example: Bearer
+        expires_in:
+          type: integer
+          description: Tempo de expiração do access token em segundos
+          example: 900
+        user:
+          $ref: '#/components/schemas/UserResponse'
+
+    # ==================== USER DTOs ====================
+    CreateUserDto:
+      type: object
+      required:
+        - name
+        - email
+        - password
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 255
+          example: João Silva
+        email:
+          type: string
+          format: email
+          example: joao.silva@example.com
+        password:
+          type: string
+          minLength: 6
+          maxLength: 100
+          example: SenhaSegura@123
+        is_active:
+          type: boolean
+          default: true
+          example: true
+
+    UpdateUserDto:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 255
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+          maxLength: 100
+        is_active:
+          type: boolean
+        email_verified:
+          type: boolean
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+        name:
+          type: string
+          example: Admin User
+        email:
+          type: string
+          format: email
+          example: admin@nexustransit.com
+        is_active:
+          type: boolean
+          example: true
+        email_verified:
+          type: boolean
+          example: true
+        created_at:
+          type: string
+          format: date-time
+          example: '2024-01-15T10:00:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          example: '2024-01-15T10:00:00Z'
+        roles:
+          type: array
+          items:
+            type: string
+          example:
+            - ADMIN
+
+    # ==================== ROLE DTOs ====================
+    CreateRoleDto:
+      type: object
+      required:
+        - name
+        - description
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 50
+          example: MANAGER
+        description:
+          type: string
+          minLength: 10
+          maxLength: 500
+          example: Gerente de operações
+
+    RoleResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+        name:
+          type: string
+          example: ADMIN
+        description:
+          type: string
+          example: Administrador do sistema
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    # ==================== ERROR ====================
+    ErrorResponse:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          example: 400
+        message:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                type: string
+          example: Validation failed
+        error:
+          type: string
+          example: Bad Request
