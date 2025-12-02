@@ -11,7 +11,7 @@ import {
   HttpStatus,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBody } from '@nestjs/swagger';
 import { CustomersService } from './customers.service';
 import { Customer } from './entities/customer.entity';
 import { CreateCustomerDto } from './dto/create-customer.dto';
@@ -27,6 +27,86 @@ export class CustomersController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new customer' })
+  @ApiBody({
+    type: CreateCustomerDto,
+    description: 'Dados do cliente a ser criado',
+    examples: {
+      individual: {
+        summary: 'Cliente Pessoa Física',
+        description: 'Exemplo de criação de cliente pessoa física',
+        value: {
+          taxId: '12345678901',
+          name: 'João Silva',
+          email: 'joao.silva@email.com',
+          phone: '11987654321',
+          type: 'individual',
+          status: 'active',
+          category: 'standard',
+          addresses: [
+            {
+              street: 'Av. Paulista',
+              number: '1578',
+              complement: 'Apto 123',
+              neighborhood: 'Bela Vista',
+              zipCode: '01310-100',
+              city: 'São Paulo',
+              state: 'SP',
+              type: 'residential',
+              isPrimary: true,
+              isActive: true,
+            },
+          ],
+          contacts: [
+            {
+              name: 'Maria Silva',
+              value: 'maria.silva@email.com',
+              type: 'email',
+              isPrimary: false,
+              isActive: true,
+            },
+          ],
+          preferences: {
+            deliveryPreference: 'standard',
+            preferredNotificationChannel: 'email',
+            deliveryTimeWindows: ['08:00-12:00', '14:00-18:00'],
+            allowWeekendDelivery: true,
+            requireSignature: false,
+            specialInstructions: ['Deixar com portaria'],
+          },
+        },
+      },
+      corporate: {
+        summary: 'Cliente Pessoa Jurídica',
+        description: 'Exemplo de criação de cliente pessoa jurídica',
+        value: {
+          taxId: '12345678000190',
+          name: 'Empresa XYZ Ltda',
+          email: 'contato@empresaxyz.com.br',
+          phone: '1133334444',
+          type: 'corporate',
+          status: 'active',
+          category: 'premium',
+          addresses: [
+            {
+              street: 'Rua Comercial',
+              number: '500',
+              neighborhood: 'Centro',
+              zipCode: '01001-000',
+              city: 'São Paulo',
+              state: 'SP',
+              type: 'commercial',
+              isPrimary: true,
+              isActive: true,
+            },
+          ],
+          metadata: {
+            origem: 'indicacao',
+            observacoes: 'Cliente preferencial',
+          },
+        },
+      },
+    },
+  })
   @ApiResponse({
     status: HttpStatus.CREATED,
     description: 'Customer created successfully',
