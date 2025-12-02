@@ -1,4 +1,4 @@
-import { Injectable, ConflictException } from '@nestjs/common';
+import { Injectable, ConflictException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull } from 'typeorm';
 import * as bcrypt from 'bcrypt';
@@ -8,6 +8,8 @@ import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
+  
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
@@ -50,10 +52,21 @@ export class UsersService {
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    return this.userRepository.findOne({
-      where: { email, deleted_at: IsNull() },
-      relations: ['roles'], // Incluir roles para autenticação
-    });
+    // FORÇA BUSCA DIRETA NO BANCO COM NOVA CONEXÃO - SEM QUALQUER CACHE
+    const manager = this.userRepository.manager;
+    
+    const user = await manager
+      .createQueryBuilder(User, 'user')
+      .leftJoinAndSelect('user.roles', 'roles')
+      .where('user.email = :email', { email })
+      .andWhere('user.deleted_at IS NULL')
+      .cache(false)
+      .useTransaction(false) // Não usar transação para garantir dados frescos
+      .getOne();
+    
+    this.logger.debug(`[USERS SERVICE] Found user: ${user?.id}, Email: ${user?.email}, Hash: ${user?.password_hash?.substring(0, 30)}...`);
+    
+    return user;
   }
 
   async updateLastLogin(id: string): Promise<void> {

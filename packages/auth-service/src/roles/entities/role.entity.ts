@@ -1,6 +1,8 @@
-import { Entity, Column } from 'typeorm';
+import { Entity, Column, ManyToMany } from 'typeorm';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { BaseEntity } from '../../database/entities/base.entity';
 import { RoleType } from '../enums/role-type.enum';
+import type { User } from '../../users/entities/user.entity';
 
 /**
  * Role Entity - Sistema de papéis e permissões
@@ -13,6 +15,10 @@ import { RoleType } from '../enums/role-type.enum';
  */
 @Entity('roles')
 export class Role extends BaseEntity {
+  @ApiProperty({
+    description: 'Nome único do papel',
+    example: 'Gerente de Operações',
+  })
   @Column({
     type: 'varchar',
     length: 100,
@@ -21,6 +27,10 @@ export class Role extends BaseEntity {
   })
   name!: string;
 
+  @ApiPropertyOptional({
+    description: 'Descrição do papel',
+    example: 'Gerencia operações diárias e supervisiona motoristas',
+  })
   @Column({
     type: 'varchar',
     length: 255,
@@ -29,6 +39,11 @@ export class Role extends BaseEntity {
   })
   description?: string;
 
+  @ApiProperty({
+    description: 'Tipo do papel no sistema',
+    enum: RoleType,
+    example: RoleType.MANAGER,
+  })
   @Column({
     type: 'enum',
     enum: RoleType,
@@ -36,6 +51,11 @@ export class Role extends BaseEntity {
   })
   type!: RoleType;
 
+  @ApiProperty({
+    description: 'Lista de permissões do papel',
+    example: ['users:read', 'deliveries:read', 'deliveries:write'],
+    type: [String],
+  })
   @Column({
     type: 'jsonb',
     default: '[]',
@@ -43,6 +63,10 @@ export class Role extends BaseEntity {
   })
   permissions!: string[];
 
+  @ApiProperty({
+    description: 'Nível hierárquico (0 = maior autoridade)',
+    example: 1,
+  })
   @Column({
     type: 'integer',
     default: 0,
@@ -50,6 +74,10 @@ export class Role extends BaseEntity {
   })
   hierarchy_level!: number;
 
+  @ApiProperty({
+    description: 'Papel está ativo',
+    example: true,
+  })
   @Column({
     type: 'boolean',
     default: true,
@@ -57,6 +85,10 @@ export class Role extends BaseEntity {
   })
   is_active!: boolean;
 
+  @ApiPropertyOptional({
+    description: 'Configurações específicas do papel',
+    example: { dashboard_access: true },
+  })
   @Column({
     type: 'jsonb',
     nullable: true,
@@ -64,7 +96,14 @@ export class Role extends BaseEntity {
   })
   settings?: Record<string, unknown>;
 
-  // Relacionamentos - será configurado após resolver dependência circular
+  // Relacionamentos
+
+  /**
+   * Usuários que possuem este papel
+   * Relacionamento inverso de User.roles
+   */
+  @ManyToMany('User', (user: any) => user.roles)
+  users?: any[];
 
   // Computed properties
 

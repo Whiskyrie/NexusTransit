@@ -69,10 +69,6 @@ export class AuthUserSubscriber implements EntitySubscriberInterface<User> {
         changes.push('email');
       }
 
-      if (event.entity.is_active !== event.databaseEntity.is_active) {
-        changes.push('is_active');
-      }
-
       if (changes.length > 0) {
         this.logger.warn(
           `AUDIT: Sensitive fields changed for user ${event.entity.id}: ${changes.join(', ')}`,

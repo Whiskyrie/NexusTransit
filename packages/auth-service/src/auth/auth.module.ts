@@ -10,7 +10,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { UsersModule } from '../users/users.module';
 import { RedisModule } from '../redis/redis.module';
 import { AuditModule } from '../audit/audit.module';
-import { Role } from './entities/role.entity';
+import { Role } from '../roles/entities/role.entity';
 import { Permission } from './entities/permission.entity';
 import { TokenBlacklistService } from './services/token-blacklist.service';
 

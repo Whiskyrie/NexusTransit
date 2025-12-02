@@ -23,7 +23,7 @@ export class HealthController {
   @HealthCheck()
   @ApiOperation({
     summary: 'Health check geral',
-    description: 'Verifica o status geral da aplicação (database, memória, disco)',
+    description: 'Verifica o status geral da aplicação (database, memória)',
   })
   @ApiResponse({
     status: 200,
@@ -40,13 +40,6 @@ export class HealthController {
 
       // Verificar uso de memória (alerta se > 150MB)
       () => this.memory.checkHeap('memory_heap', 150 * 1024 * 1024),
-
-      // Verificar uso de disco (alerta se > 90%)
-      () =>
-        this.disk.checkStorage('storage', {
-          path: '/',
-          thresholdPercent: 0.9,
-        }),
     ]);
   }
 

@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, UseGuards, Req, Get } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, UseGuards, Req, Get, Logger } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -23,6 +23,8 @@ import { UserResponseDto } from './dto/user-response.dto';
 @Controller('auth')
 @UseGuards(ThrottlerGuard)
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(
     private readonly authService: AuthService,
     private readonly tokenBlacklistService: TokenBlacklistService,
@@ -70,6 +72,12 @@ export class AuthController {
     },
   })
   async login(@Body() loginDto: LoginDto, @Req() request: Request): Promise<LoginResponseDto> {
+    this.logger.debug(`[CONTROLLER] Received login request`);
+    this.logger.debug(`[CONTROLLER] Email: ${loginDto.email}`);
+    this.logger.debug(`[CONTROLLER] Password length: ${loginDto.password?.length}`);
+    this.logger.debug(`[CONTROLLER] Password: ${loginDto.password}`);
+    this.logger.debug(`[CONTROLLER] Raw body: ${JSON.stringify(request.body)}`);
+
     const ipAddress = this.getClientIp(request);
     const userAgent = request.get('User-Agent');
 

@@ -31,6 +31,23 @@ import { User } from './entities/user.entity';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  @Get('_debug/database-direct')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: '[DEBUG] Ver todos os users DIRETO do PostgreSQL',
+    description: 'Mostra users que realmente existem no banco (bypass TypeORM)',
+  })
+  async findAllDatabaseDirect() {
+    const result = await this.usersService['userRepository'].query(
+      `SELECT id, email, email_verified, first_name, last_name, created_at FROM auth.users ORDER BY created_at DESC`
+    );
+    return { 
+      message: 'Users DIRETO do PostgreSQL (SEM CACHE)', 
+      total: result.length, 
+      users: result 
+    };
+  }
+
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({

@@ -14,7 +14,7 @@ import { ApiProperty } from '@nestjs/swagger';
 export class LoginDto {
   @ApiProperty({
     description: 'Email do usuário para autenticação',
-    example: 'usuario@empresa.com',
+    example: 'admin@nexustransit.com',
     format: 'email',
     minLength: 5,
     maxLength: 255,
@@ -26,7 +26,7 @@ export class LoginDto {
 
   @ApiProperty({
     description: 'Senha do usuário para autenticação',
-    example: 'SenhaForte123!',
+    example: 'Admin@123456',
     minLength: 8,
     maxLength: 128,
     pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]',

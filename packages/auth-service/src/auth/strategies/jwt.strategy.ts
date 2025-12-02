@@ -62,10 +62,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Token inválido: usuário não encontrado');
     }
 
-    if (!user.is_active) {
-      throw new UnauthorizedException('Usuário inativo');
-    }
-
     if (!user.email_verified) {
       throw new UnauthorizedException('Email não verificado');
     }

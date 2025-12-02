@@ -38,11 +38,6 @@ export class AuthService {
         throw new UnauthorizedException('Credenciais inválidas');
       }
 
-      if (!user.is_active) {
-        await this.logFailedLogin(loginDto.email, 'User inactive', ipAddress, userAgent);
-        throw new UnauthorizedException('Usuário inativo');
-      }
-
       if (!user.email_verified) {
         await this.logFailedLogin(loginDto.email, 'Email not verified', ipAddress, userAgent);
         throw new UnauthorizedException('Email não verificado');
@@ -81,10 +76,6 @@ export class AuthService {
 
       if (!user) {
         throw new NotFoundException('Usuário não encontrado');
-      }
-
-      if (!user.is_active) {
-        throw new UnauthorizedException('Usuário inativo');
       }
 
       // Log acesso ao perfil
@@ -152,11 +143,18 @@ export class AuthService {
     try {
       const user = await this.usersService.findByEmail(email);
 
+      this.logger.debug(`[DEBUG] User found: ${!!user}, ID: ${user?.id}`);
+      
       if (!user) {
         return null;
       }
 
+      this.logger.debug(`[DEBUG] Password from request: ${password}`);
+      this.logger.debug(`[DEBUG] Hash from DB: ${user.password_hash.substring(0, 30)}...`);
+      
       const isPasswordValid = await comparePassword(password, user.password_hash);
+
+      this.logger.debug(`[DEBUG] Password valid: ${isPasswordValid}`);
 
       if (!isPasswordValid) {
         return null;
@@ -186,7 +184,7 @@ export class AuthService {
 
       const user = await this.usersService.findOne(payload.sub);
 
-      if (!user?.is_active) {
+      if (!user) {
         throw new UnauthorizedException('Usuário inválido');
       }
 

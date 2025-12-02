@@ -12,11 +12,11 @@ export interface JwtPayload {
   /** Roles do usuário */
   roles: string[];
 
-  /** Issued at - timestamp de emissão */
-  iat: number;
+  /** Issued at - timestamp de emissão (gerado automaticamente pelo JWT) */
+  iat?: number;
 
-  /** Expires at - timestamp de expiração */
-  exp: number;
+  /** Expires at - timestamp de expiração (gerado automaticamente pelo JWT) */
+  exp?: number;
 
   /** Tipo do token (access ou refresh) */
   type: 'access' | 'refresh';

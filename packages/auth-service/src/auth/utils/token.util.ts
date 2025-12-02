@@ -45,12 +45,21 @@ export async function generateToken(
     throw new Error('JWT_SECRET is not configured');
   }
 
-  return jwtService.signAsync(payload, {
+  const options: any = {
     expiresIn: `${expiration}s`,
     secret,
-    issuer,
-    audience,
-  });
+  };
+
+  // Adicionar issuer e audience apenas se estiverem configurados
+  if (issuer) {
+    options.issuer = issuer;
+  }
+
+  if (audience) {
+    options.audience = audience;
+  }
+
+  return jwtService.signAsync(payload, options);
 }
 
 /**
@@ -82,11 +91,20 @@ export async function verifyToken(
       throw new Error('JWT_SECRET is not configured');
     }
 
-    const payload = await jwtService.verifyAsync<JwtPayload>(token, {
+    const options: any = {
       secret,
-      issuer,
-      audience,
-    });
+    };
+
+    // Adicionar issuer e audience apenas se estiverem configurados
+    if (issuer) {
+      options.issuer = issuer;
+    }
+
+    if (audience) {
+      options.audience = audience;
+    }
+
+    const payload = await jwtService.verifyAsync<JwtPayload>(token, options);
 
     return payload;
   } catch (error) {
@@ -185,13 +203,11 @@ export function getTokenTimeLeft(payload: JwtPayload): number {
 export function generateUserPayload(
   user: { id: string; email: string; roles?: string[] },
   additionalClaims: Record<string, unknown> = {},
-): JwtPayload {
+): Omit<JwtPayload, 'iat' | 'exp'> {
   return {
     sub: user.id,
     email: user.email,
     roles: user.roles ?? [],
-    iat: Math.floor(Date.now() / 1000),
-    exp: Math.floor(Date.now() / 1000) + AUTH_CONSTANTS.ACCESS_TOKEN_EXPIRATION,
     type: 'access',
     ...additionalClaims,
   };
