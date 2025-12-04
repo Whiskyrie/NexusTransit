@@ -67,14 +67,13 @@ export class AbuseDetectionProcessor {
     try {
       const windowStart = new Date(Date.now() - this.thresholds.windowMinutes * 60 * 1000);
 
-      // Buscar violações recentes
       const recentViolations = await this.quotaUsageRepository.find({
         where: {
           blocked: true,
-          timestamp: MoreThan(windowStart),
+          request_time: MoreThan(windowStart),
         },
         order: {
-          timestamp: 'DESC',
+          request_time: 'DESC',
         },
       });
 
@@ -85,63 +84,58 @@ export class AbuseDetectionProcessor {
 
       this.logger.log(`Analisando ${recentViolations.length} violações recentes`);
 
-      // Agrupar violações por identificador
       const violationsByIdentifier = this.groupViolationsByIdentifier(recentViolations);
 
-      // Analisar cada identificador
       const abuseResults: AbuseAnalysisResult[] = [];
       for (const [identifier, violations] of violationsByIdentifier.entries()) {
-        const result = await this.analyzeIdentifier(identifier, violations);
+        const result = this.analyzeIdentifier(identifier, violations);
         if (result) {
           abuseResults.push(result);
         }
       }
 
-      // Processar resultados e tomar ações
       await this.processAbuseResults(abuseResults);
 
       this.logger.log(`Análise concluída. Detectados ${abuseResults.length} padrões de abuso`);
     } catch (error) {
-      this.logger.error(`Erro na análise de padrões de abuso: ${error.message}`, error.stack);
+      // Safe error typing
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      this.logger.error(`Erro na análise de padrões de abuso: ${errorMessage}`, errorStack);
     }
   }
 
-  /**
-   * Analisa violações em tempo real
-   * Pode ser chamado quando uma violação ocorre
-   */
   async analyzeRealtime(identifier: string): Promise<AbuseAnalysisResult | null> {
     try {
       const windowStart = new Date(Date.now() - this.thresholds.windowMinutes * 60 * 1000);
 
       const violations = await this.quotaUsageRepository.find({
         where: {
-          identifier,
+          client_id: identifier,
           blocked: true,
-          timestamp: MoreThan(windowStart),
+          request_time: MoreThan(windowStart),
         },
         order: {
-          timestamp: 'DESC',
+          request_time: 'DESC',
         },
       });
 
+      // Retorna diretamente (o método síncrono é envolvido na Promise do método async atual)
       return this.analyzeIdentifier(identifier, violations);
     } catch (error) {
-      this.logger.error(`Erro na análise em tempo real para ${identifier}: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Erro na análise em tempo real para ${identifier}: ${errorMessage}`);
       return null;
     }
   }
 
-  /**
-   * Agrupa violações por identificador
-   */
   private groupViolationsByIdentifier(violations: QuotaUsage[]): Map<string, QuotaUsage[]> {
     const grouped = new Map<string, QuotaUsage[]>();
 
     for (const violation of violations) {
-      const existing = grouped.get(violation.identifier) || [];
+      const existing = grouped.get(violation.client_id) ?? [];
       existing.push(violation);
-      grouped.set(violation.identifier, existing);
+      grouped.set(violation.client_id, existing);
     }
 
     return grouped;
@@ -174,8 +168,8 @@ export class AbuseDetectionProcessor {
       timeWindow: this.thresholds.windowMinutes,
       shouldBlock,
       details: {
-        firstViolation: violations[violations.length - 1]?.timestamp,
-        lastViolation: violations[0]?.timestamp,
+        firstViolation: violations[violations.length - 1]?.request_time,
+        lastViolation: violations[0]?.request_time,
         endpoints: this.extractUniqueEndpoints(violations),
         averageInterval: this.calculateAverageInterval(violations),
       },
@@ -287,57 +281,55 @@ export class AbuseDetectionProcessor {
 
       return true;
     } catch (error) {
-      this.logger.error(`Erro ao bloquear ${result.identifier}: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Erro ao bloquear ${result.identifier}: ${errorMessage}`);
       return false;
     }
   }
 
-  /**
-   * Extrai endpoints únicos das violações
-   */
   private extractUniqueEndpoints(violations: QuotaUsage[]): string[] {
-    const endpoints = violations.map(v => v.metadata?.endpoint as string).filter(Boolean);
+    const endpoints = violations
+      .map(v => v.metadata?.endpoint as string | undefined)
+      .filter((e): e is string => !!e);
     return [...new Set(endpoints)];
   }
 
-  /**
-   * Calcula intervalos entre violações (em ms)
-   */
   private calculateIntervals(violations: QuotaUsage[]): number[] {
     const intervals: number[] = [];
 
     for (let i = 0; i < violations.length - 1; i++) {
-      const current = violations[i].timestamp.getTime();
-      const next = violations[i + 1].timestamp.getTime();
-      intervals.push(Math.abs(current - next));
+      const currentViolation = violations[i];
+      const nextViolation = violations[i + 1];
+
+      if (currentViolation?.request_time && nextViolation?.request_time) {
+        const current = new Date(currentViolation.request_time).getTime();
+        const next = new Date(nextViolation.request_time).getTime();
+        intervals.push(Math.abs(current - next));
+      }
     }
 
     return intervals;
   }
 
-  /**
-   * Calcula intervalo médio entre violações
-   */
   private calculateAverageInterval(violations: QuotaUsage[]): number {
     const intervals = this.calculateIntervals(violations);
-    if (intervals.length === 0) return 0;
+    if (intervals.length === 0) {
+      return 0;
+    }
     return intervals.reduce((a, b) => a + b, 0) / intervals.length;
   }
 
-  /**
-   * Obtém estatísticas de abuso
-   */
   async getAbuseStatistics(): Promise<{
     totalViolations: number;
     blockedIdentifiers: number;
-    topOffenders: Array<{ identifier: string; count: number }>;
+    topOffenders: { identifier: string; count: number }[];
   }> {
-    const windowStart = new Date(Date.now() - 24 * 60 * 60 * 1000); // 24h
+    const windowStart = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
     const violations = await this.quotaUsageRepository.find({
       where: {
         blocked: true,
-        timestamp: MoreThan(windowStart),
+        request_time: MoreThan(windowStart),
       },
     });
 
@@ -351,11 +343,9 @@ export class AbuseDetectionProcessor {
       .sort((a, b) => b.count - a.count)
       .slice(0, 10);
 
-    const blockedCount = await this.blacklistService.getBlacklistSize();
-
     return {
       totalViolations: violations.length,
-      blockedIdentifiers: blockedCount,
+      blockedIdentifiers: topOffenders.length,
       topOffenders,
     };
   }
