@@ -34,42 +34,23 @@ export interface AbuseAnalysisResult {
  * Configuração de thresholds para detecção de abuso
  */
 interface AbuseThresholds {
-  // Número de violações em X minutos para considerar abuso
   violationsInWindow: number;
   windowMinutes: number;
-
-  // Taxa de requisições por segundo para considerar spike
   requestsPerSecond: number;
-
-  // Número de IPs diferentes com mesmo padrão
   distributedThreshold: number;
-
-  // Auto-block após X violações
   autoBlockAfter: number;
 }
 
-/**
- * Processor para detecção automática de padrões de abuso
- *
- * Analisa violações de rate limit e identifica comportamentos suspeitos:
- * - Violações repetidas do mesmo identificador
- * - Spikes anormais de requisições
- * - Ataques distribuídos
- * - Tentativas de força bruta
- * - Credential stuffing
- *
- * Executa análise periódica via CRON e pode processar eventos em tempo real
- */
 @Injectable()
 export class AbuseDetectionProcessor {
   private readonly logger = new Logger(AbuseDetectionProcessor.name);
 
   private readonly thresholds: AbuseThresholds = {
-    violationsInWindow: 10, // 10 violações em 5 minutos
+    violationsInWindow: 10,
     windowMinutes: 5,
-    requestsPerSecond: 100, // 100 req/s
-    distributedThreshold: 5, // 5 IPs diferentes
-    autoBlockAfter: 20, // Bloquear após 20 violações
+    requestsPerSecond: 100,
+    distributedThreshold: 5,
+    autoBlockAfter: 20,
   };
 
   constructor(
@@ -79,10 +60,6 @@ export class AbuseDetectionProcessor {
     private readonly blacklistService: BlacklistService,
   ) {}
 
-  /**
-   * Análise periódica de padrões de abuso
-   * Executa a cada 5 minutos
-   */
   @Cron(CronExpression.EVERY_5_MINUTES)
   async analyzeAbusePatterns(): Promise<void> {
     this.logger.debug('Iniciando análise de padrões de abuso...');
@@ -207,40 +184,28 @@ export class AbuseDetectionProcessor {
     return result;
   }
 
-  /**
-   * Detecta o padrão de abuso com base nas violações
-   */
   private detectPattern(violations: QuotaUsage[]): AbusePattern {
-    // Verificar spike de requisições (muitas em curto período)
     const intervals = this.calculateIntervals(violations);
     const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
 
     if (avgInterval < 1000) {
-      // Menos de 1 segundo entre violações
       return AbusePattern.SPIKE_REQUESTS;
     }
 
-    // Verificar tentativas de força bruta (mesmo endpoint, muitas vezes)
     const endpoints = this.extractUniqueEndpoints(violations);
     if (endpoints.length === 1 && violations.length > 15) {
       return AbusePattern.BRUTE_FORCE;
     }
 
-    // Verificar credential stuffing (múltiplos endpoints de auth)
     const authEndpoints = endpoints.filter(ep => ep.includes('/auth') || ep.includes('/login'));
     if (authEndpoints.length > 0 && violations.length > 10) {
       return AbusePattern.CREDENTIAL_STUFFING;
     }
 
-    // Padrão geral de violações repetidas
     return AbusePattern.REPEATED_VIOLATIONS;
   }
 
-  /**
-   * Calcula a severidade do abuso
-   */
   private calculateSeverity(violationCount: number, pattern: AbusePattern): AlertSeverity {
-    // Padrões críticos
     if (
       pattern === AbusePattern.BRUTE_FORCE ||
       pattern === AbusePattern.CREDENTIAL_STUFFING ||
@@ -249,7 +214,6 @@ export class AbuseDetectionProcessor {
       return AlertSeverity.CRITICAL;
     }
 
-    // Baseado no número de violações
     if (violationCount >= this.thresholds.autoBlockAfter) {
       return AlertSeverity.CRITICAL;
     }
@@ -263,13 +227,9 @@ export class AbuseDetectionProcessor {
     return AlertSeverity.INFO;
   }
 
-  /**
-   * Processa resultados de abuso e toma ações
-   */
   private async processAbuseResults(results: AbuseAnalysisResult[]): Promise<void> {
     for (const result of results) {
-      // Enviar alerta
-      await this.alertService.sendAlert({
+      this.alertService.sendAlert({
         type: AlertType.SUSPICIOUS_ACTIVITY,
         severity: result.severity,
         message: `Padrão de abuso detectado: ${result.pattern}`,
@@ -282,7 +242,6 @@ export class AbuseDetectionProcessor {
         },
       });
 
-      // Auto-block se necessário
       if (result.shouldBlock) {
         const blocked = await this.autoBlock(result);
         if (blocked) {
