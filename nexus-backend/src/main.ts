@@ -45,6 +45,7 @@ async function bootstrap(): Promise<void> {
     .addTag('Reports', 'Relatórios e analytics')
     .addTag('Incidents', 'Gerenciamento de incidentes')
     .addTag('LGPD', 'Conformidade LGPD')
+    .addTag('Rate Limit', 'Sistema de rate limiting e throttling')
     .addTag('Health', 'Health checks')
     .addTag('Metrics', 'Métricas e monitoramento')
     .addBearerAuth(

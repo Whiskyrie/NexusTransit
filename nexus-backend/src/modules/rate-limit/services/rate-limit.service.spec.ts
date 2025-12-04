@@ -1,6 +1,12 @@
 import { Test, type TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
 import { RateLimitService } from './rate-limit.service';
 import { RedisService } from '../../redis/redis.service';
+import { RateLimitRule } from '../entities/rate-limit-rule.entity';
+import { QuotaUsage } from '../entities/quota-usage.entity';
+import { SlidingWindowStrategy } from '../strategies/sliding-window.strategy';
+import { TokenBucketStrategy } from '../strategies/token-bucket.strategy';
+import { FixedWindowStrategy } from '../strategies/fixed-window.strategy';
 import type { RateLimitResult } from '../interfaces/rate-limit.interface';
 
 describe('RateLimitService', () => {
@@ -13,6 +19,35 @@ describe('RateLimitService', () => {
     delete: jest.fn(),
   };
 
+  const mockRateLimitRuleRepository = {
+    create: jest.fn(),
+    save: jest.fn(),
+    findOne: jest.fn(),
+    find: jest.fn(),
+    findAndCount: jest.fn(),
+    softRemove: jest.fn(),
+  };
+
+  const mockQuotaUsageRepository = {
+    create: jest.fn(),
+    save: jest.fn(),
+    findOne: jest.fn(),
+    find: jest.fn(),
+    count: jest.fn(),
+  };
+
+  const mockSlidingWindowStrategy = {
+    checkLimit: jest.fn(),
+  };
+
+  const mockTokenBucketStrategy = {
+    checkLimit: jest.fn(),
+  };
+
+  const mockFixedWindowStrategy = {
+    checkLimit: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -20,6 +55,26 @@ describe('RateLimitService', () => {
         {
           provide: RedisService,
           useValue: mockRedisService,
+        },
+        {
+          provide: getRepositoryToken(RateLimitRule),
+          useValue: mockRateLimitRuleRepository,
+        },
+        {
+          provide: getRepositoryToken(QuotaUsage),
+          useValue: mockQuotaUsageRepository,
+        },
+        {
+          provide: SlidingWindowStrategy,
+          useValue: mockSlidingWindowStrategy,
+        },
+        {
+          provide: TokenBucketStrategy,
+          useValue: mockTokenBucketStrategy,
+        },
+        {
+          provide: FixedWindowStrategy,
+          useValue: mockFixedWindowStrategy,
         },
       ],
     }).compile();

@@ -1,11 +1,50 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import type Keyv from 'keyv';
+import type { RedisClientType } from 'redis';
 
 @Injectable()
 export class RedisService {
   private readonly logger = new Logger(RedisService.name);
+  private redis: RedisClientType | null = null;
 
-  constructor(@Inject('KEYV_INSTANCE') private readonly keyv: Keyv) {}
+  constructor(@Inject('KEYV_INSTANCE') private readonly keyv: Keyv) {
+    this.extractRedisClient();
+  }
+
+  /**
+   * Extrai o cliente Redis nativo do Keyv store
+   */
+  private extractRedisClient(): void {
+    try {
+      const keyvInternal = this.keyv as unknown as {
+        opts?: {
+          store?: {
+            redis?: RedisClientType;
+          };
+        };
+      };
+
+      const redisClient = keyvInternal.opts?.store?.redis;
+
+      if (redisClient) {
+        this.redis = redisClient;
+        this.logger.log('Native Redis client extracted successfully');
+      } else {
+        this.logger.warn('Could not extract native Redis client from Keyv');
+      }
+    } catch (error) {
+      this.logger.error('Failed to extract Redis client', error);
+    }
+  }
+
+  /**
+   * Retorna o cliente Redis nativo (se disponível)
+   *
+   * @returns Cliente Redis tipado ou null se não disponível
+   */
+  getRedisClient(): RedisClientType | null {
+    return this.redis;
+  }
 
   /**
    * Armazena um valor no Redis com TTL opcional
