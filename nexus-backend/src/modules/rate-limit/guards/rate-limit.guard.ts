@@ -12,6 +12,7 @@ import { RATE_LIMIT_KEY } from '../decorators/rate-limit.decorator';
 import { RateLimitType } from '../enums/rate-limit-type.enum';
 import { RoleLimits } from '../enums/role-limits.enum';
 import { RateLimitService } from '../services/rate-limit.service';
+import { BlacklistService } from '../services/blacklist.service';
 import type { RateLimitConfig, RateLimitResult } from '../interfaces/rate-limit.interface';
 
 interface AuthenticatedRequest extends Request {
@@ -39,10 +40,18 @@ export class RateLimitGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
     private readonly rateLimitService: RateLimitService,
+    private readonly blacklistService: BlacklistService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
+
+    // Bypass health checks, metrics, and docs endpoints
+    if (this.isWhitelistedPath(request.path)) {
+      this.logger.debug('Path is whitelisted, bypassing rate limit', { path: request.path });
+      return true;
+    }
+
     const rateLimitConfig = this.reflector.get<RateLimitConfig>(
       RATE_LIMIT_KEY,
       context.getHandler(),
@@ -58,6 +67,46 @@ export class RateLimitGuard implements CanActivate {
     const userRole = request.user?.role;
 
     try {
+      // Check if IP is whitelisted (bypass all checks)
+      if (await this.blacklistService.isWhitelisted(clientIp, 'IP')) {
+        this.logger.debug('IP is whitelisted, bypassing rate limit', { ip: clientIp });
+        return true;
+      }
+
+      // Check if user is whitelisted
+      if (userId && (await this.blacklistService.isWhitelisted(userId, 'USER'))) {
+        this.logger.debug('User is whitelisted, bypassing rate limit', { userId });
+        return true;
+      }
+
+      // Check if IP is blacklisted
+      if (await this.blacklistService.isBlacklisted(clientIp, 'IP')) {
+        this.logger.warn('IP is blacklisted', { ip: clientIp });
+        throw new HttpException(
+          {
+            message: 'Access denied',
+            error: 'Forbidden',
+            statusCode: HttpStatus.FORBIDDEN,
+            reason: 'IP address is blacklisted',
+          },
+          HttpStatus.FORBIDDEN,
+        );
+      }
+
+      // Check if user is blacklisted
+      if (userId && (await this.blacklistService.isBlacklisted(userId, 'USER'))) {
+        this.logger.warn('User is blacklisted', { userId });
+        throw new HttpException(
+          {
+            message: 'Access denied',
+            error: 'Forbidden',
+            statusCode: HttpStatus.FORBIDDEN,
+            reason: 'User account is blacklisted',
+          },
+          HttpStatus.FORBIDDEN,
+        );
+      }
+
       const endpoint = `${request.method} ${(request.route as { path?: string } | undefined)?.path ?? request.path}`;
 
       const rateLimitContext: RateLimitContext = {
@@ -75,6 +124,10 @@ export class RateLimitGuard implements CanActivate {
       const result = await this.checkRateLimit(rateLimitConfig, rateLimitContext);
 
       if (!result.allowed) {
+        // Record violation for potential auto-blacklisting
+        const violationType = userId ? 'USER' : 'IP';
+        await this.blacklistService.recordViolation(userId ?? clientIp, violationType);
+
         this.logger.warn(`Rate limit exceeded for ${rateLimitConfig.type}`, {
           ip: clientIp,
           userId,
@@ -216,5 +269,22 @@ export class RateLimitGuard implements CanActivate {
     }
 
     return realIp ?? clientIp ?? request.socket.remoteAddress ?? '127.0.0.1';
+  }
+
+  /**
+   * Check if path should bypass rate limiting
+   * Health checks, metrics, and documentation endpoints are automatically whitelisted
+   */
+  private isWhitelistedPath(path: string): boolean {
+    const whitelistedPaths = [
+      '/health',
+      '/metrics',
+      '/api/docs',
+      '/api-docs',
+      '/swagger',
+      '/api/health',
+    ];
+
+    return whitelistedPaths.some(whitePath => path.startsWith(whitePath));
   }
 }
