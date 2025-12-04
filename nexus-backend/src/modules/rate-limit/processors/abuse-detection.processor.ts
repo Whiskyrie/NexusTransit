@@ -144,18 +144,16 @@ export class AbuseDetectionProcessor {
   /**
    * Analisa violações de um identificador específico
    */
-  private async analyzeIdentifier(
+  private analyzeIdentifier(
     identifier: string,
     violations: QuotaUsage[],
-  ): Promise<AbuseAnalysisResult | null> {
+  ): AbuseAnalysisResult | null {
     const violationCount = violations.length;
 
-    // Verificar se excede threshold de violações
     if (violationCount < this.thresholds.violationsInWindow) {
       return null;
     }
 
-    // Detectar padrão
     const pattern = this.detectPattern(violations);
     const severity = this.calculateSeverity(violationCount, pattern);
     const shouldBlock = violationCount >= this.thresholds.autoBlockAfter;
