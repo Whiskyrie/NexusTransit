@@ -247,27 +247,20 @@ export class AbuseDetectionProcessor {
     }
   }
 
-  /**
-   * Bloqueia automaticamente um identificador suspeito
-   */
   private async autoBlock(result: AbuseAnalysisResult): Promise<boolean> {
     try {
-      // Verificar se já está na blacklist
-      const isBlacklisted = await this.blacklistService.isBlacklisted(result.identifier);
+      const isBlacklisted = await this.blacklistService.isBlacklisted(result.identifier, 'IP');
       if (isBlacklisted) {
         return false;
       }
 
-      // Adicionar à blacklist
       const reason = `Auto-blocked: ${result.pattern} - ${result.violationCount} violações em ${result.timeWindow} minutos`;
-      await this.blacklistService.addToBlacklist(
-        result.identifier,
+      await this.blacklistService.addToBlacklist(result.identifier, 'IP', {
         reason,
-        24 * 60 * 60 * 1000, // 24 horas
-      );
+        durationSeconds: 24 * 60 * 60,
+      });
 
-      // Enviar alerta de auto-block
-      await this.alertService.sendAlert({
+      this.alertService.sendAlert({
         type: AlertType.AUTO_BLACKLIST,
         severity: AlertSeverity.CRITICAL,
         message: `Identificador bloqueado automaticamente`,
