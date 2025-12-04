@@ -23,6 +23,7 @@ import { RedisModule } from './modules/redis/redis.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { LgpdModule } from './modules/lgpd/lgpd.module';
 import { UploadModule } from './modules/upload/upload.module';
+import { RateLimitModule } from './modules/rate-limit/rate-limit.module';
 import configurations from './config/configurations';
 
 @Module({
@@ -62,6 +63,7 @@ import configurations from './config/configurations';
     AuditModule, // Sistema de auditoria e logs
     LgpdModule,
     UploadModule, // Conformidade LGPD
+    RateLimitModule, // Sistema de rate limiting e throttling
   ],
   controllers: [AppController],
   providers: [AppService],
