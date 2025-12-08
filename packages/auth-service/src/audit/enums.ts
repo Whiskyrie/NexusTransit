@@ -1,0 +1,27 @@
+/**
+ * Audit Actions
+ */
+export enum AuditAction {
+  CREATE = 'CREATE',
+  READ = 'READ',
+  UPDATE = 'UPDATE',
+  DELETE = 'DELETE',
+  LOGIN = 'LOGIN',
+  LOGOUT = 'LOGOUT',
+  FAILED_LOGIN = 'FAILED_LOGIN',
+  ACCESS = 'ACCESS',
+  EXECUTE = 'EXECUTE',
+}
+
+/**
+ * Audit Categories
+ */
+export enum AuditCategory {
+  AUTH = 'AUTH',
+  AUTHENTICATION = 'AUTHENTICATION',
+  USER_MANAGEMENT = 'USER_MANAGEMENT',
+  ROLE_MANAGEMENT = 'ROLE_MANAGEMENT',
+  SYSTEM = 'SYSTEM',
+  SECURITY = 'SECURITY',
+  DATA_ACCESS = 'DATA_ACCESS',
+}
