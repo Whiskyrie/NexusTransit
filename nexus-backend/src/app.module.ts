@@ -6,6 +6,7 @@ import type { Request } from 'express';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
+import { LoggingModule } from './modules/logging/logging.module';
 import { HealthModule } from './health/health.module';
 import { UsersModule } from './modules/users/users.module';
 import { RolesModule } from './modules/roles/roles.module';
@@ -22,6 +23,7 @@ import { RedisModule } from './modules/redis/redis.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { LgpdModule } from './modules/lgpd/lgpd.module';
 import { UploadModule } from './modules/upload/upload.module';
+import { RateLimitModule } from './modules/rate-limit/rate-limit.module';
 import configurations from './config/configurations';
 
 @Module({
@@ -44,6 +46,7 @@ import configurations from './config/configurations';
       },
     }),
     DatabaseModule, // Configuração TypeORM + PostgreSQL
+    LoggingModule, // Logging estruturado com Pino + Métricas
     HealthModule, // Health checks e monitoramento
     UsersModule, // Sistema de usuários
     RolesModule, // Sistema de papéis e permissões
@@ -60,6 +63,7 @@ import configurations from './config/configurations';
     AuditModule, // Sistema de auditoria e logs
     LgpdModule,
     UploadModule, // Conformidade LGPD
+    RateLimitModule, // Sistema de rate limiting e throttling
   ],
   controllers: [AppController],
   providers: [AppService],

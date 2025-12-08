@@ -8,6 +8,7 @@ import {
   DiskHealthIndicator,
   HealthCheckResult,
 } from '@nestjs/terminus';
+import { RedisHealthIndicator } from './indicators/redis.indicator';
 
 @ApiTags('Health')
 @Controller('health')
@@ -17,13 +18,14 @@ export class HealthController {
     private readonly db: TypeOrmHealthIndicator,
     private readonly memory: MemoryHealthIndicator,
     private readonly disk: DiskHealthIndicator,
+    private readonly redis: RedisHealthIndicator,
   ) {}
 
   @Get()
   @HealthCheck()
   @ApiOperation({
     summary: 'Health check geral',
-    description: 'Verifica o status geral da aplicação (database, memória, disco)',
+    description: 'Verifica o status geral da aplicação (database, memória, disco, Redis)',
   })
   @ApiResponse({
     status: 200,
@@ -37,6 +39,9 @@ export class HealthController {
     return this.health.check([
       // Verificar conexão com PostgreSQL
       () => this.db.pingCheck('database'),
+
+      // Verificar conexão com Redis
+      () => this.redis.isHealthy('redis'),
 
       // Verificar uso de memória (alerta se > 150MB)
       () => this.memory.checkHeap('memory_heap', 150 * 1024 * 1024),
@@ -96,17 +101,35 @@ export class HealthController {
   @HealthCheck()
   @ApiOperation({
     summary: 'Database check',
-    description: 'Verifica a conexão com o banco de dados',
+    description: 'Verifica a conexão com o banco de dados PostgreSQL',
   })
   @ApiResponse({
     status: 200,
-    description: 'Banco de dados conectado',
+    description: 'Database conectado',
   })
   @ApiResponse({
     status: 503,
-    description: 'Banco de dados desconectado',
+    description: 'Database com problemas',
   })
   database(): Promise<HealthCheckResult> {
     return this.health.check([() => this.db.pingCheck('database')]);
+  }
+
+  @Get('redis')
+  @HealthCheck()
+  @ApiOperation({
+    summary: 'Redis check',
+    description: 'Verifica a conexão com o Redis',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Redis conectado',
+  })
+  @ApiResponse({
+    status: 503,
+    description: 'Redis com problemas',
+  })
+  checkRedis(): Promise<HealthCheckResult> {
+    return this.health.check([() => this.redis.isHealthy('redis')]);
   }
 }

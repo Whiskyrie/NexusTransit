@@ -1,4 +1,4 @@
-import type { RateLimitType } from '../enums/rateLimitEnums';
+import type { RateLimitType } from '../enums/rate-limit-type.enum';
 
 /**
  * Configurações para rate limiting
