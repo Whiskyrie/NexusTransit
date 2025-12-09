@@ -4,7 +4,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { UsersService } from '../../users/users.service';
 import { TokenBlacklistService } from '../services/token-blacklist.service';
-import { JwtPayload } from '../interfaces/jwt-payload.interface';
+import { JwtPayload } from '@nexus/auth';
 import { User } from '../../users/entities/user.entity';
 
 /**
