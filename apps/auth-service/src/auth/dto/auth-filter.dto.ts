@@ -1,6 +1,6 @@
 import { IsOptional, IsString, IsEmail, IsEnum, IsDateString } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { BaseFilterDto } from '../../common/dto/base-filter.dto';
+import { BaseFilterDto } from '@nexus/common';
 import { AuthProvider } from '../enums/auth-provider.enum';
 
 /**
