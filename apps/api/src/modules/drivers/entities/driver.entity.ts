@@ -88,11 +88,14 @@ export class Driver extends BaseEntity {
   deliveries!: Delivery[];
 
   @OneToMany(() => DeliveryAttempt, attempt => attempt.driver)
-  delivery_attempts!: DeliveryAttempt[];
+  delivery_attempts?: DeliveryAttempt[];
 
   @OneToMany(() => DeliveryStatusHistory, history => history.driver)
-  status_changes!: DeliveryStatusHistory[];
+  delivery_status_histories?: DeliveryStatusHistory[];
 
   @OneToMany(() => Route, route => route.driver)
-  routes!: Route[];
+  routes?: Route[];
+
+  // Service Orders
+  service_orders?: any[]; // Importar ServiceOrder causaria dependência circular
 }

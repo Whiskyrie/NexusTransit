@@ -226,7 +226,7 @@ export class DeliveryStatusHistory extends BaseEntity {
   @Column('uuid', { comment: 'ID da entrega' })
   delivery_id!: string;
 
-  @ManyToOne(() => Driver, driver => driver.status_changes, { nullable: true })
+  @ManyToOne(() => Driver, driver => driver.delivery_attempts, { nullable: true })
   @JoinColumn({ name: 'driver_id' })
   driver?: Driver;
 
