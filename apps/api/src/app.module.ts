@@ -24,6 +24,7 @@ import { AuditModule } from './modules/audit/audit.module';
 import { LgpdModule } from './modules/lgpd/lgpd.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { RateLimitModule } from './modules/rate-limit/rate-limit.module';
+import { ServiceOrdersModule } from './modules/service-orders/service-orders.module';
 import configurations from './config/configurations';
 
 @Module({
@@ -64,6 +65,7 @@ import configurations from './config/configurations';
     LgpdModule,
     UploadModule, // Conformidade LGPD
     RateLimitModule, // Sistema de rate limiting e throttling
+    ServiceOrdersModule, // Sistema de ordens de serviço
   ],
   controllers: [AppController],
   providers: [AppService],
