@@ -19,6 +19,9 @@ export * from "./enums/common.enum";
 // Decorators
 export * from "./decorators/auditable.decorator";
 
+// Interceptors
+export * from "./interceptors/throttle.interceptor";
+
 // Validators - Brazilian documents
 export * from "./validators/cpf.validator";
 export * from "./validators/cnh.validator";
