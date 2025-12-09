@@ -24,9 +24,7 @@ import {
   ApiForbiddenResponse,
   ApiQuery,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { RolesGuard } from './guards/roles.guard';
-import { Roles } from './decorators/roles.decorator';
+import { JwtAuthGuard, RolesGuard, Roles, Role } from '@nexus/auth';
 import { RateLimitService } from './services/rate-limit.service';
 import { MonitoringService } from './services/monitoring.service';
 import { BlacklistService, BlacklistEntry } from './services/blacklist.service';
@@ -36,7 +34,6 @@ import { RuleFilterDto } from './dto/rule-filter.dto';
 import { RuleResponseDto } from './dto/rule-response.dto';
 import { QuotaMetricsDto } from './dto/quota-metrics.dto';
 import { PaginatedResponseDto } from '@nexus/common';
-import { Role } from './enums/role.enum';
 
 /**
  * Controller para gerenciamento de regras de rate limiting

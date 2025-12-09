@@ -29,5 +29,4 @@
  */
 
 export { RateLimitGuard } from '../../modules/rate-limit/guards/rate-limit.guard';
-export { JwtAuthGuard } from '../../modules/rate-limit/guards/jwt-auth.guard';
-export { RolesGuard } from '../../modules/rate-limit/guards/roles.guard';
+export { JwtAuthGuard, RolesGuard } from '@nexus/auth';

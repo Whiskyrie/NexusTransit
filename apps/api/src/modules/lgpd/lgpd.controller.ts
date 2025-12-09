@@ -15,10 +15,7 @@ import {
   HttpException,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
-import { Role } from '../auth/enums/role.enum';
+import { JwtAuthGuard, RolesGuard, Roles, Role } from '@nexus/auth';
 import { ConsentService } from './consent.service';
 import { DataRequestService } from './data-request.service';
 import { DataPortabilityService } from './data-portability.service';

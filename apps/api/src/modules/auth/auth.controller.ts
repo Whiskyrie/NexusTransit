@@ -15,7 +15,7 @@ import { TokenBlacklistService } from './services/token-blacklist.service';
 import { LoginDto } from './dto/login.dto';
 import { LoginResponseDto } from './dto/login-response.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { JwtAuthGuard } from '@nexus/auth';
 import type { AuthenticatedRequest } from './interfaces/authenticated-request.interface';
 import { UserResponseDto } from './dto/user-response.dto';
 
