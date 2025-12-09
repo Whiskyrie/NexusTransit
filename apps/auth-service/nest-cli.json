@@ -3,14 +3,11 @@
   "collection": "@nestjs/schematics",
   "sourceRoot": "src",
   "compilerOptions": {
-    "deleteOutDir": false,
+    "deleteOutDir": true,
     "webpack": false,
-    "tsConfigPath": "tsconfig.json",
+    "tsConfigPath": "tsconfig.build.json",
     "assets": [
-      {
-        "include": "../openapi.yaml",
-        "outDir": "dist"
-      }
+      "openapi.yaml"
     ]
   }
 }

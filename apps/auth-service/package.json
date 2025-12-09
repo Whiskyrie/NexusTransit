@@ -8,9 +8,10 @@
   "main": "dist/main.js",
   "scripts": {
     "build": "nest build",
+    "dev": "cross-env NODE_OPTIONS='--no-deprecation' nest start --watch",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "start": "ts-node -r tsconfig-paths/register src/main.ts",
-    "start:dev": "nodemon --exec ts-node -r tsconfig-paths/register src/main.ts",
+    "start": "nest start",
+    "start:dev": "cross-env NODE_OPTIONS='--no-deprecation' nest start --watch",
     "start:debug": "nodemon --inspect --exec ts-node -r tsconfig-paths/register src/main.ts",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,test}/**/*.ts\" --fix",
@@ -28,6 +29,7 @@
     "migration:show": "npm run typeorm -- migration:show"
   },
   "dependencies": {
+    "@nexus/common": "workspace:*",
     "@keyv/redis": "^5.1.2",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
