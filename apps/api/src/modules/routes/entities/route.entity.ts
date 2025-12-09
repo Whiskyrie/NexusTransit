@@ -7,7 +7,7 @@ import { Vehicle } from '../../vehicles/entities/vehicle.entity';
 import { Driver } from '../../drivers/entities/driver.entity';
 import { RouteStop } from './route_stop.entity';
 import { RouteHistory } from './route_history.entity';
-import { PointTransformer } from '../../../common/transformers/point.transformer';
+import { PointTransformer } from '@nexus/common';
 
 /**
  * Route Entity - Sistema de gerenciamento de rotas

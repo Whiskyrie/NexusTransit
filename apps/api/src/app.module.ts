@@ -6,7 +6,7 @@ import type { Request } from 'express';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
-import { LoggingModule } from './modules/logging/logging.module';
+import { LoggingModule } from '@nexus/logger';
 import { HealthModule } from './health/health.module';
 import { UsersModule } from './modules/users/users.module';
 import { RolesModule } from './modules/roles/roles.module';
