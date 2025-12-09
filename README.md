@@ -307,3 +307,24 @@ Este projeto está licenciado sob a MIT License - consulte o arquivo [LICENSE](L
 ---
 
 **NexusTransit** | Transformando a logística através da tecnologia
+
+## 🏗️ Estrutura do Monorepo
+
+Este projeto foi migrado para uma estrutura de monorepo utilizando **PNPM Workspaces** e **Turborepo**.
+
+### Organização
+
+- **apps/**: Aplicações e serviços
+  - \`api\`: Backend principal (antigo nexus-backend)
+  - \`auth-service\`: Microserviço de autenticação
+- **packages/**: Bibliotecas compartilhadas
+  - \`common\`: Código compartilhado (DTOs, Enums, Utils)
+
+### Comandos Principais
+
+Executar a partir da raiz:
+
+- \`pnpm install\`: Instalar dependências de todos os projetos
+- \`pnpm build\`: Buildar todos os projetos (via Turbo)
+- \`pnpm dev\`: Iniciar todos os projetos em modo desenvolvimento
+- \`pnpm test\`: Executar testes em todos os projetos
