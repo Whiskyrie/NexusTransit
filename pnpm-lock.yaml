@@ -77,6 +77,9 @@ importers:
       '@nexus/common':
         specifier: workspace:*
         version: link:../../packages/common
+      '@nexus/logger':
+        specifier: workspace:^
+        version: link:../../packages/logger
       '@types/multer':
         specifier: ^2.0.0
         version: 2.0.0
@@ -285,6 +288,9 @@ importers:
       '@nexus/common':
         specifier: workspace:*
         version: link:../../packages/common
+      '@nexus/logger':
+        specifier: workspace:^
+        version: link:../../packages/logger
       bcrypt:
         specifier: ^6.0.0
         version: 6.0.0
@@ -447,7 +453,7 @@ importers:
         specifier: ^4.0.0
         version: 4.0.1
       typescript:
-        specifier: ^5.9.0
+        specifier: ^5.3.0
         version: 5.9.3
 
   packages/common:
@@ -467,15 +473,67 @@ importers:
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
+      rxjs:
+        specifier: ^7.8.1
+        version: 7.8.2
       typeorm:
         specifier: ^0.3.26
         version: 0.3.28(pg@8.16.3)(redis@5.10.0)(ts-node@10.9.2(@types/node@20.19.26)(typescript@5.9.3))
     devDependencies:
+      '@types/express':
+        specifier: ^5.0.6
+        version: 5.0.6
       '@types/node':
         specifier: ^20.3.1
         version: 20.19.26
       typescript:
         specifier: ^5.0.0
+        version: 5.9.3
+
+  packages/logger:
+    dependencies:
+      nestjs-pino:
+        specifier: ^4.4.1
+        version: 4.5.0(@nestjs/common@11.1.9(class-transformer@0.5.1)(class-validator@0.14.3)(reflect-metadata@0.2.2)(rxjs@7.8.2))(pino-http@10.5.0)(pino@9.14.0)(rxjs@7.8.2)
+      pino:
+        specifier: ^9.14.0
+        version: 9.14.0
+      pino-http:
+        specifier: ^10.5.0
+        version: 10.5.0
+      pino-pretty:
+        specifier: ^11.3.0
+        version: 11.3.0
+      uuid:
+        specifier: 10.0.0
+        version: 10.0.0
+    devDependencies:
+      '@nestjs/common':
+        specifier: ^11.0.1
+        version: 11.1.9(class-transformer@0.5.1)(class-validator@0.14.3)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/core':
+        specifier: ^11.0.1
+        version: 11.1.9(@nestjs/common@11.1.9(class-transformer@0.5.1)(class-validator@0.14.3)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.9)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/swagger':
+        specifier: ^11.2.0
+        version: 11.2.3(@nestjs/common@11.1.9(class-transformer@0.5.1)(class-validator@0.14.3)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.9(@nestjs/common@11.1.9(class-transformer@0.5.1)(class-validator@0.14.3)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.9)(reflect-metadata@0.2.2)(rxjs@7.8.2))(class-transformer@0.5.1)(class-validator@0.14.3)(reflect-metadata@0.2.2)
+      '@types/express':
+        specifier: ^5.0.6
+        version: 5.0.6
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.19.2
+      '@types/uuid':
+        specifier: ^10.0.0
+        version: 10.0.0
+      reflect-metadata:
+        specifier: ^0.2.2
+        version: 0.2.2
+      rxjs:
+        specifier: ^7.8.1
+        version: 7.8.2
+      typescript:
+        specifier: ^5.3.0
         version: 5.9.3
 
 packages:
