@@ -31,7 +31,7 @@ import { DeliveryFilterDto } from './dto/delivery-filter.dto';
 import { DeliveryResponseDto } from './dto/delivery-response.dto';
 import { ChangeStatusDto } from './dto/change-status.dto';
 import { CreateDeliveryAttemptDto } from './dto/delivery-attempt.dto';
-import { PaginatedResponseDto } from '../../common/dto/paginated-response.dto';
+import { PaginatedResponseDto } from '@nexus/common';
 import { DeliveryStatus } from './enums/delivery-status.enum';
 import { DeliveryPriority } from './enums/delivery-priority.enum';
 import { DeliveryAttempt } from './entities/delivery-attempt.entity';

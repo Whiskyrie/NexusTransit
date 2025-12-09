@@ -1,5 +1,5 @@
 import { Entity, Column, ManyToOne, Index, JoinColumn } from 'typeorm';
-import { BaseEntity } from '../../../database/entities/base.entity';
+import { BaseEntity } from '@nexus/common';
 import { ProofType } from '../enums/proof-type.enum';
 import { Delivery } from './delivery.entity';
 

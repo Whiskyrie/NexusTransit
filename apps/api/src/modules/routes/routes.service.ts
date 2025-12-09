@@ -9,7 +9,7 @@ import { CreateRouteDto, CreateRouteStopDto } from './dto/create-route.dto';
 import { UpdateRouteDto } from './dto/update-route.dto';
 import { RouteFilterDto } from './dto/filter-route.dto';
 import { RouteResponseDto, RouteStopResponseDto } from './dto/route-response.dto';
-import { PaginatedResponseDto } from '../../common/dto/paginated-response.dto';
+import { PaginatedResponseDto } from '@nexus/common';
 import { RouteValidatorService } from './validators/route.validator';
 import { DistanceCalculatorService } from './validators/distance_calculator.validator';
 import { RouteStatus } from './enums/route-status';

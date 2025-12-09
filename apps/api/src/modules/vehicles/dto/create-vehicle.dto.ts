@@ -16,7 +16,7 @@ import { Transform } from 'class-transformer';
 import { VehicleType } from '../enums/vehicle-type.enum';
 import { FuelType } from '../enums/fuel-type.enum';
 import { VehicleStatus } from '../enums/vehicle-status.enum';
-import { IsLicensePlate, normalizeLicensePlate } from '../validators/license-plate.validator';
+import { IsLicensePlate, normalizeLicensePlate } from '@nexus/common';
 
 export class CreateVehicleDto {
   @ApiProperty({

@@ -1,7 +1,7 @@
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { BaseEntity } from '../../../database/entities/base.entity';
+import { BaseEntity } from '@nexus/common';
 import { Vehicle } from './vehicle.entity';
-import { Auditable } from '../decorators/auditable.decorator';
+import { Auditable } from '@nexus/common';
 
 export enum DriverAssignmentStatus {
   ACTIVE = 'active',

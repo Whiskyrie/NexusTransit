@@ -1,7 +1,7 @@
 import { Entity, Column, ManyToOne, Index, JoinColumn } from 'typeorm';
 import { BaseEntity } from '../../../database/entities/base.entity';
 import { Customer } from './customer.entity';
-import { Auditable } from '../decorators/auditable.decorator';
+import { Auditable } from '@nexus/common';
 
 /**
  * CustomerPreferences Entity - Preferências de entrega e notificação

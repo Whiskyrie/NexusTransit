@@ -1,5 +1,5 @@
 import { Entity, Column, ManyToOne, OneToMany, Index, JoinColumn } from 'typeorm';
-import { BaseEntity } from '../../../database/entities/base.entity';
+import { BaseEntity } from '@nexus/common';
 import { DeliveryStatus } from '../enums/delivery-status.enum';
 import { DeliveryPriority } from '../enums/delivery-priority.enum';
 import { Customer } from '../../customers/entities/customer.entity';

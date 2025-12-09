@@ -12,8 +12,7 @@ import {
 import { ApiProperty } from '@nestjs/swagger';
 import { DriverStatus } from '../enums/driver-status.enum';
 import { CNHCategory } from '../enums/cnh-category.enum';
-import { IsCPF } from '../validators/cpf.validator';
-import { IsCNH } from '../validators/cnh.validator';
+import { IsCPF, IsCNH } from '@nexus/common';
 
 /**
  * DTO para criação de motorista

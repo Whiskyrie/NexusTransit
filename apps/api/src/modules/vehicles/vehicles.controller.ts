@@ -35,7 +35,7 @@ import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import { VehicleFilterDto } from './dto/vehicle-filter.dto';
 import { VehicleResponseDto } from './dto/vehicle-response.dto';
 import { UploadDocumentDto, DocumentResponseDto } from './dto/document.dto';
-import { PaginatedResponseDto } from '../../common/dto/paginated-response.dto';
+import { PaginatedResponseDto } from '@nexus/common';
 import { VehicleStatus } from './enums/vehicle-status.enum';
 import { VehicleType } from './enums/vehicle-type.enum';
 

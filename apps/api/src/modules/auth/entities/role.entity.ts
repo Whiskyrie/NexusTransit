@@ -1,5 +1,5 @@
 import { Entity, Column, ManyToMany } from 'typeorm';
-import { BaseEntity } from '../../../database/entities/base.entity';
+import { BaseEntity } from '@nexus/common';
 import { Role as RoleEnum } from '../enums/role.enum';
 import { User } from '../../users/entities/user.entity';
 

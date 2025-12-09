@@ -6,7 +6,7 @@ import {
   UpdateDateColumn,
   Index,
 } from 'typeorm';
-import { BaseEntity } from '../../../database/entities/base.entity';
+import { BaseEntity } from '@nexus/common';
 import { DataRequestStatus, DataRequestType } from '../enums/lgpdEnums';
 
 /**

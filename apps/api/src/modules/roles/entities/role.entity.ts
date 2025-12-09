@@ -1,5 +1,5 @@
 import { Entity, Column } from 'typeorm';
-import { BaseEntity } from '../../../database/entities/base.entity';
+import { BaseEntity } from '@nexus/common';
 import { RoleType } from '../enums/role-type.enum';
 
 /**

@@ -26,7 +26,7 @@ import { CreateDriverDto } from './dto/create-driver.dto';
 import { UpdateDriverDto } from './dto/update-driver.dto';
 import { DriverFilterDto } from './dto/driver-filter.dto';
 import { DriverResponseDto } from './dto/driver-response.dto';
-import { PaginatedResponseDto } from '../../common/dto/paginated-response.dto';
+import { PaginatedResponseDto } from '@nexus/common';
 import { DriverStatus } from './enums/driver-status.enum';
 
 @ApiTags('Drivers')

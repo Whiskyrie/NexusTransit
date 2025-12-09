@@ -6,7 +6,7 @@ import { DriverDocument } from './driver-document.entity';
 import { Delivery } from '../../deliveries/entities/delivery.entity';
 import { DeliveryAttempt } from '../../deliveries/entities/delivery-attempt.entity';
 import { DeliveryStatusHistory } from '../../deliveries/entities/delivery-status-history.entity';
-import { Auditable } from '../decorators/auditable.decorator';
+import { Auditable } from '@nexus/common';
 import { Route } from '../../routes/entities/route.entity';
 
 /**

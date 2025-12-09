@@ -15,7 +15,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { DeliveryStatus } from '../enums/delivery-status.enum';
 import { DeliveryPriority } from '../enums/delivery-priority.enum';
-import { BaseFilterDto } from '../../../common/dto/base-filter.dto';
+import { BaseFilterDto } from '@nexus/common';
 
 export class DeliveryFilterDto extends BaseFilterDto {
   @ApiProperty({

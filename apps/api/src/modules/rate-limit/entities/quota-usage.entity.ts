@@ -1,6 +1,6 @@
 import { Entity, Column, Index } from 'typeorm';
-import { BaseEntity } from '../../../database/entities/base.entity';
-import { Auditable } from '../decorators/auditable.decorator';
+import { BaseEntity } from '@nexus/common';
+import { Auditable } from '@nexus/common';
 
 /**
  * Quota Usage Entity

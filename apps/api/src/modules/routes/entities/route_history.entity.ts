@@ -1,5 +1,5 @@
 import { Entity, Column, ManyToOne, Index, JoinColumn } from 'typeorm';
-import { BaseEntity } from '../../../database/entities/base.entity';
+import { BaseEntity } from '@nexus/common';
 import { Route } from './route.entity';
 import { RouteStatus } from '../enums/route-status';
 

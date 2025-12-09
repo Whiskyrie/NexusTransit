@@ -1,6 +1,6 @@
 import { Entity, Column, ManyToOne, OneToMany, Index, JoinColumn } from 'typeorm';
-import { BaseEntity } from '../../../database/entities/base.entity';
-import { Auditable } from '../../vehicles/decorators/auditable.decorator';
+import { BaseEntity } from '@nexus/common';
+import { Auditable } from '@nexus/common';
 import { RouteStatus } from '../enums/route-status';
 import { RouteType } from '../enums/route.type';
 import { Vehicle } from '../../vehicles/entities/vehicle.entity';

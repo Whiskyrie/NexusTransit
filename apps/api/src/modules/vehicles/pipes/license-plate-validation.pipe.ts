@@ -1,8 +1,5 @@
 import { PipeTransform, Injectable, BadRequestException } from '@nestjs/common';
-import {
-  IsLicensePlateConstraint,
-  normalizeLicensePlate,
-} from '../validators/license-plate.validator';
+import { IsLicensePlateConstraint, normalizeLicensePlate } from '@nexus/common';
 
 /**
  * Pipe para validação e normalização de placa de veículo brasileira

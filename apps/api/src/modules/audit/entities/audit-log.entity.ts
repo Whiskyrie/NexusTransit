@@ -1,5 +1,5 @@
 import { Entity, Column, Index } from 'typeorm';
-import { BaseEntity } from '../../../database/entities/base.entity';
+import { BaseEntity } from '@nexus/common';
 import { AuditAction, AuditCategory } from '../enums';
 
 @Entity('audit_logs')

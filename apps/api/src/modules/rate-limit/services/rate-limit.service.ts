@@ -17,7 +17,7 @@ import { CreateRuleDto } from '../dto/create-rule.dto';
 import { UpdateRuleDto } from '../dto/update-rule.dto';
 import { RuleFilterDto } from '../dto/rule-filter.dto';
 import { RuleResponseDto } from '../dto/rule-response.dto';
-import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
+import { PaginatedResponseDto } from '@nexus/common';
 
 interface RateLimitEntry {
   requests: number[];

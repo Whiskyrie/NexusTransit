@@ -30,7 +30,7 @@ import { CreateRouteDto } from './dto/create-route.dto';
 import { UpdateRouteDto } from './dto/update-route.dto';
 import { RouteFilterDto } from './dto/filter-route.dto';
 import { RouteResponseDto } from './dto/route-response.dto';
-import { PaginatedResponseDto } from '../../common/dto/paginated-response.dto';
+import { PaginatedResponseDto } from '@nexus/common';
 import { CancelRouteDto } from './dto/cancel_route.dto';
 import { RouteStatusInterceptor } from './interceptors/route-status.interceptor';
 import { RouteValidationInterceptor } from './interceptors/route-validation.interceptor';

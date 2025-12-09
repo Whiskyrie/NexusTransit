@@ -1,12 +1,12 @@
 import { Entity, Column, OneToMany } from 'typeorm';
-import { BaseEntity } from '../../../database/entities/base.entity';
+import { BaseEntity } from '@nexus/common';
 import { VehicleStatus } from '../enums/vehicle-status.enum';
 import { VehicleType } from '../enums/vehicle-type.enum';
 import { FuelType } from '../enums/fuel-type.enum';
 import { VehicleDocument } from './vehicle-document.entity';
 import { VehicleMaintenance } from './vehicle-maintenance.entity';
 import { VehicleDriverHistory } from './vehicle-driver-history.entity';
-import { Auditable } from '../decorators/auditable.decorator';
+import { Auditable } from '@nexus/common';
 import { Delivery } from '../../deliveries/entities/delivery.entity';
 import { Route } from '../../routes/entities/route.entity';
 

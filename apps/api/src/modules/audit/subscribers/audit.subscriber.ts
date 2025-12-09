@@ -13,7 +13,7 @@ import { AuditLogService } from '../audit-log.service';
 import { AuditAction, AuditCategory } from '../enums';
 import type { CreateAuditLogDto } from '../dto';
 import type { IAuditableOptions } from '../interfaces/audit-options.interface';
-import type { BaseEntity } from '../../../database/entities/base.entity';
+import type { BaseEntity } from '@nexus/common';
 import { AUDIT_EXCLUDED_FIELDS } from '../constants/audit.constants';
 
 /**

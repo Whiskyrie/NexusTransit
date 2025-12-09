@@ -2,7 +2,7 @@ import { Entity, Column, OneToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from '../../../database/entities/base.entity';
 import { CNHCategory } from '../enums/cnh-category.enum';
 import { Driver } from './driver.entity';
-import { Auditable } from '../decorators/auditable.decorator';
+import { Auditable } from '@nexus/common';
 
 /**
  * Driver License Entity

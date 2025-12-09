@@ -1,6 +1,6 @@
 import { IsOptional, IsEnum, IsBoolean } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { BaseFilterDto } from '../../../common/dto/base-filter.dto';
+import { BaseFilterDto } from '@nexus/common';
 import { RateLimitStrategyType } from '../interfaces/rate-limit-strategy.interface';
 
 /**

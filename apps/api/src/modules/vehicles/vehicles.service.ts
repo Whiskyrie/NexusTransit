@@ -8,11 +8,8 @@ import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import { VehicleFilterDto } from './dto/vehicle-filter.dto';
 import { VehicleResponseDto } from './dto/vehicle-response.dto';
 import { UploadDocumentDto, DocumentResponseDto } from './dto/document.dto';
-import { PaginatedResponseDto } from '../../common/dto/paginated-response.dto';
-import {
-  normalizeLicensePlate,
-  IsLicensePlateConstraint,
-} from './validators/license-plate.validator';
+import { PaginatedResponseDto } from '@nexus/common';
+import { normalizeLicensePlate, IsLicensePlateConstraint } from '@nexus/common';
 import { VehicleStatus } from './enums/vehicle-status.enum';
 import { FuelType } from './enums/fuel-type.enum';
 import { FileValidationUtils } from './config/upload.config';

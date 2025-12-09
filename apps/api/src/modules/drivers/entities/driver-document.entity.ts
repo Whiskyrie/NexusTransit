@@ -2,7 +2,7 @@ import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from '../../../database/entities/base.entity';
 import { Driver } from './driver.entity';
 import { DocumentType } from '../enums/document-type.enum';
-import { Auditable } from '../decorators/auditable.decorator';
+import { Auditable } from '@nexus/common';
 
 /**
  * Driver Document Entity - Sistema de documentos do motorista

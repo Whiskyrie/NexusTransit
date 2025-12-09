@@ -2,7 +2,7 @@ import { Entity, Column, ManyToOne, Index, JoinColumn } from 'typeorm';
 import { BaseEntity } from '../../../database/entities/base.entity';
 import { ContactType } from '../enums/contact-type.enum';
 import { Customer } from './customer.entity';
-import { Auditable } from '../decorators/auditable.decorator';
+import { Auditable } from '@nexus/common';
 
 /**
  * CustomerContact Entity - Contatos adicionais de clientes

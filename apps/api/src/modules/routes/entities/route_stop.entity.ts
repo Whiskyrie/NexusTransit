@@ -1,6 +1,6 @@
 import { Entity, Column, ManyToOne, Index, JoinColumn } from 'typeorm';
-import { BaseEntity } from '../../../database/entities/base.entity';
-import { Auditable } from '../../vehicles/decorators/auditable.decorator';
+import { BaseEntity } from '@nexus/common';
+import { Auditable } from '@nexus/common';
 import { Route } from './route.entity';
 import { CustomerAddress } from '../../customers/entities/customer-address.entity';
 import { PointTransformer } from '../../../common/transformers/point.transformer';

@@ -7,7 +7,7 @@ import { CustomerAddress } from './customer-address.entity';
 import { CustomerContact } from './customer-contact.entity';
 import { CustomerPreferences } from './customer-preferences.entity';
 import { Delivery } from '../../deliveries/entities/delivery.entity';
-import { Auditable } from '../decorators/auditable.decorator';
+import { Auditable } from '@nexus/common';
 
 /**
  * Customer Entity - Sistema de gerenciamento de clientes

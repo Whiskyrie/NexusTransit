@@ -10,7 +10,7 @@ import {
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
-import { BaseFilterDto } from '../../../common/dto/base-filter.dto';
+import { BaseFilterDto } from '@nexus/common';
 import { RouteStatus } from '../enums/route-status';
 import { RouteType } from '../enums/route.type';
 

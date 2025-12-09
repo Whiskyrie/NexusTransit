@@ -1,5 +1,5 @@
 import { Entity, Column, ManyToMany, JoinTable } from 'typeorm';
-import { BaseEntity } from '../../../database/entities/base.entity';
+import { BaseEntity } from '@nexus/common';
 import { UserStatus } from '../enums/user-status.enum';
 import { UserType } from '../enums/user-type.enum';
 import { Role } from '../../auth/entities/role.entity';

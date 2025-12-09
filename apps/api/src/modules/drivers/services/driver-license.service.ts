@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { DriverLicense } from '../entities/driver-license.entity';
 import { Driver } from '../entities/driver.entity';
 import { CNHCategory } from '../enums/cnh-category.enum';
-import { normalizeCNH } from '../validators/cnh.validator';
+import { normalizeCNH } from '@nexus/common';
 import { convertDateFormat } from '../utils/date.util';
 import {
   DEFAULT_CNH_ISSUING_AUTHORITY,
