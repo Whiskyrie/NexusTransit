@@ -31,7 +31,7 @@ import configurations from './config/configurations';
     ConfigModule.forRoot({
       load: configurations,
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath: ['../../.env', '.env'],
       cache: true,
     }),
     ClsModule.forRoot({
