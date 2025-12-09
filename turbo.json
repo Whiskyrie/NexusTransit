@@ -6,7 +6,17 @@
                 "^build"
             ],
             "outputs": [
-                "dist/**"
+                "dist/**",
+                ".next/**",
+                "!.next/cache/**",
+                "*.tsbuildinfo"
+            ]
+        },
+        "dev": {
+            "cache": false,
+            "persistent": true,
+            "dependsOn": [
+                "^build"
             ]
         },
         "test": {
@@ -20,10 +30,13 @@
                 "test/**/*.tsx"
             ]
         },
-        "lint": {},
-        "dev": {
-            "cache": false,
-            "persistent": true
+        "lint": {
+            "dependsOn": [
+                "^build"
+            ]
+        },
+        "clean": {
+            "cache": false
         }
     }
 }
