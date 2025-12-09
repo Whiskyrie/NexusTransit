@@ -1,0 +1,206 @@
+version: "3.8"
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgis/postgis:15-3.4
+    container_name: nexus-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: nexus_transit
+      POSTGRES_MULTIPLE_DATABASES: nexus_transit,nexus_auth
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/create-schemas.sql:/docker-entrypoint-initdb.d/01-create-schemas.sql:ro
+      - ./apps/api/docker/postgres/init.sql:/docker-entrypoint-initdb.d/02-init.sql:ro
+    networks:
+      - nexus-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: nexus-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - nexus-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # API Principal
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: development
+    container_name: nexus-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+
+      # Database
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: postgres
+      DATABASE_NAME: nexus_transit
+      DATABASE_SCHEMA: public
+      DATABASE_SYNC: "false"
+      DATABASE_LOGGING: "true"
+
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DB: 0
+
+      # JWT
+      JWT_SECRET: dev-secret-change-in-production
+      JWT_ACCESS_TOKEN_EXPIRES_IN: 15m
+      JWT_REFRESH_TOKEN_EXPIRES_IN: 7d
+
+      # Storage
+      UPLOAD_DEST: ./uploads
+      MAX_FILE_SIZE: 10485760
+
+      # CORS
+      CORS_ORIGIN: http://localhost:3000,http://localhost:3001
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./apps/api:/app/apps/api
+      - ./packages:/app/packages
+      - /app/node_modules
+      - /app/apps/api/node_modules
+      - api_uploads:/app/apps/api/uploads
+    networks:
+      - nexus-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: pnpm --filter @nexus/api dev
+
+  # Auth Service
+  auth-service:
+    build:
+      context: .
+      dockerfile: apps/auth-service/Dockerfile
+      target: development
+    container_name: nexus-auth-service
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+
+      # Database
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: postgres
+      DATABASE_NAME: nexus_auth
+      DATABASE_SCHEMA: auth
+      DATABASE_SYNC: "false"
+      DATABASE_LOGGING: "true"
+
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DB: 1
+
+      # JWT
+      JWT_SECRET: dev-secret-change-in-production
+      JWT_ACCESS_TOKEN_EXPIRES_IN: 15m
+      JWT_REFRESH_TOKEN_EXPIRES_IN: 7d
+      JWT_BLACKLIST_EXPIRES_IN: 604800
+
+      # Session
+      SESSION_SECRET: dev-session-secret
+      SESSION_MAX_AGE: 86400000
+
+      # Rate Limit
+      RATE_LIMIT_TTL: 60
+      RATE_LIMIT_MAX: 100
+
+      # CORS
+      CORS_ORIGIN: http://localhost:3000,http://localhost:3001
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./apps/auth-service:/app/apps/auth-service
+      - ./packages:/app/packages
+      - /app/node_modules
+      - /app/apps/auth-service/node_modules
+    networks:
+      - nexus-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: pnpm --filter @nexus/auth-service dev
+
+  # pgAdmin (opcional)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: nexus-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@nexustransit.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - nexus-network
+    depends_on:
+      - postgres
+
+  # Redis Commander (opcional)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: nexus-redis-commander
+    restart: unless-stopped
+    environment:
+      REDIS_HOSTS: local:redis:6379
+    ports:
+      - "8081:8081"
+    networks:
+      - nexus-network
+    depends_on:
+      - redis
+
+networks:
+  nexus-network:
+    driver: bridge
+    name: nexus-network
+
+volumes:
+  postgres_data:
+    name: nexus-postgres-data
+  redis_data:
+    name: nexus-redis-data
+  pgadmin_data:
+    name: nexus-pgadmin-data
+  api_uploads:
+    name: nexus-api-uploads
