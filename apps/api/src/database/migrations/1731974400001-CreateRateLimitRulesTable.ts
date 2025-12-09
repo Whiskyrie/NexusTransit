@@ -161,7 +161,7 @@ export class CreateRateLimitRulesTable1731974400001 implements MigrationInterfac
 
     // Insert default rate limit rules
     await queryRunner.query(`
-      INSERT INTO rate_limit_rules (type, strategy, limit, window_size, priority, is_active, description)
+      INSERT INTO rate_limit_rules (type, strategy, "limit", window_size, priority, is_active, description)
       VALUES
         ('GLOBAL', 'SLIDING_WINDOW', 1000, 60000, 100, true, 'Global rate limit for all endpoints'),
         ('IP', 'FIXED_WINDOW', 100, 60000, 90, true, 'IP-based rate limit for unauthenticated users'),
