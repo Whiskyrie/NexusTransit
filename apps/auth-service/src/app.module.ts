@@ -14,6 +14,7 @@ import { UsersModule } from "./users/users.module";
 import { RolesModule } from "./roles/roles.module";
 import { RedisModule } from "./redis/redis.module";
 import { HealthModule } from "./health/health.module";
+import { LoggingModule } from "@nexus/logger";
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { HealthModule } from "./health/health.module";
     RolesModule,
     RedisModule,
     HealthModule,
+    LoggingModule,
   ],
 })
 export class AppModule {}

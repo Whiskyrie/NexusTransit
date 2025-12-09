@@ -1,19 +1,19 @@
-import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { AppModule } from './app.module';
+import { NestFactory } from "@nestjs/core";
+import { ValidationPipe } from "@nestjs/common";
+import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
+import { Logger } from "@nexus/logger";
+import { AppModule } from "./app.module";
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
-    logger: ['error', 'warn', 'log', 'debug', 'verbose'],
-  });
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  app.useLogger(app.get(Logger));
 
   // Global prefix
-  app.setGlobalPrefix('api');
+  app.setGlobalPrefix("api");
 
   // Enable CORS
   app.enableCors({
-    origin: process.env.CORS_ORIGIN?.split(',') || '*',
+    origin: process.env.CORS_ORIGIN?.split(",") || "*",
     credentials: true,
   });
 
@@ -26,20 +26,22 @@ async function bootstrap() {
       transformOptions: {
         enableImplicitConversion: true,
       },
-    }),
+    })
   );
 
   // Setup Swagger/OpenAPI
   const config = new DocumentBuilder()
-    .setTitle('NexusTransit Auth Service')
-    .setDescription('Microserviço de autenticação e gerenciamento de usuários do NexusTransit')
-    .setVersion('1.0')
+    .setTitle("NexusTransit Auth Service")
+    .setDescription(
+      "Microserviço de autenticação e gerenciamento de usuários do NexusTransit"
+    )
+    .setVersion("1.0")
     .addBearerAuth()
-    .addServer('http://localhost:3002', 'Development')
+    .addServer("http://localhost:3002", "Development")
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document, {
+  SwaggerModule.setup("api/docs", app, document, {
     swaggerOptions: {
       persistAuthorization: true,
     },

@@ -29,7 +29,6 @@
     "migration:show": "npm run typeorm -- migration:show"
   },
   "dependencies": {
-    "@nexus/common": "workspace:*",
     "@keyv/redis": "^5.1.2",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
@@ -43,6 +42,8 @@
     "@nestjs/terminus": "^11.0.0",
     "@nestjs/throttler": "^6.4.0",
     "@nestjs/typeorm": "^11.0.0",
+    "@nexus/common": "workspace:*",
+    "@nexus/logger": "workspace:^",
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
