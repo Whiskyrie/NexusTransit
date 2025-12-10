@@ -11,17 +11,18 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiConsumes, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { UploadService, UploadResult } from './upload.service';
 import {
+  StorageService,
   ImageValidationPipe,
   AvatarValidationPipe,
   MultipleImagesValidationPipe,
-} from './pipes/uploadPipes';
+  UploadResult,
+} from '@nexus/storage';
 
 @ApiTags('Upload')
 @Controller('upload')
 export class UploadController {
-  constructor(private readonly uploadService: UploadService) {}
+  constructor(private readonly storageService: StorageService) {}
 
   @Post('image')
   @ApiOperation({ summary: 'Upload single image' })
@@ -33,7 +34,7 @@ export class UploadController {
     @UploadedFile(ImageValidationPipe) file: Express.Multer.File,
     @Body('folder') folder?: string,
   ): Promise<UploadResult> {
-    return this.uploadService.uploadImage(file, folder ?? 'images');
+    return this.storageService.uploadImage(file, folder ?? 'images');
   }
 
   @Post('images')
@@ -46,7 +47,7 @@ export class UploadController {
     @Body('folder') folder?: string,
   ): Promise<{ success: boolean; uploaded: UploadResult[]; failed: { error: string }[] }> {
     try {
-      const results = await this.uploadService.uploadMultipleImages(files, folder ?? 'images');
+      const results = await this.storageService.uploadMultipleImages(files, folder ?? 'images');
       return { success: true, uploaded: results, failed: [] };
     } catch (error) {
       return {
@@ -66,7 +67,7 @@ export class UploadController {
   async uploadAvatar(
     @UploadedFile(AvatarValidationPipe) file: Express.Multer.File,
   ): Promise<UploadResult> {
-    return this.uploadService.uploadImage(file, 'avatars');
+    return this.storageService.uploadImage(file, 'avatars');
   }
 
   @Delete(':imageUrl')
@@ -74,7 +75,7 @@ export class UploadController {
   @ApiResponse({ status: HttpStatus.OK, description: 'Image deleted successfully' })
   async deleteImage(@Param('imageUrl') imageUrl: string): Promise<{ message: string }> {
     const decodedUrl = decodeURIComponent(imageUrl);
-    await this.uploadService.deleteImage(decodedUrl);
+    await this.storageService.deleteImage(decodedUrl);
     return { message: 'Image deleted successfully' };
   }
 }

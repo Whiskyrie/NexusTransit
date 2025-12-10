@@ -59,6 +59,7 @@
     "@nexus/database": "workspace:^",
     "@nexus/logger": "workspace:^",
     "@nexus/redis": "workspace:^",
+    "@nexus/storage": "workspace:^",
     "@types/multer": "^2.0.0",
     "axios": "^1.12.2",
     "bcrypt": "^6.0.0",
