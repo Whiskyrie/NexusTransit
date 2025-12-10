@@ -1,5 +1,4 @@
-import type { IAuditableOptions as AuditableOptions } from '@nexus/audit';
-import { AUDITABLE_ENTITY_KEY } from '@nexus/audit';
+import { AUDITABLE_ENTITY_KEY, type IAuditableOptions as AuditableOptions } from '@nexus/audit';
 
 /**
  * Utilitários para trabalhar com entidades auditáveis no módulo de motoristas
