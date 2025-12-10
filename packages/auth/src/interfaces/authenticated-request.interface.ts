@@ -15,8 +15,6 @@ export interface AuthUser {
  * Authenticated Request Interface
  * Extensão do Request do Express com usuário autenticado
  */
-export interface AuthenticatedRequest<
-  T extends AuthUser = AuthUser,
-> extends Request {
+export interface AuthenticatedRequest<T extends AuthUser = AuthUser> extends Request {
   user: T;
 }

@@ -22,5 +22,4 @@ export const PUBLIC_KEY = "isPublic";
  * Public Decorator
  * Marca um endpoint como público (sem necessidade de autenticação)
  */
-export const Public = (): ReturnType<typeof SetMetadata> =>
-  SetMetadata(PUBLIC_KEY, true);
+export const Public = (): ReturnType<typeof SetMetadata> => SetMetadata(PUBLIC_KEY, true);

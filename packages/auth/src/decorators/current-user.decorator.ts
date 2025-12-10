@@ -18,11 +18,11 @@ import type { AuthUser, AuthenticatedRequest } from "../interfaces";
 export const CurrentUser = createParamDecorator(
   <T extends AuthUser = AuthUser>(
     data: keyof T | undefined,
-    ctx: ExecutionContext
+    ctx: ExecutionContext,
   ): T | T[keyof T] => {
     const request = ctx.switchToHttp().getRequest<AuthenticatedRequest<T>>();
     const user = request.user;
 
     return data ? user?.[data] : user;
-  }
+  },
 );
