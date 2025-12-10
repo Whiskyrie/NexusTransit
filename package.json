@@ -13,9 +13,15 @@
         "clean:build": "rm -rf apps/*/dist packages/*/dist .turbo"
     },
     "devDependencies": {
+        "@eslint/js": "^9.18.0",
+        "cross-env": "^7.0.0",
+        "eslint": "^9.18.0",
+        "eslint-config-prettier": "^10.0.1",
+        "eslint-plugin-prettier": "^5.2.2",
+        "globals": "^16.0.0",
+        "prettier": "^3.7.4",
         "turbo": "^2.0.0",
-        "prettier": "^3.0.0",
-        "cross-env": "^7.0.0"
+        "typescript-eslint": "^8.20.0"
     },
     "packageManager": "pnpm@9.0.0"
 }
