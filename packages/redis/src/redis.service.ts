@@ -17,6 +17,7 @@ export class RedisService implements OnModuleDestroy {
     try {
       // Keyv stores the store adapter in opts.store
       // @keyv/redis stores the redis client in the redis property
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const store = this.keyv.opts.store as any;
       if (store && store.redis) {
         this.redisClient = store.redis as RedisClientType;
@@ -34,10 +35,12 @@ export class RedisService implements OnModuleDestroy {
     await this.keyv.disconnect();
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async get<T = any>(key: string): Promise<T | undefined> {
     return this.keyv.get(key);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async set(key: string, value: any, ttl?: number): Promise<boolean> {
     return this.keyv.set(key, value, ttl);
   }

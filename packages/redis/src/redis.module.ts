@@ -11,10 +11,7 @@ export class RedisModule {
     const keyvProvider: Provider = {
       provide: "KEYV_INSTANCE",
       useFactory: async (configService: ConfigService) => {
-        const redisUrl = configService.get<string>(
-          "REDIS_URL",
-          "redis://localhost:6379"
-        );
+        const redisUrl = configService.get<string>("REDIS_URL", "redis://localhost:6379");
 
         const keyv = new Keyv({
           store: new KeyvRedis(redisUrl),
