@@ -3,45 +3,24 @@ import {
   Logger,
   BadRequestException,
   InternalServerErrorException,
-} from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3';
-import { Upload } from '@aws-sdk/lib-storage';
-import sharp from 'sharp';
-import { v4 as uuidv4 } from 'uuid';
-import type { StorageConfig } from '../../config/storage.config';
-
-export interface UploadResult {
-  originalUrl: string;
-  thumbnails: {
-    small: string;
-    medium: string;
-    large: string;
-  };
-  metadata: {
-    filename: string;
-    originalName: string;
-    size: number;
-    mimeType: string;
-    width?: number;
-    height?: number;
-  };
-}
-
-export interface ThumbnailSize {
-  width: number;
-  height: number;
-  suffix: string;
-}
+} from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { Upload } from "@aws-sdk/lib-storage";
+import sharp from "sharp";
+import { v4 as uuidv4 } from "uuid";
+import type { StorageConfig } from "../config/storage.config";
+import type { UploadResult } from "../interfaces/upload.interface";
 
 @Injectable()
-export class UploadService {
-  private readonly logger = new Logger(UploadService.name);
+export class StorageService {
+  private readonly logger = new Logger(StorageService.name);
   private readonly s3Client: S3Client;
   private readonly storageConfig: StorageConfig;
 
   constructor(private readonly configService: ConfigService) {
-    this.storageConfig = this.configService.getOrThrow<StorageConfig>('storage');
+    this.storageConfig =
+      this.configService.getOrThrow<StorageConfig>("storage");
 
     // Configuração do cliente S3 para Backblaze B2
     this.s3Client = new S3Client({
@@ -54,7 +33,9 @@ export class UploadService {
       forcePathStyle: true, // Necessário para compatibilidade com Backblaze B2
     });
 
-    this.logger.log('Upload service initialized with Backblaze B2 configuration');
+    this.logger.log(
+      "Storage service initialized with Backblaze B2 configuration"
+    );
   }
 
   /**
@@ -62,8 +43,8 @@ export class UploadService {
    */
   async uploadImage(
     file: Express.Multer.File,
-    folder = 'images',
-    userId?: string,
+    folder = "images",
+    userId?: string
   ): Promise<UploadResult> {
     try {
       // Validar o arquivo
@@ -81,14 +62,14 @@ export class UploadService {
       const originalUrl = await this.uploadToB2(
         processedImage.buffer,
         originalFileName,
-        file.mimetype,
+        file.mimetype
       );
 
       // Gerar e fazer upload dos thumbnails
       const thumbnails = await this.generateAndUploadThumbnails(
         file.buffer,
         baseFileName,
-        fileExtension,
+        fileExtension
       );
 
       // Log da operação
@@ -111,13 +92,16 @@ export class UploadService {
         },
       };
     } catch (error) {
-      this.logger.error('Failed to upload image', error instanceof Error ? error.stack : undefined);
+      this.logger.error(
+        "Failed to upload image",
+        error instanceof Error ? error.stack : undefined
+      );
 
       if (error instanceof BadRequestException) {
         throw error;
       }
 
-      throw new InternalServerErrorException('Failed to upload image');
+      throw new InternalServerErrorException("Failed to upload image");
     }
   }
 
@@ -126,10 +110,12 @@ export class UploadService {
    */
   async uploadMultipleImages(
     files: Express.Multer.File[],
-    folder = 'images',
-    userId?: string,
+    folder = "images",
+    userId?: string
   ): Promise<UploadResult[]> {
-    const uploadPromises = files.map(file => this.uploadImage(file, folder, userId));
+    const uploadPromises = files.map((file) =>
+      this.uploadImage(file, folder, userId)
+    );
 
     return Promise.all(uploadPromises);
   }
@@ -145,22 +131,24 @@ export class UploadService {
       await this.deleteFromB2(key);
 
       // Deletar thumbnails
-      const baseKey = key.replace(/\.[^/.]+$/, ''); // Remove extensão
+      const baseKey = key.replace(/\.[^/.]+$/, ""); // Remove extensão
       const thumbnailKeys = [
         `${baseKey}_small.webp`,
         `${baseKey}_medium.webp`,
         `${baseKey}_large.webp`,
       ];
 
-      await Promise.allSettled(thumbnailKeys.map(thumbnailKey => this.deleteFromB2(thumbnailKey)));
+      await Promise.allSettled(
+        thumbnailKeys.map((thumbnailKey) => this.deleteFromB2(thumbnailKey))
+      );
 
       this.logger.log(`Image and thumbnails deleted: ${key}`);
     } catch (error) {
       this.logger.error(
         `Failed to delete image: ${imageUrl}`,
-        error instanceof Error ? error.stack : undefined,
+        error instanceof Error ? error.stack : undefined
       );
-      throw new InternalServerErrorException('Failed to delete image');
+      throw new InternalServerErrorException("Failed to delete image");
     }
   }
 
@@ -169,18 +157,18 @@ export class UploadService {
    */
   private validateFile(file: Express.Multer.File): void {
     if (!file) {
-      throw new BadRequestException('No file provided');
+      throw new BadRequestException("No file provided");
     }
 
     if (file.size > this.storageConfig.upload.maxFileSize) {
       throw new BadRequestException(
-        `File size too large. Maximum allowed: ${this.storageConfig.upload.maxFileSize / (1024 * 1024)}MB`,
+        `File size too large. Maximum allowed: ${this.storageConfig.upload.maxFileSize / (1024 * 1024)}MB`
       );
     }
 
     if (!this.storageConfig.upload.allowedMimeTypes.includes(file.mimetype)) {
       throw new BadRequestException(
-        `Invalid file type. Allowed types: ${this.storageConfig.upload.allowedMimeTypes.join(', ')}`,
+        `Invalid file type. Allowed types: ${this.storageConfig.upload.allowedMimeTypes.join(", ")}`
       );
     }
   }
@@ -189,7 +177,7 @@ export class UploadService {
    * Processar imagem (otimização e compressão)
    */
   private async processImage(
-    buffer: Buffer,
+    buffer: Buffer
   ): Promise<{ buffer: Buffer; metadata: sharp.Metadata }> {
     const image = sharp(buffer);
     const metadata = await image.metadata();
@@ -197,12 +185,16 @@ export class UploadService {
     // Otimizar baseado no formato
     let processedImage = image;
 
-    if (metadata.format === 'jpeg') {
-      processedImage = image.jpeg({ quality: this.storageConfig.upload.imageQuality });
-    } else if (metadata.format === 'png') {
+    if (metadata.format === "jpeg") {
+      processedImage = image.jpeg({
+        quality: this.storageConfig.upload.imageQuality,
+      });
+    } else if (metadata.format === "png") {
       processedImage = image.png({ compressionLevel: 9 });
-    } else if (metadata.format === 'webp') {
-      processedImage = image.webp({ quality: this.storageConfig.upload.imageQuality });
+    } else if (metadata.format === "webp") {
+      processedImage = image.webp({
+        quality: this.storageConfig.upload.imageQuality,
+      });
     }
 
     const processedBuffer = await processedImage.toBuffer();
@@ -216,34 +208,48 @@ export class UploadService {
   private async generateAndUploadThumbnails(
     originalBuffer: Buffer,
     baseFileName: string,
-    _originalExtension: string,
+    _originalExtension: string
   ): Promise<{ small: string; medium: string; large: string }> {
     const sizes = this.storageConfig.upload.thumbnailSizes;
 
-    const thumbnailPromises = Object.entries(sizes).map(async ([size, dimensions]) => {
-      const thumbnailBuffer = await sharp(originalBuffer)
-        .resize(dimensions.width, dimensions.height, {
-          fit: 'cover',
-          position: 'center',
-        })
-        .webp({ quality: 80 }) // Usar WebP para thumbnails (melhor compressão)
-        .toBuffer();
+    const thumbnailPromises = Object.entries(sizes).map(
+      async ([size, dimensions]) => {
+        const thumbnailBuffer = await sharp(originalBuffer)
+          .resize(dimensions.width, dimensions.height, {
+            fit: "cover",
+            position: "center",
+          })
+          .webp({ quality: 80 }) // Usar WebP para thumbnails (melhor compressão)
+          .toBuffer();
 
-      const thumbnailFileName = `${baseFileName}_${size}.webp`;
-      const url = await this.uploadToB2(thumbnailBuffer, thumbnailFileName, 'image/webp');
+        const thumbnailFileName = `${baseFileName}_${size}.webp`;
+        const url = await this.uploadToB2(
+          thumbnailBuffer,
+          thumbnailFileName,
+          "image/webp"
+        );
 
-      return [size, url];
-    });
+        return [size, url];
+      }
+    );
 
     const results = await Promise.all(thumbnailPromises);
 
-    return Object.fromEntries(results) as { small: string; medium: string; large: string };
+    return Object.fromEntries(results) as {
+      small: string;
+      medium: string;
+      large: string;
+    };
   }
 
   /**
    * Upload para Backblaze B2
    */
-  private async uploadToB2(buffer: Buffer, key: string, contentType: string): Promise<string> {
+  private async uploadToB2(
+    buffer: Buffer,
+    key: string,
+    contentType: string
+  ): Promise<string> {
     try {
       const upload = new Upload({
         client: this.s3Client,
@@ -254,8 +260,8 @@ export class UploadService {
           ContentType: contentType,
           // Metadados para otimização
           Metadata: {
-            'uploaded-by': 'nexus-transit',
-            'upload-timestamp': new Date().toISOString(),
+            "uploaded-by": "nexus-transit",
+            "upload-timestamp": new Date().toISOString(),
           },
         },
         // Configurações para otimização de performance
@@ -267,12 +273,12 @@ export class UploadService {
       await upload.done();
 
       // Construir URL pública
-      const baseUrl = this.storageConfig.backblaze.endpoint.replace('s3.', '');
+      const baseUrl = this.storageConfig.backblaze.endpoint.replace("s3.", "");
       return `${baseUrl}/${this.storageConfig.backblaze.bucket}/${key}`;
     } catch (error) {
       this.logger.error(
         `Failed to upload to B2: ${key}`,
-        error instanceof Error ? error.stack : undefined,
+        error instanceof Error ? error.stack : undefined
       );
       throw error;
     }
@@ -296,18 +302,20 @@ export class UploadService {
   private extractKeyFromUrl(url: string): string {
     try {
       const urlObj = new URL(url);
-      const pathParts = urlObj.pathname.split('/');
+      const pathParts = urlObj.pathname.split("/");
 
       // Remove bucket name from path and get the key
-      const bucketIndex = pathParts.indexOf(this.storageConfig.backblaze.bucket);
+      const bucketIndex = pathParts.indexOf(
+        this.storageConfig.backblaze.bucket
+      );
       if (bucketIndex !== -1) {
-        return pathParts.slice(bucketIndex + 1).join('/');
+        return pathParts.slice(bucketIndex + 1).join("/");
       }
 
       // Fallback: assume the path is the key
-      return pathParts.slice(1).join('/');
+      return pathParts.slice(1).join("/");
     } catch {
-      throw new BadRequestException('Invalid image URL format');
+      throw new BadRequestException("Invalid image URL format");
     }
   }
 
@@ -316,6 +324,6 @@ export class UploadService {
    */
   private getFileExtension(filename: string): string {
     const extension = /\.[^/.]+$/.exec(filename.toLowerCase());
-    return extension ? extension[0] : '.jpg';
+    return extension ? extension[0] : ".jpg";
   }
 }
