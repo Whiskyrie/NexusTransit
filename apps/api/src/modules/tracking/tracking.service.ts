@@ -26,22 +26,48 @@ export class TrackingService {
     tracking.status = createDto.status;
     tracking.event_type = createDto.event_type;
 
-    if (createDto.latitude !== undefined) tracking.latitude = createDto.latitude;
-    if (createDto.longitude !== undefined) tracking.longitude = createDto.longitude;
-    if (createDto.location_address !== undefined)
+    if (createDto.latitude !== undefined) {
+      tracking.latitude = createDto.latitude;
+    }
+    if (createDto.longitude !== undefined) {
+      tracking.longitude = createDto.longitude;
+    }
+    if (createDto.location_address !== undefined) {
       tracking.location_address = createDto.location_address;
-    if (createDto.city !== undefined) tracking.city = createDto.city;
-    if (createDto.state !== undefined) tracking.state = createDto.state;
-    if (createDto.description !== undefined) tracking.description = createDto.description;
-    if (createDto.driver_name !== undefined) tracking.driver_name = createDto.driver_name;
-    if (createDto.vehicle_plate !== undefined) tracking.vehicle_plate = createDto.vehicle_plate;
-    if (createDto.metadata !== undefined) tracking.metadata = createDto.metadata;
-    if (createDto.hub_name !== undefined) tracking.hub_name = createDto.hub_name;
-    if (createDto.delivery_attempt !== undefined)
+    }
+    if (createDto.city !== undefined) {
+      tracking.city = createDto.city;
+    }
+    if (createDto.state !== undefined) {
+      tracking.state = createDto.state;
+    }
+    if (createDto.description !== undefined) {
+      tracking.description = createDto.description;
+    }
+    if (createDto.driver_name !== undefined) {
+      tracking.driver_name = createDto.driver_name;
+    }
+    if (createDto.vehicle_plate !== undefined) {
+      tracking.vehicle_plate = createDto.vehicle_plate;
+    }
+    if (createDto.metadata !== undefined) {
+      tracking.metadata = createDto.metadata;
+    }
+    if (createDto.hub_name !== undefined) {
+      tracking.hub_name = createDto.hub_name;
+    }
+    if (createDto.delivery_attempt !== undefined) {
       tracking.delivery_attempt = createDto.delivery_attempt;
-    if (createDto.failure_reason !== undefined) tracking.failure_reason = createDto.failure_reason;
-    if (createDto.received_by !== undefined) tracking.received_by = createDto.received_by;
-    if (createDto.proof_url !== undefined) tracking.proof_url = createDto.proof_url;
+    }
+    if (createDto.failure_reason !== undefined) {
+      tracking.failure_reason = createDto.failure_reason;
+    }
+    if (createDto.received_by !== undefined) {
+      tracking.received_by = createDto.received_by;
+    }
+    if (createDto.proof_url !== undefined) {
+      tracking.proof_url = createDto.proof_url;
+    }
 
     tracking.event_timestamp = createDto.event_timestamp
       ? new Date(createDto.event_timestamp)
@@ -126,16 +152,27 @@ export class TrackingService {
       );
 
       // Aplicar outros filtros
-      if (delivery_id)
+      if (delivery_id) {
         queryBuilder.andWhere('tracking.delivery_id = :delivery_id', { delivery_id });
-      if (status) queryBuilder.andWhere('tracking.status = :status', { status });
-      if (event_type) queryBuilder.andWhere('tracking.event_type = :event_type', { event_type });
-      if (city) queryBuilder.andWhere('tracking.city ILIKE :city', { city: `%${city}%` });
-      if (state) queryBuilder.andWhere('tracking.state = :state', { state });
-      if (hub_name)
+      }
+      if (status) {
+        queryBuilder.andWhere('tracking.status = :status', { status });
+      }
+      if (event_type) {
+        queryBuilder.andWhere('tracking.event_type = :event_type', { event_type });
+      }
+      if (city) {
+        queryBuilder.andWhere('tracking.city ILIKE :city', { city: `%${city}%` });
+      }
+      if (state) {
+        queryBuilder.andWhere('tracking.state = :state', { state });
+      }
+      if (hub_name) {
         queryBuilder.andWhere('tracking.hub_name ILIKE :hub_name', { hub_name: `%${hub_name}%` });
-      if (is_critical !== undefined)
+      }
+      if (is_critical !== undefined) {
         queryBuilder.andWhere('tracking.is_critical = :is_critical', { is_critical });
+      }
 
       if (event_from || event_to) {
         const startDate = event_from ? new Date(event_from) : new Date('1970-01-01');
