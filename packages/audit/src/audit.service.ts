@@ -10,7 +10,7 @@ export class AuditService {
 
   constructor(
     @InjectRepository(AuditLogEntity)
-    private readonly auditLogRepository: Repository<AuditLogEntity>
+    private readonly auditLogRepository: Repository<AuditLogEntity>,
   ) {}
 
   async create(data: Partial<AuditLogEntity>): Promise<AuditLogEntity> {
@@ -34,9 +34,9 @@ export class AuditService {
     description?: string;
     ipAddress?: string;
     userAgent?: string;
-    metadata?: Record<string, any>;
-    oldValues?: Record<string, any>;
-    newValues?: Record<string, any>;
+    metadata?: Record<string, unknown>;
+    oldValues?: Record<string, unknown>;
+    newValues?: Record<string, unknown>;
   }): Promise<void> {
     try {
       await this.create({

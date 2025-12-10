@@ -1,8 +1,5 @@
 import { SetMetadata } from "@nestjs/common";
-import {
-  AUDITABLE_ENTITY_KEY,
-  DEFAULT_AUDITABLE_OPTIONS,
-} from "../constants/audit.constants";
+import { AUDITABLE_ENTITY_KEY, DEFAULT_AUDITABLE_OPTIONS } from "../constants/audit.constants";
 import type { IAuditableOptions } from "../interfaces/audit-options.interface";
 
 export const Auditable = (options: IAuditableOptions = {}): ClassDecorator => {
@@ -18,7 +15,7 @@ export const NonAuditable = (): ClassDecorator =>
   });
 
 export const AuditableOperations = (
-  operations: ("CREATE" | "UPDATE" | "DELETE")[]
+  operations: ("CREATE" | "UPDATE" | "DELETE")[],
 ): ClassDecorator => {
   return SetMetadata(AUDITABLE_ENTITY_KEY, {
     trackCreation: operations.includes("CREATE"),

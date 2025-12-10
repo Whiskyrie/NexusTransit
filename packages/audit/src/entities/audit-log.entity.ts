@@ -54,13 +54,13 @@ export class AuditLogEntity extends BaseEntity {
   executionTimeMs!: number | null;
 
   @Column({ name: "old_values", type: "jsonb", nullable: true })
-  oldValues!: Record<string, any> | null;
+  oldValues!: Record<string, unknown> | null;
 
   @Column({ name: "new_values", type: "jsonb", nullable: true })
-  newValues!: Record<string, any> | null;
+  newValues!: Record<string, unknown> | null;
 
   @Column({ name: "metadata", type: "jsonb", nullable: true })
-  metadata!: Record<string, any> | null;
+  metadata!: Record<string, unknown> | null;
 
   @Column({ name: "description", type: "text", nullable: true })
   description!: string | null;

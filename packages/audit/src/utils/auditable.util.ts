@@ -4,10 +4,7 @@ import type { IAuditableOptions } from "../interfaces/audit-options.interface";
 export class AuditableUtils {
   static isAuditable(target: object): boolean {
     try {
-      const metadata: unknown = Reflect.getMetadata(
-        AUDITABLE_ENTITY_KEY,
-        target
-      );
+      const metadata: unknown = Reflect.getMetadata(AUDITABLE_ENTITY_KEY, target);
       return !!metadata;
     } catch {
       return false;
@@ -16,9 +13,7 @@ export class AuditableUtils {
 
   static getAuditableOptions(target: object): IAuditableOptions | undefined {
     try {
-      return Reflect.getMetadata(AUDITABLE_ENTITY_KEY, target) as
-        | IAuditableOptions
-        | undefined;
+      return Reflect.getMetadata(AUDITABLE_ENTITY_KEY, target) as IAuditableOptions | undefined;
     } catch {
       return undefined;
     }
@@ -26,7 +21,7 @@ export class AuditableUtils {
 
   static sanitizeAuditData(
     data: Record<string, unknown>,
-    excludeFields: string[] = []
+    excludeFields: string[] = [],
   ): Record<string, unknown> {
     const sanitized = { ...data };
 

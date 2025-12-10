@@ -1,1 +1,1 @@
-export * from './auditable.decorator';
+export * from "./auditable.decorator";

@@ -11,15 +11,9 @@ import { Reflector } from "@nestjs/core";
 import { ClsService } from "nestjs-cls";
 import { AuditService } from "../audit.service";
 import { AuditAction, AuditCategory } from "../enums";
-import {
-  IAuditableOptions,
-  AuditContext,
-} from "../interfaces/audit-options.interface";
+import { IAuditableOptions, AuditContext } from "../interfaces/audit-options.interface";
 import { BaseEntity } from "@nexus/common";
-import {
-  AUDIT_EXCLUDED_FIELDS,
-  AUDITABLE_ENTITY_KEY,
-} from "../constants/audit.constants";
+import { AUDIT_EXCLUDED_FIELDS, AUDITABLE_ENTITY_KEY } from "../constants/audit.constants";
 
 @Injectable()
 @EventSubscriber()
@@ -29,7 +23,7 @@ export class AuditSubscriber implements EntitySubscriberInterface<BaseEntity> {
   constructor(
     private readonly auditService: AuditService,
     private readonly reflector: Reflector,
-    @Optional() private readonly cls?: ClsService
+    @Optional() private readonly cls?: ClsService,
   ) {}
 
   /**
@@ -145,11 +139,11 @@ export class AuditSubscriber implements EntitySubscriberInterface<BaseEntity> {
     }
   }
 
-  private getAuditableOptions(entity: any): IAuditableOptions | null {
+  private getAuditableOptions(entity: unknown): IAuditableOptions | null {
     if (!entity) return null;
     return this.reflector.get<IAuditableOptions>(
       AUDITABLE_ENTITY_KEY,
-      entity.constructor
+      (entity as Record<string, unknown>).constructor,
     );
   }
 
@@ -175,21 +169,16 @@ export class AuditSubscriber implements EntitySubscriberInterface<BaseEntity> {
     }
   }
 
-  private filterValues(
-    entity: any,
-    excludeFields: string[] = []
-  ): Record<string, any> {
-    if (!entity) return {};
+  private filterValues(entity: unknown, excludeFields: string[] = []): Record<string, unknown> {
+    if (!entity || typeof entity !== "object") return {};
 
-    const result: Record<string, any> = {};
+    const result: Record<string, unknown> = {};
     const allExcluded = [...AUDIT_EXCLUDED_FIELDS, ...excludeFields];
+    const entityRecord = entity as Record<string, unknown>;
 
-    for (const key in entity) {
-      if (
-        Object.prototype.hasOwnProperty.call(entity, key) &&
-        !allExcluded.includes(key)
-      ) {
-        result[key] = entity[key];
+    for (const key in entityRecord) {
+      if (Object.prototype.hasOwnProperty.call(entityRecord, key) && !allExcluded.includes(key)) {
+        result[key] = entityRecord[key];
       }
     }
     return result;
