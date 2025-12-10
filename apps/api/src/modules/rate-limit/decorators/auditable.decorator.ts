@@ -1,5 +1,5 @@
 import { SetMetadata } from '@nestjs/common';
-import type { AuditableOptions } from '../interfaces/auditable.interface';
+import type { IAuditableOptions as AuditableOptions } from '@nexus/audit';
 
 /**
  * Chave para metadados de entidades auditáveis do Rate Limit

@@ -19,8 +19,8 @@ import { IncidentsModule } from './modules/incidents/incidents.module';
 import { CustomersModule } from './modules/customers/customers.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { AuthModule } from './modules/auth/auth.module';
-import { RedisModule } from './modules/redis/redis.module';
-import { AuditModule } from './modules/audit/audit.module';
+import { RedisModule } from '@nexus/redis';
+import { AuditModule } from '@nexus/audit';
 import { LgpdModule } from './modules/lgpd/lgpd.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { RateLimitModule } from './modules/rate-limit/rate-limit.module';
@@ -60,7 +60,7 @@ import configurations from './config/configurations';
     CustomersModule,
     ReportsModule,
     AuthModule,
-    RedisModule,
+    RedisModule.forRootAsync(),
     AuditModule, // Sistema de auditoria e logs
     LgpdModule,
     UploadModule, // Conformidade LGPD

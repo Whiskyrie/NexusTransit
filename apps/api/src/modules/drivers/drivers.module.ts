@@ -22,7 +22,7 @@ import { DriverDocumentSubscriber } from './subscribers/driver-document.subscrib
 
 // Utils
 import { ClsAuditUtils } from './utils/cls-audit.util';
-import { AuditableUtils } from './utils/auditable.util';
+import { AuditableUtils } from '@nexus/audit';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Driver, DriverLicense, DriverDocument]), AuditModule],

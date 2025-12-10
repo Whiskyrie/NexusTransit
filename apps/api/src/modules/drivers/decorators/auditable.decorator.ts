@@ -1,6 +1,6 @@
 import { SetMetadata } from '@nestjs/common';
-import { AUDITABLE_ENTITY_KEY, DEFAULT_AUDITABLE_OPTIONS } from '../constants/auditable.constants';
-import type { AuditableOptions } from '../interfaces/auditable.interface';
+import { AUDITABLE_ENTITY_KEY, DEFAULT_AUDITABLE_OPTIONS } from '@nexus/audit';
+import type { IAuditableOptions as AuditableOptions } from '@nexus/audit';
 
 /**
  * Decorador para marcar uma entidade como auditável

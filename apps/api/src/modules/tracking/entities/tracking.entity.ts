@@ -1,6 +1,6 @@
 import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
-import { BaseEntity } from '../../../database/entities/base.entity';
-import { Auditable } from '../decorators/auditable.decorator';
+import { BaseEntity } from '@nexus/common';
+import { Auditable } from '@nexus/audit';
 import { Delivery } from '../../deliveries/entities/delivery.entity';
 import { TrackingEventType, TrackingStatus } from '../enums';
 

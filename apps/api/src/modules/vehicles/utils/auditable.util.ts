@@ -1,5 +1,5 @@
-import { AUDITABLE_ENTITY_KEY } from '../constants/auditable.constants';
-import type { AuditableOptions } from '../interfaces/auditable.interface';
+import { AUDITABLE_ENTITY_KEY } from '@nexus/audit';
+import type { IAuditableOptions as AuditableOptions } from '@nexus/audit';
 
 /**
  * Utilitários para verificar e manipular entidades auditáveis

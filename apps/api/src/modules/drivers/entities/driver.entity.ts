@@ -1,12 +1,12 @@
 import { Entity, Column, OneToOne, OneToMany } from 'typeorm';
-import { BaseEntity } from '../../../database/entities/base.entity';
+import { BaseEntity } from '@nexus/common';
 import { DriverStatus } from '../enums/driver-status.enum';
 import { DriverLicense } from './driver-license.entity';
 import { DriverDocument } from './driver-document.entity';
 import { Delivery } from '../../deliveries/entities/delivery.entity';
 import { DeliveryAttempt } from '../../deliveries/entities/delivery-attempt.entity';
 import { DeliveryStatusHistory } from '../../deliveries/entities/delivery-status-history.entity';
-import { Auditable } from '@nexus/common';
+import { Auditable } from '@nexus/audit';
 import { Route } from '../../routes/entities/route.entity';
 
 /**

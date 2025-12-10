@@ -6,7 +6,7 @@ import { FuelType } from '../enums/fuel-type.enum';
 import { VehicleDocument } from './vehicle-document.entity';
 import { VehicleMaintenance } from './vehicle-maintenance.entity';
 import { VehicleDriverHistory } from './vehicle-driver-history.entity';
-import { Auditable } from '@nexus/common';
+import { Auditable } from '@nexus/audit';
 import { Delivery } from '../../deliveries/entities/delivery.entity';
 import { Route } from '../../routes/entities/route.entity';
 

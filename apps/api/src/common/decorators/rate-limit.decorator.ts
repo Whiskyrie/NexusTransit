@@ -36,4 +36,4 @@ export {
 } from '../../modules/rate-limit/decorators/rate-limit.decorator';
 
 export { Roles } from '../../modules/rate-limit/decorators/roles.decorator';
-export { Auditable } from '../../modules/rate-limit/decorators/auditable.decorator';
+export { Auditable } from '@nexus/audit';

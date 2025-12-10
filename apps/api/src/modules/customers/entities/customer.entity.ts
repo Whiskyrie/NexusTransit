@@ -1,5 +1,5 @@
 import { Entity, Column, OneToMany, Index } from 'typeorm';
-import { BaseEntity } from '../../../database/entities/base.entity';
+import { BaseEntity } from '@nexus/common';
 import { CustomerType } from '../enums/customer-type.enum';
 import { CustomerStatus } from '../enums/customer-status.enum';
 import { CustomerCategory } from '../enums/customer-category.enum';
@@ -7,7 +7,7 @@ import { CustomerAddress } from './customer-address.entity';
 import { CustomerContact } from './customer-contact.entity';
 import { CustomerPreferences } from './customer-preferences.entity';
 import { Delivery } from '../../deliveries/entities/delivery.entity';
-import { Auditable } from '@nexus/common';
+import { Auditable } from '@nexus/audit';
 
 /**
  * Customer Entity - Sistema de gerenciamento de clientes

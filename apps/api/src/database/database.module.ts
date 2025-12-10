@@ -1,9 +1,8 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { createDataSource } from './data-source';
+import { DatabaseModule as NexusDatabaseModule } from '@nexus/database';
 import type { DatabaseConfig } from '../config/database.config';
-import { DataSource } from 'typeorm';
+import path from 'path';
 
 /** 
     Database Module - Configures TypeORM integration with NestJS
@@ -11,7 +10,7 @@ import { DataSource } from 'typeorm';
 
 @Module({
   imports: [
-    TypeOrmModule.forRootAsync({
+    NexusDatabaseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
         const dbConfig = configService.get<DatabaseConfig>('database');
@@ -20,21 +19,19 @@ import { DataSource } from 'typeorm';
           throw new Error('Database configuration not found');
         }
 
-        // Use the same DataSource configuration
-        const dataSource = createDataSource(configService);
-        return dataSource.options;
+        return {
+          ...dbConfig,
+          entities: [path.join(__dirname, '..', '**', '*.entity{.ts,.js}')],
+          subscribers: [path.join(__dirname, '..', '**', '*.subscriber{.ts,.js}')],
+          migrations: [path.join(__dirname, 'migrations', '*{.ts,.js}')],
+          extra: {
+            application_name: 'nexus-transit-api',
+          },
+        };
       },
       inject: [ConfigService],
-      dataSourceFactory: async options => {
-        if (!options) {
-          throw new Error('DataSource options not found');
-        }
-        const dataSource = new DataSource(options);
-        await dataSource.initialize();
-        return dataSource;
-      },
     }),
   ],
-  exports: [TypeOrmModule],
+  exports: [NexusDatabaseModule],
 })
 export class DatabaseModule {}

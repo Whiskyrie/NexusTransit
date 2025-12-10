@@ -1,6 +1,6 @@
 import { Entity, Column, Index } from 'typeorm';
 import { BaseEntity } from '@nexus/common';
-import { Auditable } from '@nexus/common';
+import { Auditable } from '@nexus/audit';
 import { RateLimitStrategyType } from '../interfaces/rate-limit-strategy.interface';
 
 /**

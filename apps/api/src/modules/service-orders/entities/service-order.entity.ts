@@ -1,5 +1,6 @@
 import { Entity, Column, ManyToOne, Index, JoinColumn } from 'typeorm';
-import { BaseEntity, Auditable } from '@nexus/common';
+import { BaseEntity } from '@nexus/common';
+import { Auditable } from '@nexus/audit';
 import { OrderStatus } from '../enums/service_order-status';
 import { OrderPriority } from '../enums/service_order-priority';
 import { Vehicle } from '../../vehicles/entities/vehicle.entity';

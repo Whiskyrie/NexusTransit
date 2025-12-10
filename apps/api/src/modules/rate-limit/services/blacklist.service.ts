@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { RedisService } from '../../redis/redis.service';
+import { RedisService } from '@nexus/redis';
 
 export type BlacklistType = 'IP' | 'USER' | 'API_KEY';
 

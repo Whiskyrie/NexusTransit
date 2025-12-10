@@ -1,8 +1,8 @@
 import { Entity, Column, OneToOne, JoinColumn } from 'typeorm';
-import { BaseEntity } from '../../../database/entities/base.entity';
+import { BaseEntity } from '@nexus/common';
 import { CNHCategory } from '../enums/cnh-category.enum';
 import { Driver } from './driver.entity';
-import { Auditable } from '@nexus/common';
+import { Auditable } from '@nexus/audit';
 
 /**
  * Driver License Entity

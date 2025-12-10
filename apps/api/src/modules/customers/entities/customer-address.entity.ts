@@ -3,7 +3,7 @@ import { BaseEntity } from '@nexus/common';
 import { AddressType } from '../enums/address-type.enum';
 import { Customer } from './customer.entity';
 import { RouteStop } from '@/modules/routes/entities/route_stop.entity';
-import { Auditable } from '@nexus/common';
+import { Auditable } from '@nexus/audit';
 
 /**
  * CustomerAddress Entity - Endereços de clientes

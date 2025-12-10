@@ -1,5 +1,5 @@
 import { Entity, Column, ManyToOne, Index, JoinColumn } from 'typeorm';
-import { BaseEntity } from '../../../database/entities/base.entity';
+import { BaseEntity } from '@nexus/common';
 import { FailureReason } from '../enums/failure-reason.enum';
 import { Delivery } from './delivery.entity';
 import { Driver } from '../../drivers/entities/driver.entity';
