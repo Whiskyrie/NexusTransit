@@ -133,7 +133,7 @@ export class DeliveryValidationService {
       errors.push('Cidade é obrigatória');
     }
 
-    if (!address.state || address.state.trim().length !== 2) {
+    if (address.state?.trim().length !== 2) {
       errors.push('Estado deve ter 2 caracteres (UF)');
     }
 
