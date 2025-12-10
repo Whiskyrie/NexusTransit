@@ -13,5 +13,6 @@ export interface DatabaseConfigOptions {
   subscribers?: string[];
   ssl?: boolean;
   autoLoadEntities?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   extra?: Record<string, any>;
 }

@@ -1,4 +1,4 @@
-import { DataSource } from 'typeorm';
+import type { DataSource } from 'typeorm';
 import type { ConfigService } from '@nestjs/config';
 import type { DatabaseConfig } from '../config/database.config';
 import { createDataSource as createNexusDataSource } from '@nexus/database';

@@ -1,9 +1,7 @@
 import { DataSource, DataSourceOptions } from "typeorm";
 import { DatabaseConfigOptions } from "./interfaces/database-options.interface";
 
-export const createDataSourceOptions = (
-  config: DatabaseConfigOptions
-): DataSourceOptions => {
+export const createDataSourceOptions = (config: DatabaseConfigOptions): DataSourceOptions => {
   return {
     type: "postgres",
     url: config.url,
