@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
         "target": "ES2022",
-        "module": "commonjs",
+        "module": "NodeNext",
         "lib": [
             "ES2022"
         ],
@@ -25,7 +25,7 @@
         "noUnusedParameters": true,
         "noImplicitReturns": true,
         "noFallthroughCasesInSwitch": true,
-        "moduleResolution": "node"
+        "moduleResolution": "NodeNext"
     },
     "include": [
         "src/**/*"
