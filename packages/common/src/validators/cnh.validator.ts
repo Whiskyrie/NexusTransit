@@ -76,9 +76,7 @@ export class IsCNHConstraint implements ValidatorConstraintInterface {
     }
 
     // Verifica se os dígitos calculados batem com os informados
-    return (
-      digit1 === parseInt(cnh.charAt(9)) && digit2 === parseInt(cnh.charAt(10))
-    );
+    return digit1 === parseInt(cnh.charAt(9)) && digit2 === parseInt(cnh.charAt(10));
   }
 
   defaultMessage(): string {

@@ -6,10 +6,10 @@ import {
   HttpException,
   HttpStatus,
   Logger,
-} from '@nestjs/common';
-import { Observable, throwError } from 'rxjs';
-import { catchError, tap } from 'rxjs/operators';
-import type { Request, Response } from 'express';
+} from "@nestjs/common";
+import { Observable, throwError } from "rxjs";
+import { catchError, tap } from "rxjs/operators";
+import type { Request, Response } from "express";
 
 /**
  * Configuração do interceptor de throttling
@@ -98,7 +98,7 @@ export class ThrottleInterceptor implements NestInterceptor {
     this.config = {
       limit: config.limit,
       windowMs: config.windowMs,
-      message: config.message ?? 'Too many requests, please try again later',
+      message: config.message ?? "Too many requests, please try again later",
       keyGenerator: config.keyGenerator ?? this.defaultKeyGenerator.bind(this),
       skipIf: config.skipIf ?? (() => false),
     };
@@ -136,12 +136,12 @@ export class ThrottleInterceptor implements NestInterceptor {
     entry.count++;
 
     // Adicionar headers de rate limit
-    response.setHeader('X-RateLimit-Limit', this.config.limit.toString());
+    response.setHeader("X-RateLimit-Limit", this.config.limit.toString());
     response.setHeader(
-      'X-RateLimit-Remaining',
+      "X-RateLimit-Remaining",
       Math.max(0, this.config.limit - entry.count).toString(),
     );
-    response.setHeader('X-RateLimit-Reset', Math.ceil(entry.resetTime / 1000).toString());
+    response.setHeader("X-RateLimit-Reset", Math.ceil(entry.resetTime / 1000).toString());
 
     // Verificar se excedeu o limite
     if (entry.count > this.config.limit) {
@@ -156,12 +156,12 @@ export class ThrottleInterceptor implements NestInterceptor {
         method: request.method,
       });
 
-      response.setHeader('Retry-After', retryAfter.toString());
+      response.setHeader("Retry-After", retryAfter.toString());
 
       throw new HttpException(
         {
           message: this.config.message,
-          error: 'Too Many Requests',
+          error: "Too Many Requests",
           statusCode: HttpStatus.TOO_MANY_REQUESTS,
           retryAfter,
         },
@@ -194,15 +194,15 @@ export class ThrottleInterceptor implements NestInterceptor {
    * Gerador de chave padrão: IP do cliente
    */
   private defaultKeyGenerator(req: Request): string {
-    const forwarded = req.headers['x-forwarded-for'] as string;
-    const realIp = req.headers['x-real-ip'] as string;
-    const clientIp = req.headers['x-client-ip'] as string;
+    const forwarded = req.headers["x-forwarded-for"] as string;
+    const realIp = req.headers["x-real-ip"] as string;
+    const clientIp = req.headers["x-client-ip"] as string;
 
     if (forwarded) {
-      return `throttle:${forwarded.split(',')[0]?.trim()}`;
+      return `throttle:${forwarded.split(",")[0]?.trim()}`;
     }
 
-    return `throttle:${realIp ?? clientIp ?? req.socket.remoteAddress ?? '127.0.0.1'}`;
+    return `throttle:${realIp ?? clientIp ?? req.socket.remoteAddress ?? "127.0.0.1"}`;
   }
 
   /**
@@ -239,7 +239,7 @@ export class ThrottleInterceptor implements NestInterceptor {
     for (const key in this.store) {
       delete this.store[key];
     }
-    this.logger.log('All throttle entries cleared');
+    this.logger.log("All throttle entries cleared");
   }
 
   /**

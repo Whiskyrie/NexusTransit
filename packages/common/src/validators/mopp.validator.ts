@@ -38,9 +38,7 @@ export class IsMOPPValidConstraint implements ValidatorConstraintInterface {
     }
 
     // Valida datas
-    if (
-      !this.isValidDates(certificate.issue_date, certificate.expiration_date)
-    ) {
+    if (!this.isValidDates(certificate.issue_date, certificate.expiration_date)) {
       return false;
     }
 
@@ -130,9 +128,7 @@ export class IsMOPPValidConstraint implements ValidatorConstraintInterface {
  * }
  * ```
  */
-export function IsMOPPValid(
-  validationOptions?: ValidationOptions
-): PropertyDecorator {
+export function IsMOPPValid(validationOptions?: ValidationOptions): PropertyDecorator {
   return function (object: object, propertyName: string | symbol): void {
     registerDecorator({
       target: object.constructor,

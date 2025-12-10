@@ -32,8 +32,7 @@ export const PointTransformer: ValueTransformer = {
     // Se vier no formato "POINT(x y)" ou "POINT(x, y)"
     if (value.toUpperCase().startsWith("POINT")) {
       // Extrair coordenadas: POINT(-23.561414 -46.656250)
-      const match =
-        /POINT\s*\(\s*([+-]?\d+\.?\d*)\s+([+-]?\d+\.?\d*)\s*\)/i.exec(value);
+      const match = /POINT\s*\(\s*([+-]?\d+\.?\d*)\s+([+-]?\d+\.?\d*)\s*\)/i.exec(value);
       if (match) {
         const [, x, y] = match;
         return `(${x},${y})`;
@@ -91,9 +90,7 @@ export function getLatitude(point: string): number | null {
 
   // POINT(x y)
   if (point.toUpperCase().startsWith("POINT")) {
-    const match = /POINT\s*\(\s*([+-]?\d+\.?\d*)\s+([+-]?\d+\.?\d*)\s*\)/i.exec(
-      point
-    );
+    const match = /POINT\s*\(\s*([+-]?\d+\.?\d*)\s+([+-]?\d+\.?\d*)\s*\)/i.exec(point);
     if (match?.[1]) {
       return parseFloat(match[1]);
     }
@@ -120,9 +117,7 @@ export function getLongitude(point: string): number | null {
 
   // POINT(x y)
   if (point.toUpperCase().startsWith("POINT")) {
-    const match = /POINT\s*\(\s*([+-]?\d+\.?\d*)\s+([+-]?\d+\.?\d*)\s*\)/i.exec(
-      point
-    );
+    const match = /POINT\s*\(\s*([+-]?\d+\.?\d*)\s+([+-]?\d+\.?\d*)\s*\)/i.exec(point);
     if (match?.[2]) {
       return parseFloat(match[2]);
     }

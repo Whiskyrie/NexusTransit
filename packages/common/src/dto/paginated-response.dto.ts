@@ -54,12 +54,7 @@ export class PaginatedResponseDto<T> {
   /**
    * Factory method to create a paginated response
    */
-  static create<T>(
-    data: T[],
-    page: number,
-    limit: number,
-    total: number
-  ): PaginatedResponseDto<T> {
+  static create<T>(data: T[], page: number, limit: number, total: number): PaginatedResponseDto<T> {
     const totalPages = Math.ceil(total / limit);
     const response = new PaginatedResponseDto<T>();
     response.data = data;
