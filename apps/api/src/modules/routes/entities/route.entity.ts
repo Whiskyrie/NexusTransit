@@ -1,5 +1,5 @@
 import { Entity, Column, ManyToOne, OneToMany, Index, JoinColumn } from 'typeorm';
-import { BaseEntity } from '@nexus/common';
+import { BaseEntity, PointTransformer } from '@nexus/common';
 import { Auditable } from '@nexus/audit';
 import { RouteStatus } from '../enums/route-status';
 import { RouteType } from '../enums/route.type';
@@ -7,8 +7,6 @@ import { Vehicle } from '../../vehicles/entities/vehicle.entity';
 import { Driver } from '../../drivers/entities/driver.entity';
 import { RouteStop } from './route_stop.entity';
 import { RouteHistory } from './route_history.entity';
-import { PointTransformer } from '@nexus/common';
-
 /**
  * Route Entity - Sistema de gerenciamento de rotas
  *
