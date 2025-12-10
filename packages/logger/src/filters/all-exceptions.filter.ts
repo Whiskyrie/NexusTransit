@@ -1,6 +1,6 @@
-import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from '@nestjs/common';
-import { PinoLogger } from 'nestjs-pino';
-import { Request, Response } from 'express';
+import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from "@nestjs/common";
+import { PinoLogger } from "nestjs-pino";
+import { Request, Response } from "express";
 
 /**
  * Interface para tipar propriedades injetadas no Request
@@ -46,22 +46,22 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     // Extrair resposta da exceção (pode ser string ou objeto)
     const exceptionResponse =
-      exception instanceof HttpException ? exception.getResponse() : 'Internal server error';
+      exception instanceof HttpException ? exception.getResponse() : "Internal server error";
 
     // Determinar mensagem de erro de forma segura (sem 'any')
     let errorMessage: string | string[];
 
-    if (typeof exceptionResponse === 'string') {
+    if (typeof exceptionResponse === "string") {
       errorMessage = exceptionResponse;
     } else if (
-      typeof exceptionResponse === 'object' &&
+      typeof exceptionResponse === "object" &&
       exceptionResponse !== null &&
-      'message' in exceptionResponse
+      "message" in exceptionResponse
     ) {
       // Type assertion seguro pois verificamos a propriedade 'message'
       errorMessage = (exceptionResponse as HttpExceptionResponse).message;
     } else {
-      errorMessage = 'Unknown error';
+      errorMessage = "Unknown error";
     }
 
     // Log estruturado do erro com contexto completo
@@ -71,15 +71,15 @@ export class AllExceptionsFilter implements ExceptionFilter {
         req: {
           method: request.method,
           url: request.url,
-          correlationId: request.correlationId ?? request.headers['x-correlation-id'],
+          correlationId: request.correlationId ?? request.headers["x-correlation-id"],
           userId: request.user?.id,
           ip: request.ip,
-          userAgent: request.headers['user-agent'],
+          userAgent: request.headers["user-agent"],
         },
         statusCode: status,
         timestamp: new Date().toISOString(),
       },
-      `Exception caught: ${exception instanceof Error ? exception.message : 'Unknown error'}`,
+      `Exception caught: ${exception instanceof Error ? exception.message : "Unknown error"}`,
     );
 
     // Resposta padronizada ao cliente
@@ -88,7 +88,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       timestamp: new Date().toISOString(),
       path: request.url,
       message: errorMessage,
-      correlationId: request.correlationId ?? request.headers['x-correlation-id'],
+      correlationId: request.correlationId ?? request.headers["x-correlation-id"],
     });
   }
 }

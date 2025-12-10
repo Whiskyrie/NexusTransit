@@ -1,6 +1,6 @@
-import type { Params } from 'nestjs-pino';
-import { stdSerializers, stdTimeFunctions } from 'pino';
-import type { IncomingMessage, ServerResponse } from 'http';
+import type { Params } from "nestjs-pino";
+import { stdSerializers, stdTimeFunctions } from "pino";
+import type { IncomingMessage, ServerResponse } from "http";
 
 /**
  * Interface para estender o Request padrão do Node/Express/Fastify
@@ -13,8 +13,8 @@ interface ExtendedRequest extends IncomingMessage {
     id?: string | number;
   };
   originalUrl?: string;
-  headers: IncomingMessage['headers'] & {
-    'x-correlation-id'?: string;
+  headers: IncomingMessage["headers"] & {
+    "x-correlation-id"?: string;
   };
 }
 
@@ -29,14 +29,14 @@ interface ExtendedRequest extends IncomingMessage {
  */
 export const getPinoConfig = (): Params => {
   // Forçar detecção de desenvolvimento
-  const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
+  const isDevelopment = process.env.NODE_ENV === "development" || !process.env.NODE_ENV;
 
   // Logs de debug da inicialização (mantidos como console.log pois o logger ainda não existe)
 
   return {
     pinoHttp: {
       // Nível de log
-      level: process.env.LOG_LEVEL ?? (isDevelopment ? 'debug' : 'info'),
+      level: process.env.LOG_LEVEL ?? (isDevelopment ? "debug" : "info"),
 
       // Serializers padrão para formatar objetos complexos
       serializers: {
@@ -48,26 +48,26 @@ export const getPinoConfig = (): Params => {
       // Redact automático de dados sensíveis
       redact: {
         paths: [
-          'req.headers.authorization',
-          'req.headers.cookie',
-          'req.body.password',
-          'req.body.token',
-          'req.body.accessToken',
-          'req.body.refreshToken',
-          'req.body.old_password',
-          'req.body.new_password',
-          '*.password',
-          '*.token',
-          '*.accessToken',
-          '*.refreshToken',
+          "req.headers.authorization",
+          "req.headers.cookie",
+          "req.body.password",
+          "req.body.token",
+          "req.body.accessToken",
+          "req.body.refreshToken",
+          "req.body.old_password",
+          "req.body.new_password",
+          "*.password",
+          "*.token",
+          "*.accessToken",
+          "*.refreshToken",
         ],
         remove: true,
       },
 
       // Campos base em todos os logs
       base: {
-        env: process.env.NODE_ENV ?? 'development',
-        app: 'nexus-transit',
+        env: process.env.NODE_ENV ?? "development",
+        app: "nexus-transit",
       },
 
       // Configuração de transporte (Pretty Print em Dev)
@@ -75,12 +75,12 @@ export const getPinoConfig = (): Params => {
       ...(isDevelopment
         ? {
             transport: {
-              target: 'pino-pretty',
+              target: "pino-pretty",
               options: {
                 colorize: true,
                 singleLine: true,
-                translateTime: 'yyyy-mm-dd HH:MM:ss.l',
-                ignore: 'pid,hostname',
+                translateTime: "yyyy-mm-dd HH:MM:ss.l",
+                ignore: "pid,hostname",
               },
             },
           }
@@ -93,9 +93,9 @@ export const getPinoConfig = (): Params => {
       customProps: (req: IncomingMessage) => {
         const typedReq = req as ExtendedRequest;
         return {
-          correlationId: typedReq.headers['x-correlation-id'] ?? typedReq.id,
+          correlationId: typedReq.headers["x-correlation-id"] ?? typedReq.id,
           userId: typedReq.user?.id,
-          userAgent: typedReq.headers['user-agent'],
+          userAgent: typedReq.headers["user-agent"],
           // typedReq.socket acessa a definição nativa de IncomingMessage
           ip: typedReq.ip ?? typedReq.socket?.remoteAddress,
         };
@@ -104,21 +104,21 @@ export const getPinoConfig = (): Params => {
       // Desabilitar auto-logging para rotas específicas (health checks, métricas)
       autoLogging: {
         ignore: (req: IncomingMessage) => {
-          const url = req.url ?? '';
-          const ignoredPaths = ['/health', '/health/live', '/health/ready', '/metrics'];
-          return ignoredPaths.some(path => url.startsWith(path));
+          const url = req.url ?? "";
+          const ignoredPaths = ["/health", "/health/live", "/health/ready", "/metrics"];
+          return ignoredPaths.some((path) => url.startsWith(path));
         },
       },
 
       // Personalizar nível de log baseado no status
       customLogLevel: (_req: IncomingMessage, res: ServerResponse, err?: Error) => {
         if (res.statusCode >= 500 || err) {
-          return 'error';
+          return "error";
         }
         if (res.statusCode >= 400) {
-          return 'warn';
+          return "warn";
         }
-        return 'info';
+        return "info";
       },
 
       // Personalizar mensagem de sucesso

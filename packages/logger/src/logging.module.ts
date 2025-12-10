@@ -1,12 +1,12 @@
-import { Module, Global } from '@nestjs/common';
-import { APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
-import { LoggerModule } from 'nestjs-pino';
-import { getPinoConfig } from './config/pino.config';
-import { MetricsService } from './services/metrics.service';
-import { MetricsController } from './controllers/metrics.controller';
-import { CorrelationIdInterceptor } from './interceptors/correlation-id.interceptor';
-import { PerformanceInterceptor } from './interceptors/performance.interceptor';
-import { AllExceptionsFilter } from './filters/all-exceptions.filter';
+import { Module, Global } from "@nestjs/common";
+import { APP_INTERCEPTOR, APP_FILTER } from "@nestjs/core";
+import { LoggerModule } from "nestjs-pino";
+import { getPinoConfig } from "./config/pino.config";
+import { MetricsService } from "./services/metrics.service";
+import { MetricsController } from "./controllers/metrics.controller";
+import { CorrelationIdInterceptor } from "./interceptors/correlation-id.interceptor";
+import { PerformanceInterceptor } from "./interceptors/performance.interceptor";
+import { AllExceptionsFilter } from "./filters/all-exceptions.filter";
 
 /**
  * Módulo de Logging e Monitoramento

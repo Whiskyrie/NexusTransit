@@ -5,12 +5,12 @@ import {
   CallHandler,
   HttpException,
   HttpStatus,
-} from '@nestjs/common';
-import { Observable, throwError } from 'rxjs';
-import { tap, catchError } from 'rxjs/operators';
-import { PinoLogger } from 'nestjs-pino';
-import { Request, Response } from 'express';
-import { MetricsService } from './../services/metrics.service';
+} from "@nestjs/common";
+import { Observable, throwError } from "rxjs";
+import { tap, catchError } from "rxjs/operators";
+import { PinoLogger } from "nestjs-pino";
+import { Request, Response } from "express";
+import { MetricsService } from "./../services/metrics.service";
 
 /**
  * Interface para tipar o Request com propriedades customizadas
@@ -67,7 +67,7 @@ export class PerformanceInterceptor implements NestInterceptor {
             duration,
             statusCode: response.statusCode,
           },
-          'Request completed',
+          "Request completed",
         );
 
         // Registrar métricas HTTP
@@ -87,7 +87,7 @@ export class PerformanceInterceptor implements NestInterceptor {
               duration,
               threshold: this.SLOW_REQUEST_THRESHOLD,
             },
-            'Slow request detected',
+            "Slow request detected",
           );
 
           this.metricsService.recordSlowRequest({
@@ -107,7 +107,7 @@ export class PerformanceInterceptor implements NestInterceptor {
           error instanceof HttpException ? error.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
 
         // Determinar nome do erro de forma segura
-        const errorName = error instanceof Error ? error.name : 'UnknownError';
+        const errorName = error instanceof Error ? error.name : "UnknownError";
 
         // Log de erro
         requestLogger.error(
@@ -116,7 +116,7 @@ export class PerformanceInterceptor implements NestInterceptor {
             duration,
             statusCode,
           },
-          'Request failed',
+          "Request failed",
         );
 
         // Registrar erro nas métricas

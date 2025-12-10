@@ -1,7 +1,7 @@
-import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
-import { Observable } from 'rxjs';
-import { v4 as uuidv4 } from 'uuid';
-import { Request, Response } from 'express';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from "@nestjs/common";
+import { Observable } from "rxjs";
+import { v4 as uuidv4 } from "uuid";
+import { Request, Response } from "express";
 
 /**
  * Interface estendida para permitir a injeção do correlationId no objeto Request
@@ -25,7 +25,7 @@ export class CorrelationIdInterceptor implements NestInterceptor {
     const response = context.switchToHttp().getResponse<Response>();
 
     // Tenta obter do header (pode ser string ou array de strings)
-    const headerCorrelationId = request.headers['x-correlation-id'];
+    const headerCorrelationId = request.headers["x-correlation-id"];
 
     // Normaliza para uma única string
     const existingId = Array.isArray(headerCorrelationId)
@@ -37,10 +37,10 @@ export class CorrelationIdInterceptor implements NestInterceptor {
 
     // Adiciona no request para uso posterior (logs, services, etc)
     request.correlationId = correlationId;
-    request.headers['x-correlation-id'] = correlationId;
+    request.headers["x-correlation-id"] = correlationId;
 
     // Adiciona no response header para o cliente
-    response.setHeader('X-Correlation-Id', correlationId);
+    response.setHeader("X-Correlation-Id", correlationId);
 
     return next.handle();
   }

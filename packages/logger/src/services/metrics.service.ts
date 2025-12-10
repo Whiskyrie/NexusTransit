@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from "@nestjs/common";
 import {
   HttpMetric,
   ErrorMetric,
@@ -6,7 +6,7 @@ import {
   HttpMetricsSummary,
   ErrorMetricsSummary,
   SystemMetrics,
-} from '../interfaces/metrics.interface';
+} from "../interfaces/metrics.interface";
 
 /**
  * Service para coleta e exposição de métricas da aplicação
@@ -82,7 +82,7 @@ export class MetricsService {
     const now = Date.now();
     const oneHourAgo = now - 3600000; // 1 hora em ms
 
-    const recentRequests = this.httpRequests.filter(r => r.timestamp.getTime() > oneHourAgo);
+    const recentRequests = this.httpRequests.filter((r) => r.timestamp.getTime() > oneHourAgo);
 
     if (recentRequests.length === 0) {
       return {
@@ -93,16 +93,16 @@ export class MetricsService {
         p95Duration: 0,
         p99Duration: 0,
         requestsPerMinute: 0,
-        errorRate: '0.00',
+        errorRate: "0.00",
       };
     }
 
     const totalRequests = recentRequests.length;
-    const successfulRequests = recentRequests.filter(r => r.statusCode < 400).length;
-    const errorRequests = recentRequests.filter(r => r.statusCode >= 400).length;
+    const successfulRequests = recentRequests.filter((r) => r.statusCode < 400).length;
+    const errorRequests = recentRequests.filter((r) => r.statusCode >= 400).length;
 
     // Calcular duração média
-    const durations = recentRequests.map(r => r.duration);
+    const durations = recentRequests.map((r) => r.duration);
     const avgDuration = durations.reduce((a, b) => a + b, 0) / durations.length;
 
     // Calcular percentis
@@ -114,7 +114,7 @@ export class MetricsService {
 
     // Calcular taxa de erro
     const errorRate =
-      totalRequests > 0 ? ((errorRequests / totalRequests) * 100).toFixed(2) : '0.00';
+      totalRequests > 0 ? ((errorRequests / totalRequests) * 100).toFixed(2) : "0.00";
 
     return {
       totalRequests,
@@ -135,7 +135,7 @@ export class MetricsService {
     const now = Date.now();
     const oneHourAgo = now - 3600000;
 
-    const recentErrors = this.errors.filter(e => e.timestamp.getTime() > oneHourAgo);
+    const recentErrors = this.errors.filter((e) => e.timestamp.getTime() > oneHourAgo);
 
     // Agrupar erros por tipo
     const errorsByType = recentErrors.reduce(
@@ -173,7 +173,7 @@ export class MetricsService {
     const now = Date.now();
     const oneHourAgo = now - 3600000;
 
-    const recentSlowRequests = this.slowRequests.filter(r => r.timestamp.getTime() > oneHourAgo);
+    const recentSlowRequests = this.slowRequests.filter((r) => r.timestamp.getTime() > oneHourAgo);
 
     return {
       totalSlowRequests: recentSlowRequests.length,
@@ -230,6 +230,6 @@ export class MetricsService {
     this.httpRequests = [];
     this.errors = [];
     this.slowRequests = [];
-    this.logger.log('All metrics cleared');
+    this.logger.log("All metrics cleared");
   }
 }
