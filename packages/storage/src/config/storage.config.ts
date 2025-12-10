@@ -28,9 +28,7 @@ export default registerAs(
   "storage",
   (): StorageConfig => ({
     backblaze: {
-      endpoint:
-        process.env.BACKBLAZE_ENDPOINT ??
-        "https://s3.us-east-005.backblazeb2.com",
+      endpoint: process.env.BACKBLAZE_ENDPOINT ?? "https://s3.us-east-005.backblazeb2.com",
       region: process.env.BACKBLAZE_REGION ?? "us-east-005",
       accessKeyId: process.env.BACKBLAZE_ACCESS_KEY_ID ?? "",
       secretAccessKey: process.env.BACKBLAZE_SECRET_ACCESS_KEY ?? "",
@@ -38,15 +36,8 @@ export default registerAs(
       bucketRegion: process.env.BACKBLAZE_BUCKET_REGION ?? "us-east-005",
     },
     upload: {
-      maxFileSize:
-        parseInt(process.env.MAX_FILE_SIZE ?? "5242880") || 5 * 1024 * 1024, // 5MB
-      allowedMimeTypes: [
-        "image/jpeg",
-        "image/png",
-        "image/webp",
-        "image/gif",
-        "image/svg+xml",
-      ],
+      maxFileSize: parseInt(process.env.MAX_FILE_SIZE ?? "5242880") || 5 * 1024 * 1024, // 5MB
+      allowedMimeTypes: ["image/jpeg", "image/png", "image/webp", "image/gif", "image/svg+xml"],
       allowedExtensions: [".jpg", ".jpeg", ".png", ".webp", ".gif", ".svg"],
       imageQuality: parseInt(process.env.IMAGE_QUALITY ?? "85") || 85,
       thumbnailSizes: {
@@ -55,5 +46,5 @@ export default registerAs(
         large: { width: 800, height: 600 },
       },
     },
-  })
+  }),
 );

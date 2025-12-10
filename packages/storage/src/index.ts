@@ -17,10 +17,7 @@ export { AvatarValidationPipe } from "./pipes/avatar-validation.pipe";
 export { MultipleImagesValidationPipe } from "./pipes/multiple-images-validation.pipe";
 
 // Config
-export {
-  default as storageConfig,
-  StorageConfig,
-} from "./config/storage.config";
+export { default as storageConfig, StorageConfig } from "./config/storage.config";
 
 // Interfaces
 export * from "./interfaces/upload.interface";

@@ -19,8 +19,7 @@ export class StorageService {
   private readonly storageConfig: StorageConfig;
 
   constructor(private readonly configService: ConfigService) {
-    this.storageConfig =
-      this.configService.getOrThrow<StorageConfig>("storage");
+    this.storageConfig = this.configService.getOrThrow<StorageConfig>("storage");
 
     // Configuração do cliente S3 para Backblaze B2
     this.s3Client = new S3Client({
@@ -33,9 +32,7 @@ export class StorageService {
       forcePathStyle: true, // Necessário para compatibilidade com Backblaze B2
     });
 
-    this.logger.log(
-      "Storage service initialized with Backblaze B2 configuration"
-    );
+    this.logger.log("Storage service initialized with Backblaze B2 configuration");
   }
 
   /**
@@ -44,7 +41,7 @@ export class StorageService {
   async uploadImage(
     file: Express.Multer.File,
     folder = "images",
-    userId?: string
+    userId?: string,
   ): Promise<UploadResult> {
     try {
       // Validar o arquivo
@@ -62,14 +59,14 @@ export class StorageService {
       const originalUrl = await this.uploadToB2(
         processedImage.buffer,
         originalFileName,
-        file.mimetype
+        file.mimetype,
       );
 
       // Gerar e fazer upload dos thumbnails
       const thumbnails = await this.generateAndUploadThumbnails(
         file.buffer,
         baseFileName,
-        fileExtension
+        fileExtension,
       );
 
       // Log da operação
@@ -92,10 +89,7 @@ export class StorageService {
         },
       };
     } catch (error) {
-      this.logger.error(
-        "Failed to upload image",
-        error instanceof Error ? error.stack : undefined
-      );
+      this.logger.error("Failed to upload image", error instanceof Error ? error.stack : undefined);
 
       if (error instanceof BadRequestException) {
         throw error;
@@ -111,11 +105,9 @@ export class StorageService {
   async uploadMultipleImages(
     files: Express.Multer.File[],
     folder = "images",
-    userId?: string
+    userId?: string,
   ): Promise<UploadResult[]> {
-    const uploadPromises = files.map((file) =>
-      this.uploadImage(file, folder, userId)
-    );
+    const uploadPromises = files.map((file) => this.uploadImage(file, folder, userId));
 
     return Promise.all(uploadPromises);
   }
@@ -139,14 +131,14 @@ export class StorageService {
       ];
 
       await Promise.allSettled(
-        thumbnailKeys.map((thumbnailKey) => this.deleteFromB2(thumbnailKey))
+        thumbnailKeys.map((thumbnailKey) => this.deleteFromB2(thumbnailKey)),
       );
 
       this.logger.log(`Image and thumbnails deleted: ${key}`);
     } catch (error) {
       this.logger.error(
         `Failed to delete image: ${imageUrl}`,
-        error instanceof Error ? error.stack : undefined
+        error instanceof Error ? error.stack : undefined,
       );
       throw new InternalServerErrorException("Failed to delete image");
     }
@@ -162,13 +154,13 @@ export class StorageService {
 
     if (file.size > this.storageConfig.upload.maxFileSize) {
       throw new BadRequestException(
-        `File size too large. Maximum allowed: ${this.storageConfig.upload.maxFileSize / (1024 * 1024)}MB`
+        `File size too large. Maximum allowed: ${this.storageConfig.upload.maxFileSize / (1024 * 1024)}MB`,
       );
     }
 
     if (!this.storageConfig.upload.allowedMimeTypes.includes(file.mimetype)) {
       throw new BadRequestException(
-        `Invalid file type. Allowed types: ${this.storageConfig.upload.allowedMimeTypes.join(", ")}`
+        `Invalid file type. Allowed types: ${this.storageConfig.upload.allowedMimeTypes.join(", ")}`,
       );
     }
   }
@@ -177,7 +169,7 @@ export class StorageService {
    * Processar imagem (otimização e compressão)
    */
   private async processImage(
-    buffer: Buffer
+    buffer: Buffer,
   ): Promise<{ buffer: Buffer; metadata: sharp.Metadata }> {
     const image = sharp(buffer);
     const metadata = await image.metadata();
@@ -208,30 +200,24 @@ export class StorageService {
   private async generateAndUploadThumbnails(
     originalBuffer: Buffer,
     baseFileName: string,
-    _originalExtension: string
+    _originalExtension: string,
   ): Promise<{ small: string; medium: string; large: string }> {
     const sizes = this.storageConfig.upload.thumbnailSizes;
 
-    const thumbnailPromises = Object.entries(sizes).map(
-      async ([size, dimensions]) => {
-        const thumbnailBuffer = await sharp(originalBuffer)
-          .resize(dimensions.width, dimensions.height, {
-            fit: "cover",
-            position: "center",
-          })
-          .webp({ quality: 80 }) // Usar WebP para thumbnails (melhor compressão)
-          .toBuffer();
+    const thumbnailPromises = Object.entries(sizes).map(async ([size, dimensions]) => {
+      const thumbnailBuffer = await sharp(originalBuffer)
+        .resize(dimensions.width, dimensions.height, {
+          fit: "cover",
+          position: "center",
+        })
+        .webp({ quality: 80 }) // Usar WebP para thumbnails (melhor compressão)
+        .toBuffer();
 
-        const thumbnailFileName = `${baseFileName}_${size}.webp`;
-        const url = await this.uploadToB2(
-          thumbnailBuffer,
-          thumbnailFileName,
-          "image/webp"
-        );
+      const thumbnailFileName = `${baseFileName}_${size}.webp`;
+      const url = await this.uploadToB2(thumbnailBuffer, thumbnailFileName, "image/webp");
 
-        return [size, url];
-      }
-    );
+      return [size, url];
+    });
 
     const results = await Promise.all(thumbnailPromises);
 
@@ -245,11 +231,7 @@ export class StorageService {
   /**
    * Upload para Backblaze B2
    */
-  private async uploadToB2(
-    buffer: Buffer,
-    key: string,
-    contentType: string
-  ): Promise<string> {
+  private async uploadToB2(buffer: Buffer, key: string, contentType: string): Promise<string> {
     try {
       const upload = new Upload({
         client: this.s3Client,
@@ -278,7 +260,7 @@ export class StorageService {
     } catch (error) {
       this.logger.error(
         `Failed to upload to B2: ${key}`,
-        error instanceof Error ? error.stack : undefined
+        error instanceof Error ? error.stack : undefined,
       );
       throw error;
     }
@@ -305,9 +287,7 @@ export class StorageService {
       const pathParts = urlObj.pathname.split("/");
 
       // Remove bucket name from path and get the key
-      const bucketIndex = pathParts.indexOf(
-        this.storageConfig.backblaze.bucket
-      );
+      const bucketIndex = pathParts.indexOf(this.storageConfig.backblaze.bucket);
       if (bucketIndex !== -1) {
         return pathParts.slice(bucketIndex + 1).join("/");
       }

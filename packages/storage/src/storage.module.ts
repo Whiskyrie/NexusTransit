@@ -1,4 +1,4 @@
-import { Module, DynamicModule, Global } from "@nestjs/common";
+import { Module, DynamicModule, Global, Type } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { MulterModule } from "@nestjs/platform-express";
 import { StorageService } from "./services/storage.service";
@@ -24,16 +24,16 @@ export class StorageModule {
   }
 
   static forRootAsync(options?: {
-    useFactory?: (...args: any[]) => Promise<any> | any;
-    inject?: any[];
+    useFactory?: (...args: unknown[]) => Promise<unknown> | unknown;
+    inject?: (string | symbol | Type<unknown>)[];
   }): DynamicModule {
     return {
       module: StorageModule,
       imports: [
         ConfigModule.forFeature(storageConfig),
         MulterModule.registerAsync({
-          useFactory: options?.useFactory,
-          inject: options?.inject,
+          useFactory: options?.useFactory as never,
+          inject: options?.inject as never,
         }),
       ],
       providers: [StorageService],

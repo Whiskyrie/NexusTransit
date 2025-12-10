@@ -1,9 +1,4 @@
-import {
-  PipeTransform,
-  Injectable,
-  ArgumentMetadata,
-  BadRequestException,
-} from "@nestjs/common";
+import { PipeTransform, Injectable, ArgumentMetadata, BadRequestException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import type { StorageConfig } from "../config/storage.config";
 
@@ -11,10 +6,7 @@ import type { StorageConfig } from "../config/storage.config";
 export class AvatarValidationPipe implements PipeTransform {
   constructor(private readonly configService: ConfigService) {}
 
-  transform(
-    file: Express.Multer.File,
-    _metadata: ArgumentMetadata
-  ): Express.Multer.File {
+  transform(file: Express.Multer.File, _metadata: ArgumentMetadata): Express.Multer.File {
     if (!file) {
       throw new BadRequestException("No avatar file provided");
     }
@@ -28,16 +20,14 @@ export class AvatarValidationPipe implements PipeTransform {
     // Avatar tem limite de tamanho menor (2MB)
     const maxAvatarSize = 2 * 1024 * 1024; // 2MB
     if (file.size > maxAvatarSize) {
-      throw new BadRequestException(
-        `Avatar size too large. Maximum allowed: 2MB`
-      );
+      throw new BadRequestException(`Avatar size too large. Maximum allowed: 2MB`);
     }
 
     // Validar tipo MIME
     const allowedAvatarTypes = ["image/jpeg", "image/png", "image/webp"];
     if (!allowedAvatarTypes.includes(file.mimetype)) {
       throw new BadRequestException(
-        `Invalid avatar file type. Allowed types: ${allowedAvatarTypes.join(", ")}`
+        `Invalid avatar file type. Allowed types: ${allowedAvatarTypes.join(", ")}`,
       );
     }
 
@@ -46,7 +36,7 @@ export class AvatarValidationPipe implements PipeTransform {
     const allowedExtensions = [".jpg", ".jpeg", ".png", ".webp"];
     if (!allowedExtensions.includes(fileExtension)) {
       throw new BadRequestException(
-        `Invalid avatar extension. Allowed extensions: ${allowedExtensions.join(", ")}`
+        `Invalid avatar extension. Allowed extensions: ${allowedExtensions.join(", ")}`,
       );
     }
 
