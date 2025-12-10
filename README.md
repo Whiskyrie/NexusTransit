@@ -46,16 +46,15 @@ O NexusTransit oferece uma solução integrada que aborda cada um desses pontos 
 NexusTransit (Turborepo + pnpm)
 │
 ├── apps/
-│   ├── api/              # 🚀 API Principal (NestJS) - Porta 3000
-│   └── auth-service/     # 🔐 Microserviço de Auth - Porta 3001
+│   └── api/              # 🚀 API Principal (NestJS) - Porta 3000
 │
-└── packages/
-    └── common/           # 📦 Código compartilhado
-        ├── database/     # BaseEntity, TypeORM utils
-        ├── dto/          # DTOs compartilhados
-        ├── interfaces/   # TypeScript interfaces
-        ├── enums/        # Enumerações
-        └── transformers/ # Point transformer (PostGIS)
+└── packages/             # 📦 Código compartilhado
+    ├── audit/            # Sistema de auditoria
+    ├── auth/             # Utilitários de autenticação (guards, decorators)
+    ├── common/           # DTOs, validators, transformers base
+    ├── database/         # Database factory e configuração
+    ├── logger/           # Logging estruturado
+    └── redis/            # Cliente Redis configurado
 ```
 
 **Stack Tecnológica:**
@@ -79,16 +78,13 @@ cd NexusTransit
 
 # Copiar variáveis de ambiente
 cp apps/api/.env.example apps/api/.env
-cp apps/auth-service/.env.example apps/auth-service/.env
 
 # Iniciar todos os serviços
 docker-compose -f docker-compose.dev.yml up -d
 
-# Acessar aplicações
+# Acessar aplicação
 # API: http://localhost:3000
-# Auth: http://localhost:3001
-# Swagger API: http://localhost:3000/api/docs
-# Swagger Auth: http://localhost:3001/api/docs
+# Swagger: http://localhost:3000/api/docs
 ```
 
 ### Opção 2: Local Development
@@ -102,9 +98,6 @@ pnpm build
 
 # Executar API
 pnpm dev:api
-
-# Executar Auth Service
-pnpm dev:auth
 ```
 
 📚 **Ver**: [QUICKSTART.md](./QUICKSTART.md) para mais detalhes
@@ -115,9 +108,13 @@ pnpm dev:auth
 
 | Pacote | Descrição | Status |
 |--------|-----------|--------|
-| `@nexus/api` | API principal com todos os módulos | ✅ Funcionando |
-| `@nexus/auth-service` | Microserviço de autenticação | ✅ Funcionando |
-| `@nexus/common` | Código compartilhado (DTOs, Entities, Utils) | ✅ Funcionando |
+| `@nexus/api` | API principal (monolito modular) | ✅ Funcionando |
+| `@nexus/audit` | Sistema de auditoria compartilhado | ✅ Funcionando |
+| `@nexus/auth` | Utilitários de autenticação | ✅ Funcionando |
+| `@nexus/common` | DTOs, validators e transformers | ✅ Funcionando |
+| `@nexus/database` | Database factory e configuração | ✅ Funcionando |
+| `@nexus/logger` | Logging estruturado (Pino) | ✅ Funcionando |
+| `@nexus/redis` | Cliente Redis configurado | ✅ Funcionando |
 
 ---
 
