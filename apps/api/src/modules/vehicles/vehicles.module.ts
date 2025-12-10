@@ -6,6 +6,7 @@ import { VehiclesController } from './vehicles.controller';
 import { Vehicle } from './entities/vehicle.entity';
 import { VehicleDocument } from './entities/vehicle-document.entity';
 import { VehicleMaintenance } from './entities/vehicle-maintenance.entity';
+import { VehicleDriverHistory } from './entities/vehicle-driver-history.entity';
 import { FuelConsumptionUtils } from './utils/fuel-consumption.util';
 import { VehicleNotificationService } from './services/vehicle-notification.service';
 import { MaintenanceScheduler } from './services/maintenance-scheduler.service';
@@ -13,7 +14,7 @@ import { VehicleStatusChangeSubscriber } from './subscribers/status-change.subsc
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Vehicle, VehicleDocument, VehicleMaintenance]),
+    TypeOrmModule.forFeature([Vehicle, VehicleDocument, VehicleMaintenance, VehicleDriverHistory]),
     ScheduleModule.forRoot(),
   ],
   controllers: [VehiclesController],

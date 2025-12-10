@@ -19,7 +19,11 @@ export class DatabaseModule {
           imports: options.imports || [],
           useFactory: async (...args: any[]) => {
             const config = await options.useFactory(...args);
-            return createDataSourceOptions(config);
+            const dataSourceOptions = createDataSourceOptions(config);
+            return {
+              ...dataSourceOptions,
+              autoLoadEntities: config.autoLoadEntities,
+            };
           },
           inject: options.inject || [],
         }),

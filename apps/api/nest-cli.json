@@ -7,6 +7,6 @@
     "tsConfigPath": "tsconfig.build.json",
     "assets": [],
     "watchAssets": false,
-    "webpack": false
+    "webpack": true
   }
 }

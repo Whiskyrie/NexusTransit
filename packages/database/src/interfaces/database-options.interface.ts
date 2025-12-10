@@ -12,5 +12,6 @@ export interface DatabaseConfigOptions {
   migrations?: string[];
   subscribers?: string[];
   ssl?: boolean;
+  autoLoadEntities?: boolean;
   extra?: Record<string, any>;
 }

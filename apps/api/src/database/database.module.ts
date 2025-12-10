@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { DatabaseModule as NexusDatabaseModule } from '@nexus/database';
 import type { DatabaseConfig } from '../config/database.config';
-import path from 'path';
 
 /** 
     Database Module - Configures TypeORM integration with NestJS
@@ -21,9 +20,10 @@ import path from 'path';
 
         return {
           ...dbConfig,
-          entities: [path.join(__dirname, '..', '**', '*.entity{.ts,.js}')],
-          subscribers: [path.join(__dirname, '..', '**', '*.subscriber{.ts,.js}')],
-          migrations: [path.join(__dirname, 'migrations', '*{.ts,.js}')],
+          autoLoadEntities: true,
+          // entities: [path.join(__dirname, '..', '**', '*.entity{.ts,.js}')],
+          // subscribers: [path.join(__dirname, '..', '**', '*.subscriber{.ts,.js}')],
+          // migrations: [path.join(__dirname, 'migrations', '*{.ts,.js}')],
           extra: {
             application_name: 'nexus-transit-api',
           },

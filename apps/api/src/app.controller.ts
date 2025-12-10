@@ -1,6 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { RedisService } from './modules/redis/redis.service';
+import { RedisService } from '@nexus/redis';
 
 @ApiTags('App')
 @Controller('api')
