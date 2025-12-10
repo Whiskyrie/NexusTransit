@@ -8,7 +8,6 @@
         "lint": "turbo run lint",
         "dev": "turbo run dev",
         "dev:api": "turbo run dev --filter=@nexus/api",
-        "dev:auth": "turbo run dev --filter=@nexus/auth-service",
         "format": "prettier --write \"**/*.{ts,tsx,md}\"",
         "clean": "turbo run clean && rm -rf node_modules",
         "clean:build": "rm -rf apps/*/dist packages/*/dist .turbo"

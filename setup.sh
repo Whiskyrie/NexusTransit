@@ -42,14 +42,6 @@ else
     echo "   ✅ apps/api/.env já existe"
 fi
 
-if [ ! -f "apps/auth-service/.env" ]; then
-    echo "   Copiando apps/auth-service/.env.example -> apps/auth-service/.env"
-    cp apps/auth-service/.env.example apps/auth-service/.env
-    echo "   ⚠️  Edite apps/auth-service/.env com suas configurações!"
-else
-    echo "   ✅ apps/auth-service/.env já existe"
-fi
-
 # Build
 echo ""
 echo "🔨 Buildando pacotes..."
@@ -60,21 +52,18 @@ echo "✨ Setup concluído com sucesso!"
 echo ""
 echo "📚 Próximos passos:"
 echo ""
-echo "1. Revisar e configurar arquivos .env:"
+echo "1. Revisar e configurar arquivo .env:"
 echo "   - apps/api/.env"
-echo "   - apps/auth-service/.env"
 echo ""
 echo "2. Iniciar banco de dados:"
 echo "   docker-compose -f docker-compose.dev.yml up -d postgres redis"
 echo ""
 echo "3. Executar migrations:"
 echo "   cd apps/api && pnpm migration:run"
-echo "   cd apps/auth-service && pnpm migration:run"
 echo ""
-echo "4. Iniciar aplicações:"
+echo "4. Iniciar aplicação:"
 echo "   pnpm dev              # Todos os serviços"
 echo "   pnpm dev:api          # Apenas API"
-echo "   pnpm dev:auth         # Apenas Auth Service"
 echo ""
 echo "📖 Documentação completa: ./DEVELOPMENT.md"
 echo "🚀 Guia rápido: ./QUICKSTART.md"

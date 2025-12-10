@@ -10,7 +10,6 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: nexus_transit
-      POSTGRES_MULTIPLE_DATABASES: nexus_transit,nexus_auth
     ports:
       - "5432:5432"
     volumes:
@@ -80,7 +79,7 @@ services:
       MAX_FILE_SIZE: 10485760
 
       # CORS
-      CORS_ORIGIN: http://localhost:3000,http://localhost:3001
+      CORS_ORIGIN: http://localhost:3000
     ports:
       - "3000:3000"
     volumes:
@@ -97,65 +96,6 @@ services:
       redis:
         condition: service_healthy
     command: pnpm --filter @nexus/api dev
-
-  # Auth Service
-  auth-service:
-    build:
-      context: .
-      dockerfile: apps/auth-service/Dockerfile
-      target: development
-    container_name: nexus-auth-service
-    restart: unless-stopped
-    environment:
-      NODE_ENV: development
-      PORT: 3001
-
-      # Database
-      DATABASE_HOST: postgres
-      DATABASE_PORT: 5432
-      DATABASE_USER: postgres
-      DATABASE_PASSWORD: postgres
-      DATABASE_NAME: nexus_auth
-      DATABASE_SCHEMA: auth
-      DATABASE_SYNC: "false"
-      DATABASE_LOGGING: "true"
-
-      # Redis
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_DB: 1
-
-      # JWT
-      JWT_SECRET: dev-secret-change-in-production
-      JWT_ACCESS_TOKEN_EXPIRES_IN: 15m
-      JWT_REFRESH_TOKEN_EXPIRES_IN: 7d
-      JWT_BLACKLIST_EXPIRES_IN: 604800
-
-      # Session
-      SESSION_SECRET: dev-session-secret
-      SESSION_MAX_AGE: 86400000
-
-      # Rate Limit
-      RATE_LIMIT_TTL: 60
-      RATE_LIMIT_MAX: 100
-
-      # CORS
-      CORS_ORIGIN: http://localhost:3000,http://localhost:3001
-    ports:
-      - "3001:3001"
-    volumes:
-      - ./apps/auth-service:/app/apps/auth-service
-      - ./packages:/app/packages
-      - /app/node_modules
-      - /app/apps/auth-service/node_modules
-    networks:
-      - nexus-network
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    command: pnpm --filter @nexus/auth-service dev
 
   # pgAdmin (opcional)
   pgadmin:
