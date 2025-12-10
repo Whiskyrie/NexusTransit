@@ -1,17 +1,17 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { createHash } from 'crypto';
-import { RedisService } from '../../redis/redis.service';
-import type { JwtPayload } from '../interfaces/jwt-payload.interface';
+import { Injectable, Logger } from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
+import { createHash } from "crypto";
+import { RedisService } from "@nexus/redis";
+import type { JwtPayload } from "../interfaces/jwt-payload.interface";
 
 @Injectable()
 export class TokenBlacklistService {
   private readonly logger = new Logger(TokenBlacklistService.name);
-  private readonly BLACKLIST_PREFIX = 'blacklist';
+  private readonly BLACKLIST_PREFIX = "blacklist";
 
   constructor(
     private readonly redisService: RedisService,
-    private readonly jwtService: JwtService,
+    private readonly jwtService: JwtService
   ) {}
 
   /**
@@ -23,7 +23,7 @@ export class TokenBlacklistService {
       const decoded = this.jwtService.decode<JwtPayload>(token);
 
       if (!decoded?.exp) {
-        this.logger.warn('Token inválido ou sem tempo de expiração');
+        this.logger.warn("Token inválido ou sem tempo de expiração");
         return false;
       }
 
@@ -33,7 +33,7 @@ export class TokenBlacklistService {
 
       // Se o token já expirou, não precisa adicionar à blacklist
       if (ttl <= 0) {
-        this.logger.debug('Token já expirado, não adicionado à blacklist');
+        this.logger.debug("Token já expirado, não adicionado à blacklist");
         return true;
       }
 
@@ -47,9 +47,9 @@ export class TokenBlacklistService {
         {
           blacklistedAt: new Date().toISOString(),
           userId: decoded.sub,
-          reason: 'logout',
+          reason: "logout",
         },
-        ttl,
+        ttl
       );
 
       if (success) {
@@ -60,7 +60,7 @@ export class TokenBlacklistService {
 
       return success;
     } catch (error) {
-      this.logger.error('Erro ao adicionar token à blacklist', error);
+      this.logger.error("Erro ao adicionar token à blacklist", error);
       return false;
     }
   }
@@ -73,7 +73,7 @@ export class TokenBlacklistService {
       const decoded = this.jwtService.decode<JwtPayload>(token);
 
       if (!decoded) {
-        this.logger.warn('Token inválido para verificação de blacklist');
+        this.logger.warn("Token inválido para verificação de blacklist");
         return true; // Considera inválido como blacklisted
       }
 
@@ -88,7 +88,7 @@ export class TokenBlacklistService {
 
       return isBlacklisted;
     } catch (error) {
-      this.logger.error('Erro ao verificar blacklist', error);
+      this.logger.error("Erro ao verificar blacklist", error);
       return true; // Em caso de erro, considera como blacklisted por segurança
     }
   }
@@ -109,7 +109,7 @@ export class TokenBlacklistService {
 
       return await this.redisService.delete(key);
     } catch (error) {
-      this.logger.error('Erro ao remover token da blacklist', error);
+      this.logger.error("Erro ao remover token da blacklist", error);
       return false;
     }
   }
@@ -126,18 +126,20 @@ export class TokenBlacklistService {
         key,
         {
           blacklistedAt: new Date().toISOString(),
-          reason: 'user_tokens_revoked',
+          reason: "user_tokens_revoked",
         },
-        this.getDefaultTTL(),
+        this.getDefaultTTL()
       );
 
       if (success) {
-        this.logger.log(`Todos os tokens do usuário ${userId} foram invalidados`);
+        this.logger.log(
+          `Todos os tokens do usuário ${userId} foram invalidados`
+        );
       }
 
       return success;
     } catch (error) {
-      this.logger.error('Erro ao invalidar tokens do usuário', error);
+      this.logger.error("Erro ao invalidar tokens do usuário", error);
       return false;
     }
   }
@@ -150,7 +152,10 @@ export class TokenBlacklistService {
       const key = `${this.BLACKLIST_PREFIX}:user:${userId}`;
       return await this.redisService.has(key);
     } catch (error) {
-      this.logger.error('Erro ao verificar invalidação de tokens do usuário', error);
+      this.logger.error(
+        "Erro ao verificar invalidação de tokens do usuário",
+        error
+      );
       return false;
     }
   }
@@ -162,9 +167,9 @@ export class TokenBlacklistService {
     try {
       // Nota: Keyv clear() limpa todo o namespace, use com cuidado
       await this.redisService.clear();
-      this.logger.log('Blacklist limpa');
+      this.logger.log("Blacklist limpa");
     } catch (error) {
-      this.logger.error('Erro ao limpar blacklist', error);
+      this.logger.error("Erro ao limpar blacklist", error);
     }
   }
 
@@ -172,7 +177,7 @@ export class TokenBlacklistService {
    * Gera um hash único para o token
    */
   private generateTokenHash(token: string): string {
-    return createHash('sha256').update(token).digest('hex').substring(0, 32);
+    return createHash("sha256").update(token).digest("hex").substring(0, 32);
   }
 
   /**

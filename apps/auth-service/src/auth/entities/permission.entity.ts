@@ -1,52 +1,52 @@
-import { Entity, Column } from 'typeorm';
-import { BaseEntity } from '../../database/entities/base.entity';
+import { Entity, Column } from "typeorm";
+import { BaseEntity } from "@nexus/common";
 
 /**
  * Permission Entity
  * Entidade para gerenciar permissões granulares do sistema
  */
-@Entity('permissions')
+@Entity("permissions")
 export class Permission extends BaseEntity {
   @Column({
-    type: 'varchar',
+    type: "varchar",
     length: 100,
     unique: true,
-    comment: 'Nome único da permissão (ex: users:create)',
+    comment: "Nome único da permissão (ex: users:create)",
   })
   name!: string;
 
   @Column({
-    type: 'varchar',
+    type: "varchar",
     length: 50,
-    comment: 'Recurso ao qual a permissão se aplica',
+    comment: "Recurso ao qual a permissão se aplica",
   })
   resource!: string;
 
   @Column({
-    type: 'varchar',
+    type: "varchar",
     length: 20,
-    comment: 'Ação permitida (create, read, update, delete)',
+    comment: "Ação permitida (create, read, update, delete)",
   })
   action!: string;
 
   @Column({
-    type: 'varchar',
+    type: "varchar",
     length: 100,
-    comment: 'Nome de exibição da permissão',
+    comment: "Nome de exibição da permissão",
   })
   display_name!: string;
 
   @Column({
-    type: 'text',
+    type: "text",
     nullable: true,
-    comment: 'Descrição da permissão',
+    comment: "Descrição da permissão",
   })
   description?: string;
 
   @Column({
-    type: 'boolean',
+    type: "boolean",
     default: true,
-    comment: 'Se a permissão está ativa',
+    comment: "Se a permissão está ativa",
   })
   is_active!: boolean;
 
@@ -55,7 +55,10 @@ export class Permission extends BaseEntity {
    */
   matches(pattern: string): boolean {
     // Suporte para wildcards (* e ?)
-    const regex = new RegExp(pattern.replace(/\*/g, '.*').replace(/\?/g, '.'), 'i');
+    const regex = new RegExp(
+      pattern.replace(/\*/g, ".*").replace(/\?/g, "."),
+      "i"
+    );
     return regex.test(this.name);
   }
 

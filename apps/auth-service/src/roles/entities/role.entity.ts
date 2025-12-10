@@ -1,8 +1,7 @@
-import { Entity, Column, ManyToMany } from 'typeorm';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { BaseEntity } from '../../database/entities/base.entity';
-import { RoleType } from '../enums/role-type.enum';
-import type { User } from '../../users/entities/user.entity';
+import { Entity, Column, ManyToMany } from "typeorm";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { BaseEntity } from "@nexus/common";
+import { RoleType } from "../enums/role-type.enum";
 
 /**
  * Role Entity - Sistema de papéis e permissões
@@ -13,86 +12,86 @@ import type { User } from '../../users/entities/user.entity';
  * - Hierarquia de papéis
  * - Timestamps automáticos
  */
-@Entity('roles')
+@Entity("roles")
 export class Role extends BaseEntity {
   @ApiProperty({
-    description: 'Nome único do papel',
-    example: 'Gerente de Operações',
+    description: "Nome único do papel",
+    example: "Gerente de Operações",
   })
   @Column({
-    type: 'varchar',
+    type: "varchar",
     length: 100,
     unique: true,
-    comment: 'Nome único do papel',
+    comment: "Nome único do papel",
   })
   name!: string;
 
   @ApiPropertyOptional({
-    description: 'Descrição do papel',
-    example: 'Gerencia operações diárias e supervisiona motoristas',
+    description: "Descrição do papel",
+    example: "Gerencia operações diárias e supervisiona motoristas",
   })
   @Column({
-    type: 'varchar',
+    type: "varchar",
     length: 255,
     nullable: true,
-    comment: 'Descrição do papel',
+    comment: "Descrição do papel",
   })
   description?: string;
 
   @ApiProperty({
-    description: 'Tipo do papel no sistema',
+    description: "Tipo do papel no sistema",
     enum: RoleType,
     example: RoleType.MANAGER,
   })
   @Column({
-    type: 'enum',
+    type: "enum",
     enum: RoleType,
-    comment: 'Tipo do papel no sistema',
+    comment: "Tipo do papel no sistema",
   })
   type!: RoleType;
 
   @ApiProperty({
-    description: 'Lista de permissões do papel',
-    example: ['users:read', 'deliveries:read', 'deliveries:write'],
+    description: "Lista de permissões do papel",
+    example: ["users:read", "deliveries:read", "deliveries:write"],
     type: [String],
   })
   @Column({
-    type: 'jsonb',
-    default: '[]',
-    comment: 'Lista de permissões do papel',
+    type: "jsonb",
+    default: "[]",
+    comment: "Lista de permissões do papel",
   })
   permissions!: string[];
 
   @ApiProperty({
-    description: 'Nível hierárquico (0 = maior autoridade)',
+    description: "Nível hierárquico (0 = maior autoridade)",
     example: 1,
   })
   @Column({
-    type: 'integer',
+    type: "integer",
     default: 0,
-    comment: 'Nível hierárquico do papel (0 = maior autoridade)',
+    comment: "Nível hierárquico do papel (0 = maior autoridade)",
   })
   hierarchy_level!: number;
 
   @ApiProperty({
-    description: 'Papel está ativo',
+    description: "Papel está ativo",
     example: true,
   })
   @Column({
-    type: 'boolean',
+    type: "boolean",
     default: true,
-    comment: 'Papel está ativo',
+    comment: "Papel está ativo",
   })
   is_active!: boolean;
 
   @ApiPropertyOptional({
-    description: 'Configurações específicas do papel',
+    description: "Configurações específicas do papel",
     example: { dashboard_access: true },
   })
   @Column({
-    type: 'jsonb',
+    type: "jsonb",
     nullable: true,
-    comment: 'Configurações específicas do papel',
+    comment: "Configurações específicas do papel",
   })
   settings?: Record<string, unknown>;
 
@@ -102,7 +101,7 @@ export class Role extends BaseEntity {
    * Usuários que possuem este papel
    * Relacionamento inverso de User.roles
    */
-  @ManyToMany('User', (user: any) => user.roles)
+  @ManyToMany("User", (user: any) => user.roles)
   users?: any[];
 
   // Computed properties
@@ -125,13 +124,15 @@ export class Role extends BaseEntity {
    * Verifica se é um papel operacional
    */
   get is_operational(): boolean {
-    return [RoleType.MANAGER, RoleType.OPERATOR, RoleType.DRIVER].includes(this.type);
+    return [RoleType.MANAGER, RoleType.OPERATOR, RoleType.DRIVER].includes(
+      this.type
+    );
   }
 
   /**
    * Verifica se pode gerenciar outros usuários
    */
   get can_manage_users(): boolean {
-    return this.hasPermission('users:manage') || this.is_admin;
+    return this.hasPermission("users:manage") || this.is_admin;
   }
 }

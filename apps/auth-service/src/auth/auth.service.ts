@@ -1,15 +1,24 @@
-import { Injectable, Logger, UnauthorizedException, NotFoundException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
-import { UsersService } from '../users/users.service';
-import { LoginDto } from './dto/login.dto';
-import { LoginResponseDto } from './dto/login-response.dto';
-import { UserResponseDto } from './dto/user-response.dto';
-import { User } from '../users/entities/user.entity';
-import { AuditLogService } from '../audit/audit-log.service';
-import { AuditAction, AuditCategory } from '../audit/enums';
-import { generateToken, verifyToken, generateUserPayload } from './utils/token.util';
-import { hashPassword, comparePassword } from './utils/password.util';
+import {
+  Injectable,
+  Logger,
+  UnauthorizedException,
+  NotFoundException,
+} from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
+import { ConfigService } from "@nestjs/config";
+import { UsersService } from "../users/users.service";
+import { LoginDto } from "./dto/login.dto";
+import { LoginResponseDto } from "./dto/login-response.dto";
+import { UserResponseDto } from "./dto/user-response.dto";
+import { User } from "../users/entities/user.entity";
+import { AuditService } from "@nexus/audit";
+import { AuditAction, AuditCategory } from "@nexus/audit";
+import {
+  generateToken,
+  verifyToken,
+  generateUserPayload,
+} from "./utils/token.util";
+import { hashPassword, comparePassword } from "./utils/password.util";
 
 @Injectable()
 export class AuthService {
@@ -19,7 +28,7 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-    private readonly auditLogService: AuditLogService,
+    private readonly auditLogService: AuditService
   ) {}
 
   /**
@@ -28,19 +37,29 @@ export class AuthService {
   async login(
     loginDto: LoginDto,
     ipAddress?: string,
-    userAgent?: string,
+    userAgent?: string
   ): Promise<LoginResponseDto> {
     try {
       const user = await this.validateUser(loginDto.email, loginDto.password);
 
       if (!user) {
-        await this.logFailedLogin(loginDto.email, 'Invalid credentials', ipAddress, userAgent);
-        throw new UnauthorizedException('Credenciais inválidas');
+        await this.logFailedLogin(
+          loginDto.email,
+          "Invalid credentials",
+          ipAddress,
+          userAgent
+        );
+        throw new UnauthorizedException("Credenciais inválidas");
       }
 
       if (!user.email_verified) {
-        await this.logFailedLogin(loginDto.email, 'Email not verified', ipAddress, userAgent);
-        throw new UnauthorizedException('Email não verificado');
+        await this.logFailedLogin(
+          loginDto.email,
+          "Email not verified",
+          ipAddress,
+          userAgent
+        );
+        throw new UnauthorizedException("Email não verificado");
       }
 
       const tokens = await this.generateTokens(user);
@@ -57,9 +76,14 @@ export class AuthService {
         throw error;
       }
 
-      this.logger.error('Erro durante login', error);
-      await this.logFailedLogin(loginDto.email, 'System error', ipAddress, userAgent);
-      throw new UnauthorizedException('Erro interno do servidor');
+      this.logger.error("Erro durante login", error);
+      await this.logFailedLogin(
+        loginDto.email,
+        "System error",
+        ipAddress,
+        userAgent
+      );
+      throw new UnauthorizedException("Erro interno do servidor");
     }
   }
 
@@ -69,13 +93,13 @@ export class AuthService {
   async getProfile(
     userId: string,
     ipAddress?: string,
-    userAgent?: string,
+    userAgent?: string
   ): Promise<UserResponseDto> {
     try {
       const user = await this.usersService.findOne(userId);
 
       if (!user) {
-        throw new NotFoundException('Usuário não encontrado');
+        throw new NotFoundException("Usuário não encontrado");
       }
 
       // Log acesso ao perfil
@@ -83,37 +107,42 @@ export class AuthService {
 
       return UserResponseDto.fromUser(user);
     } catch (error) {
-      if (error instanceof NotFoundException || error instanceof UnauthorizedException) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof UnauthorizedException
+      ) {
         throw error;
       }
 
-      this.logger.error('Erro ao obter perfil do usuário', error);
-      throw new UnauthorizedException('Erro ao obter perfil');
+      this.logger.error("Erro ao obter perfil do usuário", error);
+      throw new UnauthorizedException("Erro ao obter perfil");
     }
   }
 
   /**
    * Gera tokens de acesso e refresh
    */
-  private async generateTokens(user: User): Promise<{ accessToken: string; refreshToken: string }> {
+  private async generateTokens(
+    user: User
+  ): Promise<{ accessToken: string; refreshToken: string }> {
     const basePayload = generateUserPayload({
       id: user.id,
       email: user.email,
-      roles: user.roles?.map(role => role.name) || [],
+      roles: user.roles?.map((role) => role.name) || [],
     });
 
     const accessToken = await generateToken(
       this.jwtService,
       this.configService,
-      { ...basePayload, type: 'access' as const },
-      'access',
+      { ...basePayload, type: "access" as const },
+      "access"
     );
 
     const refreshToken = await generateToken(
       this.jwtService,
       this.configService,
-      { ...basePayload, type: 'refresh' as const },
-      'refresh',
+      { ...basePayload, type: "refresh" as const },
+      "refresh"
     );
 
     return { accessToken, refreshToken };
@@ -124,12 +153,12 @@ export class AuthService {
    */
   private mapToLoginResponseDto(
     user: User,
-    tokens: { accessToken: string; refreshToken: string },
+    tokens: { accessToken: string; refreshToken: string }
   ): LoginResponseDto {
     const response = new LoginResponseDto();
     response.access_token = tokens.accessToken;
     response.refresh_token = tokens.refreshToken;
-    response.token_type = 'Bearer';
+    response.token_type = "Bearer";
     response.expires_in = this.getAccessTokenExpiresIn();
     response.user = UserResponseDto.fromUser(user);
 
@@ -144,15 +173,20 @@ export class AuthService {
       const user = await this.usersService.findByEmail(email);
 
       this.logger.debug(`[DEBUG] User found: ${!!user}, ID: ${user?.id}`);
-      
+
       if (!user) {
         return null;
       }
 
       this.logger.debug(`[DEBUG] Password from request: ${password}`);
-      this.logger.debug(`[DEBUG] Hash from DB: ${user.password_hash.substring(0, 30)}...`);
-      
-      const isPasswordValid = await comparePassword(password, user.password_hash);
+      this.logger.debug(
+        `[DEBUG] Hash from DB: ${user.password_hash.substring(0, 30)}...`
+      );
+
+      const isPasswordValid = await comparePassword(
+        password,
+        user.password_hash
+      );
 
       this.logger.debug(`[DEBUG] Password valid: ${isPasswordValid}`);
 
@@ -162,7 +196,7 @@ export class AuthService {
 
       return user;
     } catch (error) {
-      this.logger.error('Erro ao validar usuário', error);
+      this.logger.error("Erro ao validar usuário", error);
       return null;
     }
   }
@@ -173,23 +207,27 @@ export class AuthService {
   async refreshToken(
     refreshToken: string,
     ipAddress?: string,
-    userAgent?: string,
+    userAgent?: string
   ): Promise<LoginResponseDto> {
     try {
-      const payload = await verifyToken(this.jwtService, this.configService, refreshToken);
+      const payload = await verifyToken(
+        this.jwtService,
+        this.configService,
+        refreshToken
+      );
 
-      if (!payload || payload.type !== 'refresh') {
-        throw new UnauthorizedException('Token inválido');
+      if (!payload || payload.type !== "refresh") {
+        throw new UnauthorizedException("Token inválido");
       }
 
       const user = await this.usersService.findOne(payload.sub);
 
       if (!user) {
-        throw new UnauthorizedException('Usuário inválido');
+        throw new UnauthorizedException("Usuário inválido");
       }
 
       if (!user.email_verified) {
-        throw new UnauthorizedException('Email não verificado');
+        throw new UnauthorizedException("Email não verificado");
       }
 
       const tokens = await this.generateTokens(user);
@@ -199,8 +237,8 @@ export class AuthService {
 
       return this.mapToLoginResponseDto(user, tokens);
     } catch (error) {
-      this.logger.error('Erro ao atualizar refresh token', error);
-      throw new UnauthorizedException('Refresh token inválido');
+      this.logger.error("Erro ao atualizar refresh token", error);
+      throw new UnauthorizedException("Refresh token inválido");
     }
   }
 
@@ -215,7 +253,11 @@ export class AuthService {
     const hasSpecialChar = /[@$!%*?&]/.test(password);
 
     return (
-      password.length >= minLength && hasUpperCase && hasLowerCase && hasNumbers && hasSpecialChar
+      password.length >= minLength &&
+      hasUpperCase &&
+      hasLowerCase &&
+      hasNumbers &&
+      hasSpecialChar
     );
   }
 
@@ -223,7 +265,7 @@ export class AuthService {
    * Hash da senha usando util
    */
   async hashPasswordForUser(password: string): Promise<string> {
-    const saltRounds = this.configService.get<number>('BCRYPT_SALT_ROUNDS', 12);
+    const saltRounds = this.configService.get<number>("BCRYPT_SALT_ROUNDS", 12);
     return hashPassword(password, saltRounds);
   }
 
@@ -233,7 +275,7 @@ export class AuthService {
   private async logSuccessfulLogin(
     user: User,
     ipAddress?: string,
-    userAgent?: string,
+    userAgent?: string
   ): Promise<void> {
     try {
       const auditData = {
@@ -241,11 +283,11 @@ export class AuthService {
         category: AuditCategory.AUTH,
         userId: user.id,
         userEmail: user.email,
-        resourceType: 'auth',
+        resourceType: "auth",
         resourceId: user.id,
         description: `Successful login for user ${user.email}`,
         metadata: {
-          userRoles: user.roles?.map(role => role.name) || [],
+          userRoles: user.roles?.map((role) => role.name) || [],
           lastLogin: user.last_login_at,
         },
         ...(user.roles?.[0]?.name && { userRole: user.roles[0].name }),
@@ -253,9 +295,9 @@ export class AuthService {
         ...(userAgent && { userAgent }),
       };
 
-      await this.auditLogService.createLog(auditData);
+      await this.auditLogService.logAction(auditData);
     } catch (error) {
-      this.logger.error('Failed to log successful login audit', error);
+      this.logger.error("Failed to log successful login audit", error);
     }
   }
 
@@ -266,14 +308,14 @@ export class AuthService {
     email: string,
     reason: string,
     ipAddress?: string,
-    userAgent?: string,
+    userAgent?: string
   ): Promise<void> {
     try {
       const auditData = {
         action: AuditAction.FAILED_LOGIN,
         category: AuditCategory.AUTH,
         userEmail: email,
-        resourceType: 'auth',
+        resourceType: "auth",
         description: `Failed login attempt for ${email}: ${reason}`,
         metadata: {
           reason,
@@ -283,9 +325,9 @@ export class AuthService {
         ...(userAgent && { userAgent }),
       };
 
-      await this.auditLogService.createLog(auditData);
+      await this.auditLogService.logAction(auditData);
     } catch (error) {
-      this.logger.error('Failed to log failed login audit', error);
+      this.logger.error("Failed to log failed login audit", error);
     }
   }
 
@@ -295,7 +337,7 @@ export class AuthService {
   private async logProfileAccess(
     user: User,
     ipAddress?: string,
-    userAgent?: string,
+    userAgent?: string
   ): Promise<void> {
     try {
       const auditData = {
@@ -303,7 +345,7 @@ export class AuthService {
         category: AuditCategory.AUTH,
         userId: user.id,
         userEmail: user.email,
-        resourceType: 'user_profile',
+        resourceType: "user_profile",
         resourceId: user.id,
         description: `User ${user.email} accessed their profile`,
         metadata: {
@@ -313,23 +355,27 @@ export class AuthService {
         ...(userAgent && { userAgent }),
       };
 
-      await this.auditLogService.createLog(auditData);
+      await this.auditLogService.logAction(auditData);
     } catch (error) {
-      this.logger.error('Failed to log profile access audit', error);
+      this.logger.error("Failed to log profile access audit", error);
     }
   }
 
   /**
    * Log auditoria para refresh token
    */
-  private async logTokenRefresh(user: User, ipAddress?: string, userAgent?: string): Promise<void> {
+  private async logTokenRefresh(
+    user: User,
+    ipAddress?: string,
+    userAgent?: string
+  ): Promise<void> {
     try {
       const auditData = {
         action: AuditAction.UPDATE,
         category: AuditCategory.AUTH,
         userId: user.id,
         userEmail: user.email,
-        resourceType: 'auth',
+        resourceType: "auth",
         resourceId: user.id,
         description: `Token refreshed for user ${user.email}`,
         metadata: {
@@ -339,9 +385,9 @@ export class AuthService {
         ...(userAgent && { userAgent }),
       };
 
-      await this.auditLogService.createLog(auditData);
+      await this.auditLogService.logAction(auditData);
     } catch (error) {
-      this.logger.error('Failed to log token refresh audit', error);
+      this.logger.error("Failed to log token refresh audit", error);
     }
   }
 
@@ -352,7 +398,7 @@ export class AuthService {
     userId: string,
     userEmail: string,
     ipAddress?: string,
-    userAgent?: string,
+    userAgent?: string
   ): Promise<void> {
     try {
       const auditData = {
@@ -360,7 +406,7 @@ export class AuthService {
         category: AuditCategory.AUTH,
         userId,
         userEmail,
-        resourceType: 'auth',
+        resourceType: "auth",
         resourceId: userId,
         description: `User ${userEmail} logged out`,
         metadata: {
@@ -370,9 +416,9 @@ export class AuthService {
         ...(userAgent && { userAgent }),
       };
 
-      await this.auditLogService.createLog(auditData);
+      await this.auditLogService.logAction(auditData);
     } catch (error) {
-      this.logger.error('Failed to log logout audit', error);
+      this.logger.error("Failed to log logout audit", error);
     }
   }
 
@@ -380,16 +426,19 @@ export class AuthService {
    * Obtém tempo de expiração do access token em segundos
    */
   private getAccessTokenExpiresIn(): number {
-    const expiresIn = this.configService.get<string>('JWT_ACCESS_TOKEN_EXPIRES_IN', '15m');
+    const expiresIn = this.configService.get<string>(
+      "JWT_ACCESS_TOKEN_EXPIRES_IN",
+      "15m"
+    );
 
     // Converte string como "15m" para segundos
-    if (expiresIn.endsWith('m')) {
+    if (expiresIn.endsWith("m")) {
       return parseInt(expiresIn.slice(0, -1)) * 60;
     }
-    if (expiresIn.endsWith('h')) {
+    if (expiresIn.endsWith("h")) {
       return parseInt(expiresIn.slice(0, -1)) * 60 * 60;
     }
-    if (expiresIn.endsWith('d')) {
+    if (expiresIn.endsWith("d")) {
       return parseInt(expiresIn.slice(0, -1)) * 60 * 60 * 24;
     }
 

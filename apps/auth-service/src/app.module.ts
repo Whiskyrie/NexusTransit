@@ -1,6 +1,6 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
-import { TypeOrmModule } from "@nestjs/typeorm";
+import { DatabaseModule as NexusDatabaseModule } from "@nexus/database";
 import { ThrottlerModule } from "@nestjs/throttler";
 import { ScheduleModule } from "@nestjs/schedule";
 
@@ -12,8 +12,9 @@ import { getDatabaseConfig } from "./config/database.config";
 import { AuthModule } from "./auth/auth.module";
 import { UsersModule } from "./users/users.module";
 import { RolesModule } from "./roles/roles.module";
-import { RedisModule } from "./redis/redis.module";
+import { RedisModule } from "@nexus/redis";
 import { HealthModule } from "./health/health.module";
+import { AuditModule } from "@nexus/audit";
 import { LoggingModule } from "@nexus/logger";
 
 @Module({
@@ -26,8 +27,11 @@ import { LoggingModule } from "@nexus/logger";
     }),
 
     // Database Module - Schema 'auth'
-    TypeOrmModule.forRootAsync({
-      useFactory: getDatabaseConfig,
+    NexusDatabaseModule.forRootAsync({
+      useFactory: () => {
+        const config = getDatabaseConfig();
+        return config as any;
+      },
     }),
 
     // Rate Limiting
@@ -45,9 +49,10 @@ import { LoggingModule } from "@nexus/logger";
     AuthModule,
     UsersModule,
     RolesModule,
-    RedisModule,
+    RedisModule.forRootAsync(),
     HealthModule,
     LoggingModule,
+    AuditModule,
   ],
 })
 export class AppModule {}

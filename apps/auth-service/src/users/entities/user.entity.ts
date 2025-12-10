@@ -1,6 +1,6 @@
-import { Entity, Column, ManyToMany, JoinTable } from 'typeorm';
-import { BaseEntity } from '../../database/entities/base.entity';
-import { Role } from '../../roles/entities/role.entity';
+import { Entity, Column, ManyToMany, JoinTable } from "typeorm";
+import { BaseEntity } from "@nexus/common";
+import { Role } from "../../roles/entities/role.entity";
 
 /**
  * User Entity - Sistema de usuários do Nexus Transit
@@ -11,85 +11,85 @@ import { Role } from '../../roles/entities/role.entity';
  * - Timestamps automáticos
  * - Soft delete
  */
-@Entity('users')
+@Entity("users")
 export class User extends BaseEntity {
   @Column({
-    type: 'varchar',
+    type: "varchar",
     length: 255,
     unique: true,
-    comment: 'Email único do usuário',
+    comment: "Email único do usuário",
   })
   email!: string;
 
   @Column({
-    type: 'varchar',
+    type: "varchar",
     length: 255,
-    comment: 'Hash da senha do usuário',
+    comment: "Hash da senha do usuário",
   })
   password_hash!: string;
 
   @Column({
-    type: 'varchar',
+    type: "varchar",
     length: 100,
-    comment: 'Primeiro nome do usuário',
+    comment: "Primeiro nome do usuário",
   })
   first_name!: string;
 
   @Column({
-    type: 'varchar',
+    type: "varchar",
     length: 100,
-    comment: 'Sobrenome do usuário',
+    comment: "Sobrenome do usuário",
   })
   last_name!: string;
 
   @Column({
-    type: 'varchar',
+    type: "varchar",
     length: 20,
     nullable: true,
-    comment: 'Telefone do usuário',
+    comment: "Telefone do usuário",
   })
   phone?: string;
 
   @Column({
-    type: 'timestamp with time zone',
+    type: "timestamp with time zone",
     nullable: true,
-    comment: 'Último login do usuário',
+    comment: "Último login do usuário",
   })
   last_login_at?: Date;
 
   @Column({
-    type: 'jsonb',
+    type: "jsonb",
     nullable: true,
-    comment: 'Configurações personalizadas do usuário',
+    comment: "Configurações personalizadas do usuário",
   })
   preferences?: Record<string, unknown>;
 
   @Column({
-    type: 'boolean',
+    type: "boolean",
     default: false,
-    comment: 'Email foi verificado',
+    comment: "Email foi verificado",
   })
   email_verified!: boolean;
 
   @Column({
-    type: 'timestamp with time zone',
+    type: "timestamp with time zone",
     nullable: true,
-    comment: 'Data de verificação do email',
+    comment: "Data de verificação do email",
   })
   email_verified_at?: Date;
 
   // Relacionamentos
 
-  @ManyToMany(() => Role, role => role.users)
+  @ManyToMany(() => Role, (role) => role.users)
   @JoinTable({
-    name: 'user_roles',
+    name: "user_roles",
     joinColumn: {
-      name: 'user_id',
-      referencedColumnName: 'id',
+      name: "user_id",
+      referencedColumnName: "id",
     },
     inverseJoinColumn: {
-      name: 'role_id',
-      referencedColumnName: 'id',
+      name: "role_id",
+      referencedColumnName: "id",
     },
   })
   roles!: Role[];
