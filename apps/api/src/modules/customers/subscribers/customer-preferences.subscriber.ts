@@ -9,9 +9,7 @@ import { Logger } from '@nestjs/common';
 import { CustomerPreferences } from '../entities/customer-preferences.entity';
 
 @EventSubscriber()
-export class CustomerPreferencesSubscriber
-  implements EntitySubscriberInterface<CustomerPreferences>
-{
+export class CustomerPreferencesSubscriber implements EntitySubscriberInterface<CustomerPreferences> {
   private readonly logger = new Logger(CustomerPreferencesSubscriber.name);
 
   listenTo(): typeof CustomerPreferences {

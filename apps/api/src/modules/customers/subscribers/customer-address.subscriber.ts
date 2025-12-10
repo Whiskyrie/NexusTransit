@@ -167,7 +167,7 @@ export class CustomerAddressSubscriber implements EntitySubscriberInterface<Cust
     }
 
     // Validação de estado
-    if (!address.state || address.state.trim().length !== 2) {
+    if (address.state?.trim().length !== 2) {
       throw new Error('State must be exactly 2 characters');
     }
 
