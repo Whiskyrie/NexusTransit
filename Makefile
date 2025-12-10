@@ -87,31 +87,11 @@ migration-revert-api: ## ⏮️  Reverter última migration da API
 	@echo "$(YELLOW)Revertendo última migration da API...$(NC)"
 	@cd apps/api && pnpm migration:revert
 
-migration-generate-auth: ## 📝 Gerar migration do Auth Service
-	@read -p "Nome da migration: " name; \
-	cd apps/auth-service && pnpm migration:generate -- $$name
-
-migration-run-auth: ## ▶️  Executar migrations do Auth Service
-	@echo "$(GREEN)Executando migrations do Auth Service...$(NC)"
-	@cd apps/auth-service && pnpm migration:run
-
-migration-revert-auth: ## ⏮️  Reverter última migration do Auth Service
-	@echo "$(YELLOW)Revertendo última migration do Auth Service...$(NC)"
-	@cd apps/auth-service && pnpm migration:revert
-
 db-reset-api: ## 🔄 Reset database da API (CUIDADO!)
 	@echo "$(RED)⚠️  ATENÇÃO: Isso irá apagar todos os dados da API!$(NC)"
 	@read -p "Confirma? (y/N) " confirm; \
 	if [ "$$confirm" = "y" ]; then \
 		cd apps/api && pnpm migration:revert:all && pnpm migration:run; \
-		echo "$(GREEN)Database resetado!$(NC)"; \
-	fi
-
-db-reset-auth: ## 🔄 Reset database do Auth Service (CUIDADO!)
-	@echo "$(RED)⚠️  ATENÇÃO: Isso irá apagar todos os dados do Auth!$(NC)"
-	@read -p "Confirma? (y/N) " confirm; \
-	if [ "$$confirm" = "y" ]; then \
-		cd apps/auth-service && pnpm migration:revert:all && pnpm migration:run; \
 		echo "$(GREEN)Database resetado!$(NC)"; \
 	fi
 
