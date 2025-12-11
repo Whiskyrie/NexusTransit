@@ -29,11 +29,7 @@
  * ```
  */
 
-export {
-  RateLimit,
-  SkipRateLimit,
-  RATE_LIMIT_KEY,
-} from '../../modules/rate-limit/decorators/rate-limit.decorator';
+export { RateLimit, SkipRateLimit, RATE_LIMIT_KEY } from '@nexus/rate-limit';
 
-export { Roles } from '../../modules/rate-limit/decorators/roles.decorator';
+export { Roles } from '@nexus/rate-limit';
 export { Auditable } from '@nexus/audit';
