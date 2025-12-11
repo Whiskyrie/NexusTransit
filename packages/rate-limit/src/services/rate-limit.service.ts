@@ -1,23 +1,23 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere, ILike } from 'typeorm';
-import { RedisService } from '../../redis/redis.service';
-import { RateLimitResult } from '../interfaces/rate-limit.interface';
+import { Injectable, Logger, NotFoundException, BadRequestException } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository, FindOptionsWhere, ILike } from "typeorm";
+import { RedisService } from "@nexus/redis";
+import { RateLimitResult } from "../interfaces/rate-limit.interface";
 import type {
   IRateLimitStrategy,
   RateLimitRequest,
   RateLimitRuleConfig,
-} from '../interfaces/rate-limit-strategy.interface';
-import { RateLimitRule } from '../entities/rate-limit-rule.entity';
-import { QuotaUsage } from '../entities/quota-usage.entity';
-import { SlidingWindowStrategy } from '../strategies/sliding-window.strategy';
-import { TokenBucketStrategy } from '../strategies/token-bucket.strategy';
-import { FixedWindowStrategy } from '../strategies/fixed-window.strategy';
-import { CreateRuleDto } from '../dto/create-rule.dto';
-import { UpdateRuleDto } from '../dto/update-rule.dto';
-import { RuleFilterDto } from '../dto/rule-filter.dto';
-import { RuleResponseDto } from '../dto/rule-response.dto';
-import { PaginatedResponseDto } from '@nexus/common';
+} from "../interfaces/rate-limit-strategy.interface";
+import { RateLimitRule } from "../entities/rate-limit-rule.entity";
+import { QuotaUsage } from "../entities/quota-usage.entity";
+import { SlidingWindowStrategy } from "../strategies/sliding-window.strategy";
+import { TokenBucketStrategy } from "../strategies/token-bucket.strategy";
+import { FixedWindowStrategy } from "../strategies/fixed-window.strategy";
+import { CreateRuleDto } from "../dto/create-rule.dto";
+import { UpdateRuleDto } from "../dto/update-rule.dto";
+import { RuleFilterDto } from "../dto/rule-filter.dto";
+import { RuleResponseDto } from "../dto/rule-response.dto";
+import { PaginatedResponseDto } from "@nexus/common";
 
 interface RateLimitEntry {
   requests: number[];
@@ -53,9 +53,9 @@ export class RateLimitService {
   ) {
     // Initialize strategies map
     this.strategies = new Map<string, IRateLimitStrategy>();
-    this.strategies.set('SLIDING_WINDOW', this.slidingWindowStrategy);
-    this.strategies.set('TOKEN_BUCKET', this.tokenBucketStrategy);
-    this.strategies.set('FIXED_WINDOW', this.fixedWindowStrategy);
+    this.strategies.set("SLIDING_WINDOW", this.slidingWindowStrategy);
+    this.strategies.set("TOKEN_BUCKET", this.tokenBucketStrategy);
+    this.strategies.set("FIXED_WINDOW", this.fixedWindowStrategy);
   }
 
   /**
@@ -70,7 +70,7 @@ export class RateLimitService {
       const rules = await this.getApplicableRules(request);
 
       if (rules.length === 0) {
-        this.logger.warn('No rate limit rules found, using default');
+        this.logger.warn("No rate limit rules found, using default");
         return this.getDefaultRateLimitResult();
       }
 
@@ -121,8 +121,8 @@ export class RateLimitService {
         resetTime: Date.now() + (rules[0]?.window_size ?? 60000),
       };
     } catch (error) {
-      this.logger.error('Rate limit check failed', {
-        error: error instanceof Error ? error.message : 'Unknown error',
+      this.logger.error("Rate limit check failed", {
+        error: error instanceof Error ? error.message : "Unknown error",
         stack: error instanceof Error ? error.stack : undefined,
       });
 
@@ -143,7 +143,7 @@ export class RateLimitService {
       // Get all active rules
       const allRules = await this.ruleRepository.find({
         where: { is_active: true },
-        order: { priority: 'ASC' },
+        order: { priority: "ASC" },
       });
 
       for (const rule of allRules) {
@@ -155,8 +155,8 @@ export class RateLimitService {
 
       return rules;
     } catch (error) {
-      this.logger.error('Failed to get applicable rules', {
-        error: error instanceof Error ? error.message : 'Unknown error',
+      this.logger.error("Failed to get applicable rules", {
+        error: error instanceof Error ? error.message : "Unknown error",
       });
       return [];
     }
@@ -167,19 +167,19 @@ export class RateLimitService {
    */
   private doesRuleApply(rule: RateLimitRule, request: RateLimitRequest): boolean {
     switch (rule.type) {
-      case 'GLOBAL':
+      case "GLOBAL":
         return true;
 
-      case 'IP':
+      case "IP":
         return !!request.ip;
 
-      case 'USER':
+      case "USER":
         return !!request.userId;
 
-      case 'API_KEY':
+      case "API_KEY":
         return !!request.apiKeyId && rule.api_key_id === request.apiKeyId;
 
-      case 'ENDPOINT':
+      case "ENDPOINT":
         if (!rule.endpoint) {
           return false;
         }
@@ -208,7 +208,7 @@ export class RateLimitService {
   ): void {
     try {
       // Extract method from endpoint (e.g., "GET /api/users" -> "GET")
-      const method = request.endpoint.split(' ')[0] ?? 'UNKNOWN';
+      const method = request.endpoint.split(" ")[0] ?? "UNKNOWN";
 
       const usageData: Partial<QuotaUsage> = {
         client_id: request.clientId,
@@ -237,15 +237,15 @@ export class RateLimitService {
 
       // Save asynchronously without blocking
       setImmediate(() => {
-        this.usageRepository.save(usage).catch(error => {
-          this.logger.error('Failed to record usage', {
-            error: error instanceof Error ? error.message : 'Unknown error',
+        this.usageRepository.save(usage).catch((error) => {
+          this.logger.error("Failed to record usage", {
+            error: error instanceof Error ? error.message : "Unknown error",
           });
         });
       });
     } catch (error) {
-      this.logger.error('Failed to prepare usage record', {
-        error: error instanceof Error ? error.message : 'Unknown error',
+      this.logger.error("Failed to prepare usage record", {
+        error: error instanceof Error ? error.message : "Unknown error",
       });
     }
   }
@@ -258,7 +258,7 @@ export class RateLimitService {
     rule: RateLimitRule,
     result: RateLimitResult,
   ): void {
-    this.logger.warn('Rate limit exceeded', {
+    this.logger.warn("Rate limit exceeded", {
       clientId: request.clientId,
       ip: request.ip,
       userId: request.userId,
@@ -300,7 +300,7 @@ export class RateLimitService {
       };
 
       // Clean expired requests
-      entry.requests = entry.requests.filter(timestamp => timestamp > windowStart);
+      entry.requests = entry.requests.filter((timestamp) => timestamp > windowStart);
 
       // Check if limit exceeded
       const currentCount = entry.requests.length;
@@ -325,11 +325,11 @@ export class RateLimitService {
         resetTime,
       };
     } catch (error) {
-      this.logger.error('Rate limit check failed', {
+      this.logger.error("Rate limit check failed", {
         key,
         limit,
         windowMs,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
       });
 
       // Fail open - allow request if Redis is down
@@ -351,9 +351,9 @@ export class RateLimitService {
       await this.redisService.delete(key);
       this.logger.log(`Rate limit reset for key: ${key}`);
     } catch (error) {
-      this.logger.error('Failed to reset rate limit', {
+      this.logger.error("Failed to reset rate limit", {
         key,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
       });
     }
   }
@@ -379,7 +379,7 @@ export class RateLimitService {
       }
 
       // Clean expired requests
-      const validRequests = entry.requests.filter(timestamp => timestamp > windowStart);
+      const validRequests = entry.requests.filter((timestamp) => timestamp > windowStart);
       const currentCount = validRequests.length;
       const remaining = Math.max(0, limit - currentCount);
       const resetTime = now + windowMs;
@@ -392,9 +392,9 @@ export class RateLimitService {
         resetTime,
       };
     } catch (error) {
-      this.logger.error('Failed to get rate limit status', {
+      this.logger.error("Failed to get rate limit status", {
         key,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
       });
 
       return {
@@ -412,7 +412,7 @@ export class RateLimitService {
    */
   cleanup(): void {
     // Keyv handles TTL automatically, so no manual cleanup needed
-    this.logger.log('Rate limit cleanup not needed with Keyv TTL');
+    this.logger.log("Rate limit cleanup not needed with Keyv TTL");
   }
 
   /**
@@ -486,13 +486,13 @@ export class RateLimitService {
       where,
       take: limit,
       skip: (page - 1) * limit,
-      order: { priority: 'ASC', created_at: 'DESC' },
+      order: { priority: "ASC", created_at: "DESC" },
     });
 
     const totalPages = Math.ceil(total / limit);
 
     return {
-      data: rules.map(r => this.mapRuleToResponseDto(r)),
+      data: rules.map((r) => this.mapRuleToResponseDto(r)),
       meta: {
         page,
         limit,

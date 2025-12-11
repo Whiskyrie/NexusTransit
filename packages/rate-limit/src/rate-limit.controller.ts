@@ -11,7 +11,7 @@ import {
   HttpStatus,
   HttpCode,
   UseGuards,
-} from '@nestjs/common';
+} from "@nestjs/common";
 import {
   ApiTags,
   ApiOperation,
@@ -23,17 +23,17 @@ import {
   ApiUnauthorizedResponse,
   ApiForbiddenResponse,
   ApiQuery,
-} from '@nestjs/swagger';
-import { JwtAuthGuard, RolesGuard, Roles, Role } from '@nexus/auth';
-import { RateLimitService } from './services/rate-limit.service';
-import { MonitoringService } from './services/monitoring.service';
-import { BlacklistService, BlacklistEntry } from './services/blacklist.service';
-import { CreateRuleDto } from './dto/create-rule.dto';
-import { UpdateRuleDto } from './dto/update-rule.dto';
-import { RuleFilterDto } from './dto/rule-filter.dto';
-import { RuleResponseDto } from './dto/rule-response.dto';
-import { QuotaMetricsDto } from './dto/quota-metrics.dto';
-import { PaginatedResponseDto } from '@nexus/common';
+} from "@nestjs/swagger";
+import { JwtAuthGuard, RolesGuard, Roles, Role } from "@nexus/auth";
+import { RateLimitService } from "./services/rate-limit.service";
+import { MonitoringService } from "./services/monitoring.service";
+import { BlacklistService, BlacklistEntry } from "./services/blacklist.service";
+import { CreateRuleDto } from "./dto/create-rule.dto";
+import { UpdateRuleDto } from "./dto/update-rule.dto";
+import { RuleFilterDto } from "./dto/rule-filter.dto";
+import { RuleResponseDto } from "./dto/rule-response.dto";
+import { QuotaMetricsDto } from "./dto/quota-metrics.dto";
+import { PaginatedResponseDto } from "@nexus/common";
 
 /**
  * Controller para gerenciamento de regras de rate limiting
@@ -44,8 +44,8 @@ import { PaginatedResponseDto } from '@nexus/common';
  * - Gerenciamento de whitelist/blacklist
  * - Monitoramento de violações
  */
-@ApiTags('Rate Limit')
-@Controller('rate-limit')
+@ApiTags("Rate Limit")
+@Controller("rate-limit")
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class RateLimitController {
@@ -55,40 +55,40 @@ export class RateLimitController {
     private readonly blacklistService: BlacklistService,
   ) {}
 
-  @Post('rules')
+  @Post("rules")
   @Roles(Role.ADMIN)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
-    summary: 'Criar nova regra de rate limit',
-    description: 'Cria uma nova regra de rate limiting no sistema',
+    summary: "Criar nova regra de rate limit",
+    description: "Cria uma nova regra de rate limiting no sistema",
   })
   @ApiResponse({
     status: HttpStatus.CREATED,
-    description: 'Regra criada com sucesso',
+    description: "Regra criada com sucesso",
     type: RuleResponseDto,
   })
   @ApiBadRequestResponse({
-    description: 'Dados inválidos fornecidos',
+    description: "Dados inválidos fornecidos",
   })
   @ApiUnauthorizedResponse({
-    description: 'Token de autenticação inválido ou ausente',
+    description: "Token de autenticação inválido ou ausente",
   })
   @ApiForbiddenResponse({
-    description: 'Usuário não possui permissão de administrador',
+    description: "Usuário não possui permissão de administrador",
   })
   async createRule(@Body() createDto: CreateRuleDto): Promise<RuleResponseDto> {
     return this.rateLimitService.createRule(createDto);
   }
 
-  @Get('rules')
+  @Get("rules")
   @Roles(Role.ADMIN, Role.GESTOR)
   @ApiOperation({
-    summary: 'Listar regras de rate limit',
-    description: 'Lista todas as regras de rate limiting com filtros e paginação',
+    summary: "Listar regras de rate limit",
+    description: "Lista todas as regras de rate limiting com filtros e paginação",
   })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: 'Lista de regras',
+    description: "Lista de regras",
     type: [RuleResponseDto],
   })
   async findAllRules(
@@ -97,115 +97,115 @@ export class RateLimitController {
     return this.rateLimitService.findAllRules(filterDto);
   }
 
-  @Get('rules/:id')
+  @Get("rules/:id")
   @Roles(Role.ADMIN, Role.GESTOR)
   @ApiOperation({
-    summary: 'Buscar regra por ID',
-    description: 'Retorna detalhes de uma regra específica',
+    summary: "Buscar regra por ID",
+    description: "Retorna detalhes de uma regra específica",
   })
   @ApiParam({
-    name: 'id',
-    description: 'ID único da regra',
+    name: "id",
+    description: "ID único da regra",
     type: String,
-    format: 'uuid',
+    format: "uuid",
   })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: 'Regra encontrada',
+    description: "Regra encontrada",
     type: RuleResponseDto,
   })
   @ApiNotFoundResponse({
-    description: 'Regra não encontrada',
+    description: "Regra não encontrada",
   })
-  async findOneRule(@Param('id', ParseUUIDPipe) id: string): Promise<RuleResponseDto> {
+  async findOneRule(@Param("id", ParseUUIDPipe) id: string): Promise<RuleResponseDto> {
     return this.rateLimitService.findOneRule(id);
   }
 
-  @Patch('rules/:id')
+  @Patch("rules/:id")
   @Roles(Role.ADMIN)
   @ApiOperation({
-    summary: 'Atualizar regra de rate limit',
-    description: 'Atualiza campos específicos de uma regra',
+    summary: "Atualizar regra de rate limit",
+    description: "Atualiza campos específicos de uma regra",
   })
   @ApiParam({
-    name: 'id',
-    description: 'ID único da regra',
+    name: "id",
+    description: "ID único da regra",
     type: String,
-    format: 'uuid',
+    format: "uuid",
   })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: 'Regra atualizada com sucesso',
+    description: "Regra atualizada com sucesso",
     type: RuleResponseDto,
   })
   @ApiNotFoundResponse({
-    description: 'Regra não encontrada',
+    description: "Regra não encontrada",
   })
   async updateRule(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param("id", ParseUUIDPipe) id: string,
     @Body() updateDto: UpdateRuleDto,
   ): Promise<RuleResponseDto> {
     return this.rateLimitService.updateRule(id, updateDto);
   }
 
-  @Delete('rules/:id')
+  @Delete("rules/:id")
   @Roles(Role.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
-    summary: 'Remover regra de rate limit',
-    description: 'Remove (soft delete) uma regra do sistema',
+    summary: "Remover regra de rate limit",
+    description: "Remove (soft delete) uma regra do sistema",
   })
   @ApiParam({
-    name: 'id',
-    description: 'ID único da regra',
+    name: "id",
+    description: "ID único da regra",
     type: String,
-    format: 'uuid',
+    format: "uuid",
   })
   @ApiResponse({
     status: HttpStatus.NO_CONTENT,
-    description: 'Regra removida com sucesso',
+    description: "Regra removida com sucesso",
   })
   @ApiNotFoundResponse({
-    description: 'Regra não encontrada',
+    description: "Regra não encontrada",
   })
-  async removeRule(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
+  async removeRule(@Param("id", ParseUUIDPipe) id: string): Promise<void> {
     return this.rateLimitService.removeRule(id);
   }
 
-  @Get('metrics/quota')
+  @Get("metrics/quota")
   @Roles(Role.ADMIN, Role.GESTOR)
   @ApiOperation({
-    summary: 'Obter métricas de uso de quota',
-    description: 'Retorna estatísticas agregadas de uso das quotas de rate limit',
+    summary: "Obter métricas de uso de quota",
+    description: "Retorna estatísticas agregadas de uso das quotas de rate limit",
   })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: 'Métricas de quota',
+    description: "Métricas de quota",
     type: QuotaMetricsDto,
   })
   async getQuotaMetrics(
-    @Query('startDate') startDate?: string,
-    @Query('endDate') endDate?: string,
+    @Query("startDate") startDate?: string,
+    @Query("endDate") endDate?: string,
   ): Promise<QuotaMetricsDto> {
     const parsedStartDate = startDate ? new Date(startDate) : undefined;
     const parsedEndDate = endDate ? new Date(endDate) : undefined;
     return this.monitoringService.getQuotaMetrics(parsedStartDate, parsedEndDate);
   }
 
-  @Get('metrics/violations')
+  @Get("metrics/violations")
   @Roles(Role.ADMIN, Role.GESTOR)
   @ApiOperation({
-    summary: 'Obter relatório de violações',
-    description: 'Lista violações de rate limit com filtros por período',
+    summary: "Obter relatório de violações",
+    description: "Lista violações de rate limit com filtros por período",
   })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: 'Lista de violações',
+    description: "Lista de violações",
   })
   async getViolations(
-    @Query('startDate') startDate?: string,
-    @Query('endDate') endDate?: string,
-    @Query('type') type?: 'IP' | 'USER' | 'CLIENT_ID',
+    @Query("startDate") startDate?: string,
+    @Query("endDate") endDate?: string,
+    @Query("type") type?: "IP" | "USER" | "CLIENT_ID",
   ): Promise<
     {
       client_id: string;
@@ -223,61 +223,61 @@ export class RateLimitController {
     return this.monitoringService.getViolations(parsedStartDate, parsedEndDate, type);
   }
 
-  @Post('whitelist')
+  @Post("whitelist")
   @Roles(Role.ADMIN)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
-    summary: 'Adicionar à whitelist',
-    description: 'Adiciona um IP ou usuário à whitelist (bypass de rate limit)',
+    summary: "Adicionar à whitelist",
+    description: "Adiciona um IP ou usuário à whitelist (bypass de rate limit)",
   })
   @ApiResponse({
     status: HttpStatus.CREATED,
-    description: 'Adicionado à whitelist com sucesso',
+    description: "Adicionado à whitelist com sucesso",
   })
   async addToWhitelist(
-    @Body('identifier') identifier: string,
-    @Body('type') type: 'IP' | 'USER',
-    @Body('permanent') permanent?: boolean,
-    @Body('ttlSeconds') ttlSeconds?: number,
+    @Body("identifier") identifier: string,
+    @Body("type") type: "IP" | "USER",
+    @Body("permanent") permanent?: boolean,
+    @Body("ttlSeconds") ttlSeconds?: number,
   ): Promise<{ message: string }> {
     await this.blacklistService.addToWhitelist(identifier, type, permanent ?? true, ttlSeconds);
-    return { message: 'Adicionado à whitelist com sucesso' };
+    return { message: "Adicionado à whitelist com sucesso" };
   }
 
-  @Delete('whitelist/:identifier')
+  @Delete("whitelist/:identifier")
   @Roles(Role.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
-    summary: 'Remover da whitelist',
-    description: 'Remove um IP ou usuário da whitelist',
+    summary: "Remover da whitelist",
+    description: "Remove um IP ou usuário da whitelist",
   })
   @ApiParam({
-    name: 'identifier',
-    description: 'IP ou ID do usuário',
+    name: "identifier",
+    description: "IP ou ID do usuário",
   })
   async removeFromWhitelist(
-    @Param('identifier') identifier: string,
-    @Query('type') type: 'IP' | 'USER',
+    @Param("identifier") identifier: string,
+    @Query("type") type: "IP" | "USER",
   ): Promise<void> {
     await this.blacklistService.removeFromWhitelist(identifier, type);
   }
 
-  @Post('blacklist')
+  @Post("blacklist")
   @Roles(Role.ADMIN)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
-    summary: 'Adicionar à blacklist',
-    description: 'Adiciona um IP ou usuário à blacklist (bloqueia acesso)',
+    summary: "Adicionar à blacklist",
+    description: "Adiciona um IP ou usuário à blacklist (bloqueia acesso)",
   })
   @ApiResponse({
     status: HttpStatus.CREATED,
-    description: 'Adicionado à blacklist com sucesso',
+    description: "Adicionado à blacklist com sucesso",
   })
   async addToBlacklist(
-    @Body('identifier') identifier: string,
-    @Body('type') type: 'IP' | 'USER',
-    @Body('reason') reason?: string,
-    @Body('durationSeconds') durationSeconds?: number,
+    @Body("identifier") identifier: string,
+    @Body("type") type: "IP" | "USER",
+    @Body("reason") reason?: string,
+    @Body("durationSeconds") durationSeconds?: number,
   ): Promise<{ message: string }> {
     // Construir objeto options apenas com propriedades definidas
     const options: {
@@ -295,61 +295,61 @@ export class RateLimitController {
     }
 
     await this.blacklistService.addToBlacklist(identifier, type, options);
-    return { message: 'Adicionado à blacklist com sucesso' };
+    return { message: "Adicionado à blacklist com sucesso" };
   }
 
-  @Delete('blacklist/:identifier')
+  @Delete("blacklist/:identifier")
   @Roles(Role.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
-    summary: 'Remover da blacklist',
-    description: 'Remove um IP ou usuário da blacklist',
+    summary: "Remover da blacklist",
+    description: "Remove um IP ou usuário da blacklist",
   })
   @ApiParam({
-    name: 'identifier',
-    description: 'IP ou ID do usuário',
+    name: "identifier",
+    description: "IP ou ID do usuário",
   })
   async removeFromBlacklist(
-    @Param('identifier') identifier: string,
-    @Query('type') type: 'IP' | 'USER',
+    @Param("identifier") identifier: string,
+    @Query("type") type: "IP" | "USER",
   ): Promise<void> {
     await this.blacklistService.removeFromBlacklist(identifier, type);
   }
 
-  @Get('blacklist')
+  @Get("blacklist")
   @Roles(Role.ADMIN, Role.GESTOR)
   @ApiOperation({
-    summary: 'Listar entradas da blacklist',
-    description: 'Lista todos os IPs e usuários bloqueados',
+    summary: "Listar entradas da blacklist",
+    description: "Lista todos os IPs e usuários bloqueados",
   })
   @ApiQuery({
-    name: 'type',
+    name: "type",
     required: false,
-    enum: ['IP', 'USER'],
-    description: 'Filtrar por tipo de identificador',
+    enum: ["IP", "USER"],
+    description: "Filtrar por tipo de identificador",
   })
   @ApiQuery({
-    name: 'page',
+    name: "page",
     required: false,
     type: Number,
     example: 1,
-    description: 'Número da página',
+    description: "Número da página",
   })
   @ApiQuery({
-    name: 'limit',
+    name: "limit",
     required: false,
     type: Number,
     example: 10,
-    description: 'Itens por página (máximo 100)',
+    description: "Itens por página (máximo 100)",
   })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: 'Lista de blacklist',
+    description: "Lista de blacklist",
   })
   async listBlacklist(
-    @Query('type') type?: 'IP' | 'USER',
-    @Query('page') page?: number,
-    @Query('limit') limit?: number,
+    @Query("type") type?: "IP" | "USER",
+    @Query("page") page?: number,
+    @Query("limit") limit?: number,
   ): Promise<{
     data: BlacklistEntry[];
     meta: {
@@ -364,25 +364,25 @@ export class RateLimitController {
     return this.blacklistService.listBlacklist(type, page, limit);
   }
 
-  @Post('rules/:id/reset')
+  @Post("rules/:id/reset")
   @Roles(Role.ADMIN)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Resetar contador de rate limit',
-    description: 'Reseta os contadores de uma regra específica',
+    summary: "Resetar contador de rate limit",
+    description: "Reseta os contadores de uma regra específica",
   })
   @ApiParam({
-    name: 'id',
-    description: 'ID único da regra',
+    name: "id",
+    description: "ID único da regra",
     type: String,
-    format: 'uuid',
+    format: "uuid",
   })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: 'Contador resetado com sucesso',
+    description: "Contador resetado com sucesso",
   })
-  async resetRuleCounter(@Param('id', ParseUUIDPipe) id: string): Promise<{ message: string }> {
+  async resetRuleCounter(@Param("id", ParseUUIDPipe) id: string): Promise<{ message: string }> {
     await this.rateLimitService.resetRuleCounter(id);
-    return { message: 'Contador resetado com sucesso' };
+    return { message: "Contador resetado com sucesso" };
   }
 }

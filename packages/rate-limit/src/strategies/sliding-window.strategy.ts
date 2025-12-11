@@ -1,11 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { RedisService } from '../../redis/redis.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { RedisService } from "@nexus/redis";
 import type {
   IRateLimitStrategy,
   RateLimitRequest,
   RateLimitRuleConfig,
-} from '../interfaces/rate-limit-strategy.interface';
-import type { RateLimitResult } from '../interfaces/rate-limit.interface';
+} from "../interfaces/rate-limit-strategy.interface";
+import type { RateLimitResult } from "../interfaces/rate-limit.interface";
 
 /**
  * Sliding Window Rate Limiting Strategy
@@ -25,7 +25,7 @@ import type { RateLimitResult } from '../interfaces/rate-limit.interface';
 @Injectable()
 export class SlidingWindowStrategy implements IRateLimitStrategy {
   private readonly logger = new Logger(SlidingWindowStrategy.name);
-  private readonly strategyName = 'SLIDING_WINDOW';
+  private readonly strategyName = "SLIDING_WINDOW";
 
   constructor(private readonly redisService: RedisService) {}
 
@@ -43,7 +43,7 @@ export class SlidingWindowStrategy implements IRateLimitStrategy {
       const redis = this.redisService.getRedisClient();
 
       if (!redis) {
-        this.logger.warn('Redis client not available, failing open');
+        this.logger.warn("Redis client not available, failing open");
         return this.failOpen(rule, now);
       }
 
@@ -101,9 +101,9 @@ export class SlidingWindowStrategy implements IRateLimitStrategy {
         resetTime,
       };
     } catch (error) {
-      this.logger.error('Sliding window rate limit check failed', {
+      this.logger.error("Sliding window rate limit check failed", {
         key,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
         stack: error instanceof Error ? error.stack : undefined,
       });
 
@@ -113,22 +113,22 @@ export class SlidingWindowStrategy implements IRateLimitStrategy {
   }
 
   generateKey(request: RateLimitRequest, rule: RateLimitRuleConfig): string {
-    const parts = ['rate_limit', 'sliding_window', rule.type];
+    const parts = ["rate_limit", "sliding_window", rule.type];
 
     switch (rule.type) {
-      case 'IP':
+      case "IP":
         parts.push(request.ip);
         break;
-      case 'USER':
+      case "USER":
         parts.push(request.userId ?? request.ip);
         break;
-      case 'API_KEY':
+      case "API_KEY":
         parts.push(request.apiKeyId ?? request.ip);
         break;
-      case 'ENDPOINT':
+      case "ENDPOINT":
         parts.push(`${request.ip}:${request.endpoint}`);
         break;
-      case 'GLOBAL':
+      case "GLOBAL":
         parts.push(request.endpoint);
         break;
       default:
@@ -137,7 +137,7 @@ export class SlidingWindowStrategy implements IRateLimitStrategy {
 
     parts.push(rule.id);
 
-    return parts.join(':');
+    return parts.join(":");
   }
 
   async reset(key: string): Promise<void> {
@@ -148,9 +148,9 @@ export class SlidingWindowStrategy implements IRateLimitStrategy {
         this.logger.log(`Rate limit reset for key: ${key}`);
       }
     } catch (error) {
-      this.logger.error('Failed to reset rate limit', {
+      this.logger.error("Failed to reset rate limit", {
         key,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
       });
     }
   }

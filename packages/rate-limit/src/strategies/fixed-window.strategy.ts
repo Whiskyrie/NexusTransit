@@ -1,11 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { RedisService } from '../../redis/redis.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { RedisService } from "@nexus/redis";
 import type {
   IRateLimitStrategy,
   RateLimitRequest,
   RateLimitRuleConfig,
-} from '../interfaces/rate-limit-strategy.interface';
-import type { RateLimitResult } from '../interfaces/rate-limit.interface';
+} from "../interfaces/rate-limit-strategy.interface";
+import type { RateLimitResult } from "../interfaces/rate-limit.interface";
 
 /**
  * Fixed Window Rate Limiting Strategy
@@ -34,7 +34,7 @@ import type { RateLimitResult } from '../interfaces/rate-limit.interface';
 @Injectable()
 export class FixedWindowStrategy implements IRateLimitStrategy {
   private readonly logger = new Logger(FixedWindowStrategy.name);
-  private readonly strategyName = 'FIXED_WINDOW';
+  private readonly strategyName = "FIXED_WINDOW";
 
   constructor(private readonly redisService: RedisService) {}
 
@@ -55,7 +55,7 @@ export class FixedWindowStrategy implements IRateLimitStrategy {
       const redis = this.redisService.getRedisClient();
 
       if (!redis) {
-        this.logger.warn('Redis client not available, failing open');
+        this.logger.warn("Redis client not available, failing open");
         return this.failOpen(rule, windowEnd);
       }
 
@@ -105,9 +105,9 @@ export class FixedWindowStrategy implements IRateLimitStrategy {
         resetTime: windowEnd,
       };
     } catch (error) {
-      this.logger.error('Fixed window rate limit check failed', {
+      this.logger.error("Fixed window rate limit check failed", {
         key: keyWithWindow,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
         stack: error instanceof Error ? error.stack : undefined,
       });
 
@@ -116,22 +116,22 @@ export class FixedWindowStrategy implements IRateLimitStrategy {
   }
 
   generateKey(request: RateLimitRequest, rule: RateLimitRuleConfig): string {
-    const parts = ['rate_limit', 'fixed_window', rule.type];
+    const parts = ["rate_limit", "fixed_window", rule.type];
 
     switch (rule.type) {
-      case 'IP':
+      case "IP":
         parts.push(request.ip);
         break;
-      case 'USER':
+      case "USER":
         parts.push(request.userId ?? request.ip);
         break;
-      case 'API_KEY':
+      case "API_KEY":
         parts.push(request.apiKeyId ?? request.ip);
         break;
-      case 'ENDPOINT':
+      case "ENDPOINT":
         parts.push(`${request.ip}:${request.endpoint}`);
         break;
-      case 'GLOBAL':
+      case "GLOBAL":
         parts.push(request.endpoint);
         break;
       default:
@@ -140,7 +140,7 @@ export class FixedWindowStrategy implements IRateLimitStrategy {
 
     parts.push(rule.id);
 
-    return parts.join(':');
+    return parts.join(":");
   }
 
   async reset(key: string): Promise<void> {
@@ -157,9 +157,9 @@ export class FixedWindowStrategy implements IRateLimitStrategy {
         }
       }
     } catch (error) {
-      this.logger.error('Failed to reset fixed window', {
+      this.logger.error("Failed to reset fixed window", {
         key,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
       });
     }
   }

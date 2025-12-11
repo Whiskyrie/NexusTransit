@@ -1,7 +1,7 @@
 import { Test, type TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { RateLimitService } from './rate-limit.service';
-import { RedisService } from '../../redis/redis.service';
+import { RedisService } from '/redis';
 import { RateLimitRule } from '../entities/rate-limit-rule.entity';
 import { QuotaUsage } from '../entities/quota-usage.entity';
 import { SlidingWindowStrategy } from '../strategies/sliding-window.strategy';

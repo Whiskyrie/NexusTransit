@@ -1,11 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { RedisService } from '../../redis/redis.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { RedisService } from "@nexus/redis";
 import type {
   IRateLimitStrategy,
   RateLimitRequest,
   RateLimitRuleConfig,
-} from '../interfaces/rate-limit-strategy.interface';
-import type { RateLimitResult } from '../interfaces/rate-limit.interface';
+} from "../interfaces/rate-limit-strategy.interface";
+import type { RateLimitResult } from "../interfaces/rate-limit.interface";
 
 /**
  * Token Bucket Rate Limiting Strategy
@@ -30,7 +30,7 @@ import type { RateLimitResult } from '../interfaces/rate-limit.interface';
 @Injectable()
 export class TokenBucketStrategy implements IRateLimitStrategy {
   private readonly logger = new Logger(TokenBucketStrategy.name);
-  private readonly strategyName = 'TOKEN_BUCKET';
+  private readonly strategyName = "TOKEN_BUCKET";
 
   constructor(private readonly redisService: RedisService) {}
 
@@ -50,7 +50,7 @@ export class TokenBucketStrategy implements IRateLimitStrategy {
       const redis = this.redisService.getRedisClient();
 
       if (!redis) {
-        this.logger.warn('Redis client not available, failing open');
+        this.logger.warn("Redis client not available, failing open");
         return this.failOpen(rule, now);
       }
 
@@ -94,7 +94,7 @@ export class TokenBucketStrategy implements IRateLimitStrategy {
       tokens -= 1;
 
       // Save updated bucket state to Redis
-      await redis.hSet(key, ['tokens', tokens.toString(), 'lastRefill', lastRefill.toString()]);
+      await redis.hSet(key, ["tokens", tokens.toString(), "lastRefill", lastRefill.toString()]);
 
       // Set expiration for cleanup (2x window size for safety)
       const ttlSeconds = Math.ceil((rule.windowSize * 2) / 1000);
@@ -117,9 +117,9 @@ export class TokenBucketStrategy implements IRateLimitStrategy {
         resetTime,
       };
     } catch (error) {
-      this.logger.error('Token bucket rate limit check failed', {
+      this.logger.error("Token bucket rate limit check failed", {
         key,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
         stack: error instanceof Error ? error.stack : undefined,
       });
 
@@ -128,22 +128,22 @@ export class TokenBucketStrategy implements IRateLimitStrategy {
   }
 
   generateKey(request: RateLimitRequest, rule: RateLimitRuleConfig): string {
-    const parts = ['rate_limit', 'token_bucket', rule.type];
+    const parts = ["rate_limit", "token_bucket", rule.type];
 
     switch (rule.type) {
-      case 'IP':
+      case "IP":
         parts.push(request.ip);
         break;
-      case 'USER':
+      case "USER":
         parts.push(request.userId ?? request.ip);
         break;
-      case 'API_KEY':
+      case "API_KEY":
         parts.push(request.apiKeyId ?? request.ip);
         break;
-      case 'ENDPOINT':
+      case "ENDPOINT":
         parts.push(`${request.ip}:${request.endpoint}`);
         break;
-      case 'GLOBAL':
+      case "GLOBAL":
         parts.push(request.endpoint);
         break;
       default:
@@ -152,7 +152,7 @@ export class TokenBucketStrategy implements IRateLimitStrategy {
 
     parts.push(rule.id);
 
-    return parts.join(':');
+    return parts.join(":");
   }
 
   async reset(key: string): Promise<void> {
@@ -163,9 +163,9 @@ export class TokenBucketStrategy implements IRateLimitStrategy {
         this.logger.log(`Token bucket reset for key: ${key}`);
       }
     } catch (error) {
-      this.logger.error('Failed to reset token bucket', {
+      this.logger.error("Failed to reset token bucket", {
         key,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
       });
     }
   }
