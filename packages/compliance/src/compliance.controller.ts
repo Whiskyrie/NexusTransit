@@ -13,19 +13,19 @@ import {
   ParseUUIDPipe,
   HttpStatus,
   HttpException,
-} from '@nestjs/common';
-import type { Request, Response } from 'express';
-import { JwtAuthGuard, RolesGuard, Roles, Role } from '@nexus/auth';
-import { ConsentService } from './consent.service';
-import { DataRequestService } from './data-request.service';
-import { DataPortabilityService } from './data-portability.service';
+} from "@nestjs/common";
+import type { Request, Response } from "express";
+import { JwtAuthGuard, RolesGuard, Roles, Role } from "@nexus/auth";
+import { ConsentService } from "./consent.service";
+import { DataRequestService } from "./data-request.service";
+import { DataPortabilityService } from "./data-portability.service";
 import {
   CreateConsentDto,
   RevokeConsentDto,
   CreateDataRequestDto,
   UpdateDataRequestDto,
-} from './dto/lgpdDto';
-import { DataRequestStatus, DataRequestType, ConsentType } from './enums/lgpdEnums';
+} from "./dto/lgpdDto";
+import { DataRequestStatus, DataRequestType, ConsentType } from "./enums/lgpdEnums";
 
 interface AuthenticatedUser {
   id: string;
@@ -37,16 +37,16 @@ interface AuthenticatedRequest extends Request {
   user: AuthenticatedUser;
 }
 
-@Controller('lgpd')
+@Controller("lgpd")
 @UseGuards(JwtAuthGuard)
-export class LgpdController {
+export class ComplianceController {
   constructor(
     private readonly consentService: ConsentService,
     private readonly dataRequestService: DataRequestService,
     private readonly dataPortabilityService: DataPortabilityService,
   ) {}
 
-  @Post('consents')
+  @Post("consents")
   async createConsent(
     @Req() req: AuthenticatedRequest,
     @Body() createConsentDto: CreateConsentDto,
@@ -57,17 +57,17 @@ export class LgpdController {
     if (req.ip) {
       createConsentDto.consentIp = req.ip;
     }
-    const userAgent = req.get('User-Agent');
+    const userAgent = req.get("User-Agent");
     if (userAgent) {
       createConsentDto.userAgent = userAgent;
     }
-    createConsentDto.collectionMethod = 'web';
+    createConsentDto.collectionMethod = "web";
 
     const consent = await this.consentService.createConsent(userId, createConsentDto);
 
     return {
       success: true,
-      message: 'Consentimento registrado com sucesso',
+      message: "Consentimento registrado com sucesso",
       data: consent,
     };
   }
@@ -75,7 +75,7 @@ export class LgpdController {
   /**
    * Revoga um consentimento
    */
-  @Put('consents/revoke')
+  @Put("consents/revoke")
   async revokeConsent(
     @Req() req: AuthenticatedRequest,
     @Body() revokeConsentDto: RevokeConsentDto,
@@ -85,7 +85,7 @@ export class LgpdController {
 
     return {
       success: true,
-      message: 'Consentimento revogado com sucesso',
+      message: "Consentimento revogado com sucesso",
       data: consent,
     };
   }
@@ -93,7 +93,7 @@ export class LgpdController {
   /**
    * Obtém consentimentos do usuário
    */
-  @Get('consents')
+  @Get("consents")
   async getUserConsents(
     @Req() req: AuthenticatedRequest,
   ): Promise<{ success: boolean; data: unknown }> {
@@ -109,7 +109,7 @@ export class LgpdController {
   /**
    * Obtém apenas consentimentos ativos do usuário
    */
-  @Get('consents/active')
+  @Get("consents/active")
   async getActiveConsents(
     @Req() req: AuthenticatedRequest,
   ): Promise<{ success: boolean; data: unknown }> {
@@ -125,10 +125,10 @@ export class LgpdController {
   /**
    * Verifica se usuário tem consentimento para um tipo específico
    */
-  @Get('consents/check/:type')
+  @Get("consents/check/:type")
   async checkConsent(
     @Req() req: AuthenticatedRequest,
-    @Param('type') consentType: ConsentType,
+    @Param("type") consentType: ConsentType,
   ): Promise<{ success: boolean; data: unknown }> {
     const userId = req.user.id;
     const hasConsent = await this.consentService.hasValidConsent(userId, consentType);
@@ -147,7 +147,7 @@ export class LgpdController {
   /**
    * Cria uma nova solicitação de dados
    */
-  @Post('data-requests')
+  @Post("data-requests")
   async createDataRequest(
     @Req() req: AuthenticatedRequest,
     @Body() createDataRequestDto: CreateDataRequestDto,
@@ -158,7 +158,7 @@ export class LgpdController {
     if (req.ip) {
       createDataRequestDto.requestIp = req.ip;
     }
-    const userAgent = req.get('User-Agent');
+    const userAgent = req.get("User-Agent");
     if (userAgent) {
       createDataRequestDto.userAgent = userAgent;
     }
@@ -170,7 +170,7 @@ export class LgpdController {
 
     return {
       success: true,
-      message: 'Solicitação criada com sucesso. Será processada em até 15 dias úteis.',
+      message: "Solicitação criada com sucesso. Será processada em até 15 dias úteis.",
       data: dataRequest,
     };
   }
@@ -178,7 +178,7 @@ export class LgpdController {
   /**
    * Obtém solicitações do usuário
    */
-  @Get('data-requests')
+  @Get("data-requests")
   async getUserDataRequests(
     @Req() req: AuthenticatedRequest,
   ): Promise<{ success: boolean; data: unknown }> {
@@ -194,17 +194,17 @@ export class LgpdController {
   /**
    * Obtém uma solicitação específica
    */
-  @Get('data-requests/:id')
+  @Get("data-requests/:id")
   async getDataRequest(
     @Req() req: AuthenticatedRequest,
-    @Param('id', ParseUUIDPipe) requestId: string,
+    @Param("id", ParseUUIDPipe) requestId: string,
   ): Promise<{ success: boolean; data: unknown }> {
     const userId = req.user.id;
     const request = await this.dataRequestService.getDataRequest(requestId);
 
     // Verifica se a solicitação pertence ao usuário
     if (request.userId !== userId) {
-      throw new HttpException('Acesso negado', HttpStatus.FORBIDDEN);
+      throw new HttpException("Acesso negado", HttpStatus.FORBIDDEN);
     }
 
     return {
@@ -216,17 +216,17 @@ export class LgpdController {
   /**
    * Cancela uma solicitação
    */
-  @Delete('data-requests/:id')
+  @Delete("data-requests/:id")
   async cancelDataRequest(
     @Req() req: AuthenticatedRequest,
-    @Param('id', ParseUUIDPipe) requestId: string,
+    @Param("id", ParseUUIDPipe) requestId: string,
   ): Promise<{ success: boolean; message: string; data: unknown }> {
     const userId = req.user.id;
     const request = await this.dataRequestService.cancelDataRequest(requestId, userId);
 
     return {
       success: true,
-      message: 'Solicitação cancelada com sucesso',
+      message: "Solicitação cancelada com sucesso",
       data: request,
     };
   }
@@ -234,54 +234,54 @@ export class LgpdController {
   /**
    * Download de arquivo de portabilidade de dados
    */
-  @Get('data-requests/:id/download')
+  @Get("data-requests/:id/download")
   async downloadDataExport(
     @Req() req: AuthenticatedRequest,
     @Res() res: Response,
-    @Param('id', ParseUUIDPipe) requestId: string,
+    @Param("id", ParseUUIDPipe) requestId: string,
   ): Promise<void> {
     const userId = req.user.id;
     const request = await this.dataRequestService.getDataRequest(requestId);
 
     // Verifica se a solicitação pertence ao usuário
     if (request.userId !== userId) {
-      throw new HttpException('Acesso negado', HttpStatus.FORBIDDEN);
+      throw new HttpException("Acesso negado", HttpStatus.FORBIDDEN);
     }
 
     // Verifica se a solicitação foi concluída e tem arquivo
     if (request.status !== DataRequestStatus.COMPLETED || !request.filePath) {
-      throw new HttpException('Arquivo não disponível para download', HttpStatus.BAD_REQUEST);
+      throw new HttpException("Arquivo não disponível para download", HttpStatus.BAD_REQUEST);
     }
 
     // Verifica se o arquivo existe e tem integridade
     const fileInfo = await this.dataPortabilityService.getExportFileInfo(request.filePath);
 
     if (!fileInfo.exists) {
-      throw new HttpException('Arquivo não encontrado', HttpStatus.NOT_FOUND);
+      throw new HttpException("Arquivo não encontrado", HttpStatus.NOT_FOUND);
     }
 
     if (request.fileHash && fileInfo.hash !== request.fileHash) {
       throw new HttpException(
-        'Arquivo corrompido. Entre em contato com o suporte.',
+        "Arquivo corrompido. Entre em contato com o suporte.",
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
 
     // Configura headers para download
-    const fileName = `dados-pessoais-${userId}-${new Date().toISOString().split('T')[0]}.json`;
-    res.setHeader('Content-Type', 'application/json');
-    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    const fileName = `dados-pessoais-${userId}-${new Date().toISOString().split("T")[0]}.json`;
+    res.setHeader("Content-Type", "application/json");
+    res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
     if (fileInfo.size) {
-      res.setHeader('Content-Length', fileInfo.size);
+      res.setHeader("Content-Length", fileInfo.size);
     }
 
     // Envia o arquivo
-    res.sendFile(request.filePath, err => {
+    res.sendFile(request.filePath, (err) => {
       if (err) {
         if (!res.headersSent) {
           res.status(500).json({
             success: false,
-            message: 'Erro interno do servidor',
+            message: "Erro interno do servidor",
           });
         }
       }
@@ -293,14 +293,14 @@ export class LgpdController {
   /**
    * Lista todas as solicitações (apenas administradores)
    */
-  @Get('admin/data-requests')
+  @Get("admin/data-requests")
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   async getAllDataRequests(
-    @Query('status') status?: DataRequestStatus,
-    @Query('type') requestType?: DataRequestType,
-    @Query('page') page = 1,
-    @Query('limit') limit = 10,
+    @Query("status") status?: DataRequestStatus,
+    @Query("type") requestType?: DataRequestType,
+    @Query("page") page = 1,
+    @Query("limit") limit = 10,
   ): Promise<{ success: boolean; data: unknown }> {
     const requests = await this.dataRequestService.getAllDataRequests(
       status,
@@ -318,12 +318,12 @@ export class LgpdController {
   /**
    * Atualiza uma solicitação (apenas administradores)
    */
-  @Put('admin/data-requests/:id')
+  @Put("admin/data-requests/:id")
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   async updateDataRequest(
     @Req() req: AuthenticatedRequest,
-    @Param('id', ParseUUIDPipe) requestId: string,
+    @Param("id", ParseUUIDPipe) requestId: string,
     @Body() updateDataRequestDto: UpdateDataRequestDto,
   ): Promise<{ success: boolean; message: string; data: unknown }> {
     const adminId = req.user.id;
@@ -335,7 +335,7 @@ export class LgpdController {
 
     return {
       success: true,
-      message: 'Solicitação atualizada com sucesso',
+      message: "Solicitação atualizada com sucesso",
       data: request,
     };
   }
@@ -343,7 +343,7 @@ export class LgpdController {
   /**
    * Obtém estatísticas de consentimentos (apenas administradores)
    */
-  @Get('admin/statistics/consents')
+  @Get("admin/statistics/consents")
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   async getConsentStatistics(): Promise<{ success: boolean; data: unknown }> {
@@ -358,7 +358,7 @@ export class LgpdController {
   /**
    * Obtém estatísticas de solicitações (apenas administradores)
    */
-  @Get('admin/statistics/data-requests')
+  @Get("admin/statistics/data-requests")
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   async getDataRequestStatistics(): Promise<{ success: boolean; data: unknown }> {
@@ -373,10 +373,10 @@ export class LgpdController {
   /**
    * Obtém solicitações próximas do vencimento (apenas administradores)
    */
-  @Get('admin/data-requests/near-due')
+  @Get("admin/data-requests/near-due")
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
-  async getRequestsNearDue(@Query('days') days = 3): Promise<{ success: boolean; data: unknown }> {
+  async getRequestsNearDue(@Query("days") days = 3): Promise<{ success: boolean; data: unknown }> {
     const requests = await this.dataRequestService.getRequestsNearDueDate(Number(days));
 
     return {
