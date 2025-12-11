@@ -23,7 +23,7 @@ import { AuditModule } from '@nexus/audit';
 import { ComplianceModule } from '@nexus/compliance';
 import { ReportingModule } from '@nexus/reporting';
 import { RateLimitModule } from '@nexus/rate-limit';
-import { UploadModule } from './modules/upload/upload.module';
+import { StorageModule } from '@nexus/storage';
 import { ServiceOrdersModule } from './modules/service-orders/service-orders.module';
 import configurations from './config/configurations';
 
@@ -64,7 +64,7 @@ import configurations from './config/configurations';
     ComplianceModule, // Conformidade LGPD/GDPR
     ReportingModule, // Sistema de relatórios
     RateLimitModule, // Sistema de rate limiting e throttling
-    UploadModule, // Upload de arquivos
+    StorageModule.forRoot(), // Upload de arquivos
     ServiceOrdersModule, // Sistema de ordens de serviço
   ],
   controllers: [AppController],
