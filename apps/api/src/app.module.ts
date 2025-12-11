@@ -17,13 +17,13 @@ import { DeliveriesModule } from './modules/deliveries/deliveries.module';
 import { TrackingModule } from './modules/tracking/tracking.module';
 import { IncidentsModule } from './modules/incidents/incidents.module';
 import { CustomersModule } from './modules/customers/customers.module';
-import { ReportsModule } from './modules/reports/reports.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { RedisModule } from '@nexus/redis';
 import { AuditModule } from '@nexus/audit';
-import { LgpdModule } from './modules/lgpd/lgpd.module';
+import { ComplianceModule } from '@nexus/compliance';
+import { ReportingModule } from '@nexus/reporting';
+import { RateLimitModule } from '@nexus/rate-limit';
 import { UploadModule } from './modules/upload/upload.module';
-import { RateLimitModule } from './modules/rate-limit/rate-limit.module';
 import { ServiceOrdersModule } from './modules/service-orders/service-orders.module';
 import configurations from './config/configurations';
 
@@ -58,13 +58,13 @@ import configurations from './config/configurations';
     TrackingModule,
     IncidentsModule,
     CustomersModule,
-    ReportsModule,
     AuthModule,
     RedisModule.forRootAsync(),
     AuditModule, // Sistema de auditoria e logs
-    LgpdModule,
-    UploadModule, // Conformidade LGPD
+    ComplianceModule, // Conformidade LGPD/GDPR
+    ReportingModule, // Sistema de relatórios
     RateLimitModule, // Sistema de rate limiting e throttling
+    UploadModule, // Upload de arquivos
     ServiceOrdersModule, // Sistema de ordens de serviço
   ],
   controllers: [AppController],
