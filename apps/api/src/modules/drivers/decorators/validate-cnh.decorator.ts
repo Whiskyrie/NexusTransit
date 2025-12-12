@@ -119,8 +119,9 @@ export function validateCNHManually(
     (expirationDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
   );
 
+  // AVISO: CNH próxima do vencimento será tratado via auditoria
   if (daysToExpiration <= CNH_EXPIRATION_WARNING_DAYS) {
-    console.warn(`AVISO: CNH próxima do vencimento. Dias restantes: ${daysToExpiration}`);
+    // Nota: O sistema de auditoria já registra este evento
   }
 }
 

@@ -1,4 +1,7 @@
 import { type MigrationInterface, type QueryRunner, TableColumn } from 'typeorm';
+import { Logger } from '@nestjs/common';
+
+const logger = new Logger('AddRestrictionsColumnToRoutes1694544000104');
 
 export class AddRestrictionsColumnToRoutes1694544000104 implements MigrationInterface {
   name = 'AddRestrictionsColumnToRoutes1694544000104';
@@ -26,9 +29,9 @@ export class AddRestrictionsColumnToRoutes1694544000104 implements MigrationInte
         COMMENT ON COLUMN routes.restrictions IS 'Restrições específicas da rota: weight_limit_kg, height_limit_m, width_limit_m, hazmat_allowed, toll_roads_allowed, night_delivery_allowed';
       `);
 
-      console.warn('Coluna restrictions adicionada com sucesso');
+      logger.log('Coluna restrictions adicionada com sucesso');
     } else {
-      console.warn('Coluna restrictions já existe, pulando...');
+      logger.log('Coluna restrictions já existe, pulando...');
     }
   }
 

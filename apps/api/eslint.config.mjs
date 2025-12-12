@@ -84,7 +84,7 @@ export default defineConfig([
       // General code quality rules
       'prefer-const': 'error',
       'no-var': 'error',
-      'no-console': ['warn', { allow: ['warn', 'error'] }],
+      'no-console': 'error', // Usar Logger do NestJS ao invés de console
       eqeqeq: ['error', 'always'],
       curly: ['error', 'all'],
       'no-else-return': 'error',

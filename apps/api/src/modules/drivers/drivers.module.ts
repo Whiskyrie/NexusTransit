@@ -8,8 +8,8 @@ import { Driver } from './entities/driver.entity';
 import { DriverLicense } from './entities/driver-license.entity';
 import { DriverLicenseService } from './services/driver-license.service';
 
-// Módulos
-import { AuditModule } from '@nexus/audit';
+// Módulos e utils externos
+import { AuditModule, AuditableUtils } from '@nexus/audit';
 
 // Interceptors
 import { AuditContextInterceptor } from './interceptors/audit-context.interceptor';
@@ -20,9 +20,8 @@ import { LicenseValidationInterceptor } from './interceptors/license-validation.
 import { DriverLicenseSubscriber } from './subscribers/driver-license.subscriber';
 import { DriverDocumentSubscriber } from './subscribers/driver-document.subscriber';
 
-// Utils
+// Utils internos
 import { ClsAuditUtils } from './utils/cls-audit.util';
-import { AuditableUtils } from '@nexus/audit';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Driver, DriverLicense, DriverDocument]), AuditModule],

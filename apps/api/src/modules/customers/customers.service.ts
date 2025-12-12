@@ -89,7 +89,10 @@ export class CustomersService {
               });
             } catch (error) {
               // Continue with provided data if CEP validation fails
-              console.warn(`CEP validation failed for ${addressDto.zipCode}:`, error);
+              this.logger.warn(
+                `CEP validation failed for ${addressDto.zipCode}`,
+                error instanceof Error ? error.message : error,
+              );
             }
           }
 
@@ -107,7 +110,7 @@ export class CustomersService {
               addressDto.latitude = coords.latitude;
               addressDto.longitude = coords.longitude;
             } catch (error) {
-              console.warn('Geocoding failed:', error);
+              this.logger.warn('Geocoding failed', error instanceof Error ? error.message : error);
             }
           }
 
@@ -461,7 +464,10 @@ export class CustomersService {
         });
       } catch (error) {
         // Continue with provided data if CEP validation fails
-        console.warn(`CEP validation failed for ${createAddressDto.zipCode}:`, error);
+        this.logger.warn(
+          `CEP validation failed for ${createAddressDto.zipCode}`,
+          error instanceof Error ? error.message : error,
+        );
       }
     }
 
@@ -479,7 +485,7 @@ export class CustomersService {
         createAddressDto.latitude = coords.latitude;
         createAddressDto.longitude = coords.longitude;
       } catch (error) {
-        console.warn('Geocoding failed:', error);
+        this.logger.warn('Geocoding failed', error instanceof Error ? error.message : error);
       }
     }
 
@@ -564,7 +570,10 @@ export class CustomersService {
           state: updateAddressDto.state ?? addressData.uf,
         });
       } catch (error) {
-        console.warn(`CEP validation failed for ${updateAddressDto.zipCode}:`, error);
+        this.logger.warn(
+          `CEP validation failed for ${updateAddressDto.zipCode}`,
+          error instanceof Error ? error.message : error,
+        );
       }
     }
 
@@ -581,7 +590,7 @@ export class CustomersService {
         updateAddressDto.latitude = coords.latitude;
         updateAddressDto.longitude = coords.longitude;
       } catch (error) {
-        console.warn('Geocoding failed:', error);
+        this.logger.warn('Geocoding failed', error instanceof Error ? error.message : error);
       }
     }
 

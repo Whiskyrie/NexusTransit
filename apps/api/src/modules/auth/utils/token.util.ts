@@ -1,11 +1,14 @@
 import type { JwtService } from '@nestjs/jwt';
 import type { ConfigService } from '@nestjs/config';
+import { Logger } from '@nestjs/common';
 import {
   AUTH_CONSTANTS,
   TOKEN_EXPIRATION_CONFIG,
   type TokenType,
 } from '../constants/auth.constants';
 import type { JwtPayload } from '../interfaces/jwt-payload.interface';
+
+const logger = new Logger('TokenUtil');
 
 /**
  * Utilitários para manipulação de tokens JWT
@@ -91,8 +94,8 @@ export async function verifyToken(
     return payload;
   } catch (error) {
     // Token inválido, expirado ou malformado - retorna null
-    console.warn(
-      'Token verification failed:',
+    logger.warn(
+      'Token verification failed',
       error instanceof Error ? error.message : 'Unknown error',
     );
     return null;
