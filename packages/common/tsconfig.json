@@ -1,35 +1,9 @@
 {
+    "extends": "../../tsconfig.json",
     "compilerOptions": {
-        "module": "NodeNext",
-        "moduleResolution": "NodeNext",
-        "declaration": true,
-        "declarationMap": true,
-        "removeComments": true,
-        "emitDecoratorMetadata": true,
-        "experimentalDecorators": true,
-        "allowSyntheticDefaultImports": true,
-        "esModuleInterop": true,
-        "target": "ES2022",
-        "sourceMap": true,
         "outDir": "./dist",
         "rootDir": "./src",
-        "incremental": true,
-        "skipLibCheck": true,
-        // Strict Mode - Habilitado para melhor qualidade de código
-        "strict": true,
-        "strictNullChecks": true,
-        "noImplicitAny": true,
-        "strictBindCallApply": true,
-        "strictFunctionTypes": true,
-        "strictPropertyInitialization": true,
-        "noImplicitThis": true,
-        "noImplicitReturns": true,
-        // Code Quality
-        "forceConsistentCasingInFileNames": true,
-        "noFallthroughCasesInSwitch": true,
-        "noUnusedLocals": true,
-        "noUnusedParameters": true,
-        "noUncheckedIndexedAccess": true
+        "composite": true
     },
     "include": [
         "src/**/*"
