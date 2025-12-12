@@ -9,7 +9,7 @@ import { DriverLicense } from './entities/driver-license.entity';
 import { DriverLicenseService } from './services/driver-license.service';
 
 // Módulos
-import { AuditModule } from '../audit/audit.module';
+import { AuditModule } from '@nexus/audit';
 
 // Interceptors
 import { AuditContextInterceptor } from './interceptors/audit-context.interceptor';

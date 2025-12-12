@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { HttpModule } from '@nestjs/axios';
-import { AuditModule } from '../audit/audit.module';
+import { AuditModule } from '@nexus/audit';
 import { CustomersService } from './customers.service';
 import { CustomersController } from './customers.controller';
 import { CustomerAddressesController } from './customer-addresses.controller';

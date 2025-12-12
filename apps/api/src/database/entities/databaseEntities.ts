@@ -2,4 +2,4 @@
 export { BaseEntity } from '@nexus/common';
 
 // Module entities exports
-export { AuditLogEntity } from '../../modules/audit/entities';
+export { AuditLogEntity } from '@nexus/audit';
