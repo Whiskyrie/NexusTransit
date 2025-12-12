@@ -7,47 +7,47 @@ export enum ReportType {
   /**
    * Relatório de entregas realizadas
    */
-  DELIVERIES = 'DELIVERIES',
+  DELIVERIES = "DELIVERIES",
 
   /**
    * Relatório de performance de motoristas
    */
-  DRIVERS_PERFORMANCE = 'DRIVERS_PERFORMANCE',
+  DRIVERS_PERFORMANCE = "DRIVERS_PERFORMANCE",
 
   /**
    * Relatório de uso de veículos
    */
-  VEHICLES_USAGE = 'VEHICLES_USAGE',
+  VEHICLES_USAGE = "VEHICLES_USAGE",
 
   /**
    * Relatório de rotas executadas
    */
-  ROUTES = 'ROUTES',
+  ROUTES = "ROUTES",
 
   /**
    * Relatório de ordens de serviço
    */
-  SERVICE_ORDERS = 'SERVICE_ORDERS',
+  SERVICE_ORDERS = "SERVICE_ORDERS",
 
   /**
    * Relatório de clientes
    */
-  CUSTOMERS = 'CUSTOMERS',
+  CUSTOMERS = "CUSTOMERS",
 
   /**
    * Relatório financeiro
    */
-  FINANCIAL = 'FINANCIAL',
+  FINANCIAL = "FINANCIAL",
 
   /**
    * Relatório de incidentes
    */
-  INCIDENTS = 'INCIDENTS',
+  INCIDENTS = "INCIDENTS",
 
   /**
    * Relatório customizado
    */
-  CUSTOM = 'CUSTOM',
+  CUSTOM = "CUSTOM",
 }
 
 /**
@@ -59,32 +59,32 @@ export enum ReportStatus {
   /**
    * Relatório pendente de geração
    */
-  PENDING = 'PENDING',
+  PENDING = "PENDING",
 
   /**
    * Relatório em processamento
    */
-  PROCESSING = 'PROCESSING',
+  PROCESSING = "PROCESSING",
 
   /**
    * Relatório gerado com sucesso
    */
-  COMPLETED = 'COMPLETED',
+  COMPLETED = "COMPLETED",
 
   /**
    * Erro na geração do relatório
    */
-  FAILED = 'FAILED',
+  FAILED = "FAILED",
 
   /**
    * Relatório cancelado
    */
-  CANCELLED = 'CANCELLED',
+  CANCELLED = "CANCELLED",
 
   /**
    * Relatório expirado (arquivo removido)
    */
-  EXPIRED = 'EXPIRED',
+  EXPIRED = "EXPIRED",
 }
 
 /**
@@ -96,27 +96,27 @@ export enum ReportFormat {
   /**
    * Formato PDF
    */
-  PDF = 'PDF',
+  PDF = "PDF",
 
   /**
    * Formato Excel (XLSX)
    */
-  EXCEL = 'EXCEL',
+  EXCEL = "EXCEL",
 
   /**
    * Formato CSV
    */
-  CSV = 'CSV',
+  CSV = "CSV",
 
   /**
    * Formato JSON
    */
-  JSON = 'JSON',
+  JSON = "JSON",
 
   /**
    * Formato HTML
    */
-  HTML = 'HTML',
+  HTML = "HTML",
 }
 
 /**
@@ -126,37 +126,37 @@ export enum ReportPeriod {
   /**
    * Hoje
    */
-  TODAY = 'TODAY',
+  TODAY = "TODAY",
 
   /**
    * Esta semana
    */
-  THIS_WEEK = 'THIS_WEEK',
+  THIS_WEEK = "THIS_WEEK",
 
   /**
    * Este mês
    */
-  THIS_MONTH = 'THIS_MONTH',
+  THIS_MONTH = "THIS_MONTH",
 
   /**
    * Últimos 7 dias
    */
-  LAST_7_DAYS = 'LAST_7_DAYS',
+  LAST_7_DAYS = "LAST_7_DAYS",
 
   /**
    * Últimos 30 dias
    */
-  LAST_30_DAYS = 'LAST_30_DAYS',
+  LAST_30_DAYS = "LAST_30_DAYS",
 
   /**
    * Últimos 90 dias
    */
-  LAST_90_DAYS = 'LAST_90_DAYS',
+  LAST_90_DAYS = "LAST_90_DAYS",
 
   /**
    * Período customizado
    */
-  CUSTOM = 'CUSTOM',
+  CUSTOM = "CUSTOM",
 }
 
 /**
@@ -220,15 +220,15 @@ export function getAvailableReportPeriods(): ReportPeriod[] {
  */
 export function translateReportType(type: ReportType): string {
   const translations: Record<ReportType, string> = {
-    [ReportType.DELIVERIES]: 'Entregas',
-    [ReportType.DRIVERS_PERFORMANCE]: 'Performance de Motoristas',
-    [ReportType.VEHICLES_USAGE]: 'Uso de Veículos',
-    [ReportType.ROUTES]: 'Rotas',
-    [ReportType.SERVICE_ORDERS]: 'Ordens de Serviço',
-    [ReportType.CUSTOMERS]: 'Clientes',
-    [ReportType.FINANCIAL]: 'Financeiro',
-    [ReportType.INCIDENTS]: 'Incidentes',
-    [ReportType.CUSTOM]: 'Customizado',
+    [ReportType.DELIVERIES]: "Entregas",
+    [ReportType.DRIVERS_PERFORMANCE]: "Performance de Motoristas",
+    [ReportType.VEHICLES_USAGE]: "Uso de Veículos",
+    [ReportType.ROUTES]: "Rotas",
+    [ReportType.SERVICE_ORDERS]: "Ordens de Serviço",
+    [ReportType.CUSTOMERS]: "Clientes",
+    [ReportType.FINANCIAL]: "Financeiro",
+    [ReportType.INCIDENTS]: "Incidentes",
+    [ReportType.CUSTOM]: "Customizado",
   };
   return translations[type] || type;
 }
@@ -238,12 +238,12 @@ export function translateReportType(type: ReportType): string {
  */
 export function translateReportStatus(status: ReportStatus): string {
   const translations: Record<ReportStatus, string> = {
-    [ReportStatus.PENDING]: 'Pendente',
-    [ReportStatus.PROCESSING]: 'Processando',
-    [ReportStatus.COMPLETED]: 'Concluído',
-    [ReportStatus.FAILED]: 'Falhou',
-    [ReportStatus.CANCELLED]: 'Cancelado',
-    [ReportStatus.EXPIRED]: 'Expirado',
+    [ReportStatus.PENDING]: "Pendente",
+    [ReportStatus.PROCESSING]: "Processando",
+    [ReportStatus.COMPLETED]: "Concluído",
+    [ReportStatus.FAILED]: "Falhou",
+    [ReportStatus.CANCELLED]: "Cancelado",
+    [ReportStatus.EXPIRED]: "Expirado",
   };
   return translations[status] || status;
 }
@@ -253,11 +253,11 @@ export function translateReportStatus(status: ReportStatus): string {
  */
 export function translateReportFormat(format: ReportFormat): string {
   const translations: Record<ReportFormat, string> = {
-    [ReportFormat.PDF]: 'PDF',
-    [ReportFormat.EXCEL]: 'Excel',
-    [ReportFormat.CSV]: 'CSV',
-    [ReportFormat.JSON]: 'JSON',
-    [ReportFormat.HTML]: 'HTML',
+    [ReportFormat.PDF]: "PDF",
+    [ReportFormat.EXCEL]: "Excel",
+    [ReportFormat.CSV]: "CSV",
+    [ReportFormat.JSON]: "JSON",
+    [ReportFormat.HTML]: "HTML",
   };
   return translations[format] || format;
 }
