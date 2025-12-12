@@ -265,7 +265,7 @@ export class CustomersService {
 
       // Check for conflicts with taxId or email
       if (updateCustomerDto.taxId || updateCustomerDto.email) {
-        const whereConditions = [];
+        const whereConditions: Array<{ taxId?: string; email?: string }> = [];
 
         if (updateCustomerDto.taxId) {
           whereConditions.push({ taxId: updateCustomerDto.taxId });

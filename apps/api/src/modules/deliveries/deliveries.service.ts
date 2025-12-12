@@ -72,7 +72,7 @@ export class DeliveriesService {
       }
 
       // Validar motorista (se fornecido)
-      let driver = null;
+      let driver: Driver | null = null;
       if (createDeliveryDto.driver_id) {
         driver = await this.driverRepository.findOne({
           where: { id: createDeliveryDto.driver_id },
@@ -86,7 +86,7 @@ export class DeliveriesService {
       }
 
       // Validar veículo (se fornecido)
-      let vehicle = null;
+      let vehicle: Vehicle | null = null;
       if (createDeliveryDto.vehicle_id) {
         vehicle = await this.vehicleRepository.findOne({
           where: { id: createDeliveryDto.vehicle_id },

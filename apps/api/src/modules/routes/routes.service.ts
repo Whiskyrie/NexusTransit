@@ -608,7 +608,6 @@ export class RoutesService {
    * Usa plainToInstance para mapeamento seguro
    * Método auxiliar disponível para uso futuro em endpoints específicos de paradas
    */
-  // @ts-expect-error - Método reservado para uso futuro
   private mapStopToResponseDto(stop: RouteStop): RouteStopResponseDto {
     return plainToInstance(RouteStopResponseDto, stop, {
       excludeExtraneousValues: true,
