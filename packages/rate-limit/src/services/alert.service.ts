@@ -1,25 +1,25 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 
 /**
  * Alert types for rate limiting system
  */
 export enum AlertType {
-  HIGH_BLOCK_RATE = 'HIGH_BLOCK_RATE',
-  SUSPICIOUS_ACTIVITY = 'SUSPICIOUS_ACTIVITY',
-  AUTO_BLACKLIST = 'AUTO_BLACKLIST',
-  QUOTA_EXCEEDED = 'QUOTA_EXCEEDED',
-  SYSTEM_ERROR = 'SYSTEM_ERROR',
+  HIGH_BLOCK_RATE = "HIGH_BLOCK_RATE",
+  SUSPICIOUS_ACTIVITY = "SUSPICIOUS_ACTIVITY",
+  AUTO_BLACKLIST = "AUTO_BLACKLIST",
+  QUOTA_EXCEEDED = "QUOTA_EXCEEDED",
+  SYSTEM_ERROR = "SYSTEM_ERROR",
 }
 
 /**
  * Alert severity levels
  */
 export enum AlertSeverity {
-  INFO = 'INFO',
-  WARNING = 'WARNING',
-  HIGH = 'HIGH',
-  CRITICAL = 'CRITICAL',
+  INFO = "INFO",
+  WARNING = "WARNING",
+  HIGH = "HIGH",
+  CRITICAL = "CRITICAL",
 }
 
 /**
@@ -51,10 +51,10 @@ export class AlertService {
   private readonly webhookUrl: string | undefined;
 
   constructor(private readonly configService: ConfigService) {
-    this.alertsEnabled = this.configService.get<boolean>('RATE_LIMIT_ALERTS_ENABLED', true);
-    this.emailEnabled = this.configService.get<boolean>('RATE_LIMIT_EMAIL_ALERTS', false);
-    this.webhookEnabled = this.configService.get<boolean>('RATE_LIMIT_WEBHOOK_ALERTS', false);
-    this.webhookUrl = this.configService.get<string>('RATE_LIMIT_WEBHOOK_URL');
+    this.alertsEnabled = this.configService.get<boolean>("RATE_LIMIT_ALERTS_ENABLED", true);
+    this.emailEnabled = this.configService.get<boolean>("RATE_LIMIT_EMAIL_ALERTS", false);
+    this.webhookEnabled = this.configService.get<boolean>("RATE_LIMIT_WEBHOOK_ALERTS", false);
+    this.webhookUrl = this.configService.get<string>("RATE_LIMIT_WEBHOOK_URL");
   }
 
   /**
@@ -117,7 +117,7 @@ export class AlertService {
    */
   private async sendEmailAlert(alert: AlertPayload): Promise<void> {
     await Promise.resolve(); // Satisfy async requirement
-    this.logger.debug('Email alert not implemented yet', { alert });
+    this.logger.debug("Email alert not implemented yet", { alert });
     // TODO: Integrate with email service
     // await this.emailService.send({
     //   to: this.configService.get('ALERT_EMAIL_RECIPIENTS'),
@@ -138,7 +138,7 @@ export class AlertService {
     }
 
     try {
-      this.logger.debug('Webhook alert not implemented yet', {
+      this.logger.debug("Webhook alert not implemented yet", {
         alert,
         webhookUrl: this.webhookUrl,
       });
@@ -154,7 +154,7 @@ export class AlertService {
       //   throw new Error(`Webhook request failed: ${response.statusText}`);
       // }
     } catch (error) {
-      this.logger.error('Failed to send webhook alert', error);
+      this.logger.error("Failed to send webhook alert", error);
     }
   }
 

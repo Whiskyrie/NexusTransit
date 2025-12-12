@@ -1,9 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, MoreThan } from 'typeorm';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { QuotaUsage } from '../entities/quota-usage.entity';
-import { AlertService } from './alert.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository, MoreThan } from "typeorm";
+import { Cron, CronExpression } from "@nestjs/schedule";
+import { QuotaUsage } from "../entities/quota-usage.entity";
+import { AlertService } from "./alert.service";
 import {
   QuotaMetrics,
   ViolatorInfo,
@@ -18,7 +18,7 @@ import {
   SuspiciousIPQueryResult,
   SuspiciousUserQueryResult,
   DistributedAttackQueryResult,
-} from '../interfaces/monitoring.interface';
+} from "../interfaces/monitoring.interface";
 
 /**
  * Rate Limiting Monitoring Service
@@ -80,8 +80,8 @@ export class MonitoringService {
         quotaUsageByIP,
       };
     } catch (error) {
-      this.logger.error('Failed to get quota metrics', {
-        error: error instanceof Error ? error.message : 'Unknown error',
+      this.logger.error("Failed to get quota metrics", {
+        error: error instanceof Error ? error.message : "Unknown error",
       });
       throw error;
     }
@@ -115,23 +115,23 @@ export class MonitoringService {
    */
   private async getTopViolators(since: Date, limit = 10): Promise<ViolatorInfo[]> {
     const results = await this.usageRepository
-      .createQueryBuilder('usage')
+      .createQueryBuilder("usage")
       .select([
-        'usage.client_id as clientId',
-        'usage.ip as ip',
-        'usage.user_id as userId',
-        'COUNT(*) as violationCount',
-        'MAX(usage.request_time) as lastViolation',
-        'array_agg(DISTINCT usage.endpoint) as endpoints',
+        "usage.client_id as clientId",
+        "usage.ip as ip",
+        "usage.user_id as userId",
+        "COUNT(*) as violationCount",
+        "MAX(usage.request_time) as lastViolation",
+        "array_agg(DISTINCT usage.endpoint) as endpoints",
       ])
-      .where('usage.request_time > :since', { since })
-      .andWhere('usage.blocked = :blocked', { blocked: true })
-      .groupBy('usage.client_id, usage.ip, usage.user_id')
-      .orderBy('violationCount', 'DESC')
+      .where("usage.request_time > :since", { since })
+      .andWhere("usage.blocked = :blocked", { blocked: true })
+      .groupBy("usage.client_id, usage.ip, usage.user_id")
+      .orderBy("violationCount", "DESC")
       .limit(limit)
       .getRawMany<ViolatorQueryResult>();
 
-    return results.map(r => ({
+    return results.map((r) => ({
       clientId: r.clientid,
       ip: r.ip,
       userId: r.userid ?? undefined,
@@ -146,22 +146,22 @@ export class MonitoringService {
    */
   private async getQuotaUsageByEndpoint(since: Date): Promise<EndpointUsage[]> {
     const results = await this.usageRepository
-      .createQueryBuilder('usage')
+      .createQueryBuilder("usage")
       .select([
-        'usage.endpoint as endpoint',
-        'usage.method as method',
-        'COUNT(*) as totalRequests',
-        'SUM(CASE WHEN usage.blocked = true THEN 1 ELSE 0 END) as blockedRequests',
-        'COUNT(DISTINCT usage.user_id) as uniqueUsers',
-        'COUNT(DISTINCT usage.ip) as uniqueIPs',
+        "usage.endpoint as endpoint",
+        "usage.method as method",
+        "COUNT(*) as totalRequests",
+        "SUM(CASE WHEN usage.blocked = true THEN 1 ELSE 0 END) as blockedRequests",
+        "COUNT(DISTINCT usage.user_id) as uniqueUsers",
+        "COUNT(DISTINCT usage.ip) as uniqueIPs",
       ])
-      .where('usage.request_time > :since', { since })
-      .groupBy('usage.endpoint, usage.method')
-      .orderBy('totalRequests', 'DESC')
+      .where("usage.request_time > :since", { since })
+      .groupBy("usage.endpoint, usage.method")
+      .orderBy("totalRequests", "DESC")
       .limit(20)
       .getRawMany<EndpointQueryResult>();
 
-    return results.map(r => {
+    return results.map((r) => {
       const total = parseInt(r.totalrequests, 10);
       const blocked = parseInt(r.blockedrequests, 10);
       return {
@@ -181,21 +181,21 @@ export class MonitoringService {
    */
   private async getQuotaUsageByUser(since: Date): Promise<UserUsage[]> {
     const results = await this.usageRepository
-      .createQueryBuilder('usage')
+      .createQueryBuilder("usage")
       .select([
-        'usage.user_id as userId',
-        'COUNT(*) as totalRequests',
-        'SUM(CASE WHEN usage.blocked = true THEN 1 ELSE 0 END) as blockedRequests',
-        'array_agg(DISTINCT usage.endpoint) as endpoints',
+        "usage.user_id as userId",
+        "COUNT(*) as totalRequests",
+        "SUM(CASE WHEN usage.blocked = true THEN 1 ELSE 0 END) as blockedRequests",
+        "array_agg(DISTINCT usage.endpoint) as endpoints",
       ])
-      .where('usage.request_time > :since', { since })
-      .andWhere('usage.user_id IS NOT NULL')
-      .groupBy('usage.user_id')
-      .orderBy('totalRequests', 'DESC')
+      .where("usage.request_time > :since", { since })
+      .andWhere("usage.user_id IS NOT NULL")
+      .groupBy("usage.user_id")
+      .orderBy("totalRequests", "DESC")
       .limit(20)
       .getRawMany<UserQueryResult>();
 
-    return results.map(r => {
+    return results.map((r) => {
       const total = parseInt(r.totalrequests, 10);
       const blocked = parseInt(r.blockedrequests, 10);
       return {
@@ -213,19 +213,19 @@ export class MonitoringService {
    */
   private async getQuotaUsageByIP(since: Date): Promise<IPUsage[]> {
     const results = await this.usageRepository
-      .createQueryBuilder('usage')
+      .createQueryBuilder("usage")
       .select([
-        'usage.ip as ip',
-        'COUNT(*) as totalRequests',
-        'SUM(CASE WHEN usage.blocked = true THEN 1 ELSE 0 END) as blockedRequests',
+        "usage.ip as ip",
+        "COUNT(*) as totalRequests",
+        "SUM(CASE WHEN usage.blocked = true THEN 1 ELSE 0 END) as blockedRequests",
       ])
-      .where('usage.request_time > :since', { since })
-      .groupBy('usage.ip')
-      .orderBy('totalRequests', 'DESC')
+      .where("usage.request_time > :since", { since })
+      .groupBy("usage.ip")
+      .orderBy("totalRequests", "DESC")
       .limit(20)
       .getRawMany<IPQueryResult>();
 
-    return results.map(r => {
+    return results.map((r) => {
       const total = parseInt(r.totalrequests, 10);
       const blocked = parseInt(r.blockedrequests, 10);
       const blockRate = total > 0 ? (blocked / total) * 100 : 0;
@@ -251,41 +251,41 @@ export class MonitoringService {
   async getViolations(
     startDate?: Date,
     endDate?: Date,
-    type?: 'IP' | 'USER' | 'CLIENT_ID',
+    type?: "IP" | "USER" | "CLIENT_ID",
   ): Promise<QuotaUsage[]> {
     try {
       const now = endDate ?? new Date();
       const start = startDate ?? new Date(now.getTime() - 24 * 60 * 60 * 1000); // Default: 24 hours
 
       const queryBuilder = this.usageRepository
-        .createQueryBuilder('usage')
-        .where('usage.request_time >= :start', { start })
-        .andWhere('usage.blocked = :blocked', { blocked: true });
+        .createQueryBuilder("usage")
+        .where("usage.request_time >= :start", { start })
+        .andWhere("usage.blocked = :blocked", { blocked: true });
 
       // If endDate is provided, add upper bound filter
       if (endDate) {
-        queryBuilder.andWhere('usage.request_time <= :end', { end: endDate });
+        queryBuilder.andWhere("usage.request_time <= :end", { end: endDate });
       }
 
       // If type is provided, filter by specific field
       if (type) {
         switch (type) {
-          case 'IP':
-            queryBuilder.andWhere('usage.ip IS NOT NULL');
+          case "IP":
+            queryBuilder.andWhere("usage.ip IS NOT NULL");
             break;
-          case 'USER':
-            queryBuilder.andWhere('usage.user_id IS NOT NULL');
+          case "USER":
+            queryBuilder.andWhere("usage.user_id IS NOT NULL");
             break;
-          case 'CLIENT_ID':
-            queryBuilder.andWhere('usage.client_id IS NOT NULL');
+          case "CLIENT_ID":
+            queryBuilder.andWhere("usage.client_id IS NOT NULL");
             break;
         }
       }
 
-      return queryBuilder.orderBy('usage.request_time', 'DESC').limit(1000).getMany();
+      return queryBuilder.orderBy("usage.request_time", "DESC").limit(1000).getMany();
     } catch (error) {
-      this.logger.error('Failed to get violations', {
-        error: error instanceof Error ? error.message : 'Unknown error',
+      this.logger.error("Failed to get violations", {
+        error: error instanceof Error ? error.message : "Unknown error",
       });
       throw error;
     }
@@ -318,8 +318,8 @@ export class MonitoringService {
 
       return suspicious;
     } catch (error) {
-      this.logger.error('Failed to detect suspicious activity', {
-        error: error instanceof Error ? error.message : 'Unknown error',
+      this.logger.error("Failed to detect suspicious activity", {
+        error: error instanceof Error ? error.message : "Unknown error",
       });
       return [];
     }
@@ -333,16 +333,16 @@ export class MonitoringService {
     const suspicious: SuspiciousActivity[] = [];
 
     const results = await this.usageRepository
-      .createQueryBuilder('usage')
+      .createQueryBuilder("usage")
       .select([
-        'usage.ip as ip',
-        'COUNT(*) as totalRequests',
-        'SUM(CASE WHEN usage.blocked = true THEN 1 ELSE 0 END) as blockedRequests',
-        'COUNT(DISTINCT usage.endpoint) as uniqueEndpoints',
+        "usage.ip as ip",
+        "COUNT(*) as totalRequests",
+        "SUM(CASE WHEN usage.blocked = true THEN 1 ELSE 0 END) as blockedRequests",
+        "COUNT(DISTINCT usage.endpoint) as uniqueEndpoints",
       ])
-      .where('usage.request_time > :since', { since: oneHourAgo })
-      .groupBy('usage.ip')
-      .having('SUM(CASE WHEN usage.blocked = true THEN 1 ELSE 0 END) > :threshold', {
+      .where("usage.request_time > :since", { since: oneHourAgo })
+      .groupBy("usage.ip")
+      .having("SUM(CASE WHEN usage.blocked = true THEN 1 ELSE 0 END) > :threshold", {
         threshold: 10,
       })
       .getRawMany<SuspiciousIPQueryResult>();
@@ -354,40 +354,40 @@ export class MonitoringService {
       const uniqueEndpoints = parseInt(r.uniqueendpoints, 10);
 
       const reasons: string[] = [];
-      let riskLevel: SuspiciousActivity['riskLevel'] = 'LOW';
+      let riskLevel: SuspiciousActivity["riskLevel"] = "LOW";
 
       if (blocked > 50) {
         reasons.push(`High violation count: ${blocked}`);
-        riskLevel = 'CRITICAL';
+        riskLevel = "CRITICAL";
       } else if (blocked > 20) {
         reasons.push(`Moderate violation count: ${blocked}`);
-        riskLevel = 'HIGH';
+        riskLevel = "HIGH";
       } else if (blocked > 10) {
         reasons.push(`Elevated violation count: ${blocked}`);
-        riskLevel = 'MEDIUM';
+        riskLevel = "MEDIUM";
       }
 
       if (blockRate > 80) {
         reasons.push(`Very high block rate: ${blockRate.toFixed(2)}%`);
-        riskLevel = 'CRITICAL';
+        riskLevel = "CRITICAL";
       } else if (blockRate > 50) {
         reasons.push(`High block rate: ${blockRate.toFixed(2)}%`);
-        if (riskLevel === 'LOW') {
-          riskLevel = 'HIGH';
+        if (riskLevel === "LOW") {
+          riskLevel = "HIGH";
         }
       }
 
       if (uniqueEndpoints > 10) {
         reasons.push(`Scanning multiple endpoints: ${uniqueEndpoints}`);
-        if (riskLevel === 'LOW') {
-          riskLevel = 'MEDIUM';
+        if (riskLevel === "LOW") {
+          riskLevel = "MEDIUM";
         }
       }
 
       if (reasons.length > 0) {
         suspicious.push({
           identifier: r.ip,
-          type: 'IP',
+          type: "IP",
           violationCount: blocked,
           riskLevel,
           reason: reasons,
@@ -407,17 +407,17 @@ export class MonitoringService {
     const suspicious: SuspiciousActivity[] = [];
 
     const results = await this.usageRepository
-      .createQueryBuilder('usage')
+      .createQueryBuilder("usage")
       .select([
-        'usage.user_id as userId',
-        'COUNT(DISTINCT usage.ip) as uniqueIPs',
-        'SUM(CASE WHEN usage.blocked = true THEN 1 ELSE 0 END) as blockedRequests',
+        "usage.user_id as userId",
+        "COUNT(DISTINCT usage.ip) as uniqueIPs",
+        "SUM(CASE WHEN usage.blocked = true THEN 1 ELSE 0 END) as blockedRequests",
       ])
-      .where('usage.request_time > :since', { since: oneHourAgo })
-      .andWhere('usage.user_id IS NOT NULL')
-      .groupBy('usage.user_id')
-      .having('COUNT(DISTINCT usage.ip) > :threshold', { threshold: 5 })
-      .orHaving('SUM(CASE WHEN usage.blocked = true THEN 1 ELSE 0 END) > :blockThreshold', {
+      .where("usage.request_time > :since", { since: oneHourAgo })
+      .andWhere("usage.user_id IS NOT NULL")
+      .groupBy("usage.user_id")
+      .having("COUNT(DISTINCT usage.ip) > :threshold", { threshold: 5 })
+      .orHaving("SUM(CASE WHEN usage.blocked = true THEN 1 ELSE 0 END) > :blockThreshold", {
         blockThreshold: 10,
       })
       .getRawMany<SuspiciousUserQueryResult>();
@@ -427,27 +427,27 @@ export class MonitoringService {
       const blocked = parseInt(r.blockedrequests, 10);
 
       const reasons: string[] = [];
-      let riskLevel: SuspiciousActivity['riskLevel'] = 'LOW';
+      let riskLevel: SuspiciousActivity["riskLevel"] = "LOW";
 
       if (uniqueIPs > 10) {
         reasons.push(`Multiple IPs: ${uniqueIPs}`);
-        riskLevel = 'HIGH';
+        riskLevel = "HIGH";
       } else if (uniqueIPs > 5) {
         reasons.push(`Several IPs: ${uniqueIPs}`);
-        riskLevel = 'MEDIUM';
+        riskLevel = "MEDIUM";
       }
 
       if (blocked > 10) {
         reasons.push(`Multiple violations: ${blocked}`);
-        if (riskLevel === 'LOW') {
-          riskLevel = 'MEDIUM';
+        if (riskLevel === "LOW") {
+          riskLevel = "MEDIUM";
         }
       }
 
       if (reasons.length > 0) {
         suspicious.push({
           identifier: r.userid,
-          type: 'USER',
+          type: "USER",
           violationCount: blocked,
           riskLevel,
           reason: reasons,
@@ -468,17 +468,17 @@ export class MonitoringService {
 
     // Check for coordinated attacks (multiple IPs hitting same endpoints)
     const results = await this.usageRepository
-      .createQueryBuilder('usage')
+      .createQueryBuilder("usage")
       .select([
-        'usage.endpoint as endpoint',
-        'COUNT(DISTINCT usage.ip) as uniqueIPs',
-        'COUNT(*) as totalRequests',
-        'SUM(CASE WHEN usage.blocked = true THEN 1 ELSE 0 END) as blockedRequests',
+        "usage.endpoint as endpoint",
+        "COUNT(DISTINCT usage.ip) as uniqueIPs",
+        "COUNT(*) as totalRequests",
+        "SUM(CASE WHEN usage.blocked = true THEN 1 ELSE 0 END) as blockedRequests",
       ])
-      .where('usage.request_time > :since', { since: oneHourAgo })
-      .groupBy('usage.endpoint')
-      .having('COUNT(DISTINCT usage.ip) > :threshold', { threshold: 20 })
-      .andHaving('SUM(CASE WHEN usage.blocked = true THEN 1 ELSE 0 END) > :blockThreshold', {
+      .where("usage.request_time > :since", { since: oneHourAgo })
+      .groupBy("usage.endpoint")
+      .having("COUNT(DISTINCT usage.ip) > :threshold", { threshold: 20 })
+      .andHaving("SUM(CASE WHEN usage.blocked = true THEN 1 ELSE 0 END) > :blockThreshold", {
         blockThreshold: 50,
       })
       .getRawMany<DistributedAttackQueryResult>();
@@ -489,9 +489,9 @@ export class MonitoringService {
 
       suspicious.push({
         identifier: r.endpoint,
-        type: 'IP',
+        type: "IP",
         violationCount: blocked,
-        riskLevel: 'CRITICAL',
+        riskLevel: "CRITICAL",
         reason: [
           `Distributed attack detected`,
           `${uniqueIPs} different IPs`,
@@ -512,14 +512,14 @@ export class MonitoringService {
   @Cron(CronExpression.EVERY_5_MINUTES)
   async checkQuotaAlerts(): Promise<void> {
     try {
-      this.logger.debug('Running scheduled quota alerts check');
+      this.logger.debug("Running scheduled quota alerts check");
 
       const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
       const metrics = await this.getQuotaMetrics(oneHourAgo);
 
       // Alert if block rate is too high
       if (metrics.blockRate > 10) {
-        this.logger.warn('High block rate detected', {
+        this.logger.warn("High block rate detected", {
           blockRate: metrics.blockRate.toFixed(2),
           totalRequests: metrics.totalRequests,
           blockedRequests: metrics.blockedRequests,
@@ -536,9 +536,9 @@ export class MonitoringService {
       // Alert for potential abuse patterns
       const suspicious = await this.detectSuspiciousActivity();
       if (suspicious.length > 0) {
-        this.logger.warn('Suspicious activity detected', {
+        this.logger.warn("Suspicious activity detected", {
           count: suspicious.length,
-          activities: suspicious.map(s => ({
+          activities: suspicious.map((s) => ({
             identifier: s.identifier,
             type: s.type,
             riskLevel: s.riskLevel,
@@ -549,7 +549,7 @@ export class MonitoringService {
         // Send alert through AlertService
         this.alertService.sendSuspiciousActivityAlert(
           suspicious.length,
-          suspicious.map(s => ({
+          suspicious.map((s) => ({
             identifier: s.identifier,
             type: s.type,
             riskLevel: s.riskLevel,
@@ -559,21 +559,21 @@ export class MonitoringService {
       }
 
       // Log summary
-      this.logger.log('Quota alerts check completed', {
+      this.logger.log("Quota alerts check completed", {
         totalRequests: metrics.totalRequests,
         blockedRequests: metrics.blockedRequests,
         blockRate: metrics.blockRate.toFixed(2),
         suspiciousActivities: suspicious.length,
       });
     } catch (error) {
-      this.logger.error('Failed to check quota alerts', {
-        error: error instanceof Error ? error.message : 'Unknown error',
+      this.logger.error("Failed to check quota alerts", {
+        error: error instanceof Error ? error.message : "Unknown error",
       });
 
       // Send system error alert
       if (error instanceof Error) {
         this.alertService.sendSystemErrorAlert(error, {
-          context: 'checkQuotaAlerts',
+          context: "checkQuotaAlerts",
         });
       }
     }
@@ -584,7 +584,7 @@ export class MonitoringService {
    */
   async getViolationHistory(
     identifier: string,
-    type: 'IP' | 'USER' | 'CLIENT_ID',
+    type: "IP" | "USER" | "CLIENT_ID",
     hours = 24,
   ): Promise<QuotaUsage[]> {
     const since = new Date(Date.now() - hours * 60 * 60 * 1000);
@@ -601,20 +601,20 @@ export class MonitoringService {
     };
 
     switch (type) {
-      case 'IP':
+      case "IP":
         whereClause.ip = identifier;
         break;
-      case 'USER':
+      case "USER":
         whereClause.user_id = identifier;
         break;
-      case 'CLIENT_ID':
+      case "CLIENT_ID":
         whereClause.client_id = identifier;
         break;
     }
 
     return this.usageRepository.find({
       where: whereClause,
-      order: { request_time: 'DESC' },
+      order: { request_time: "DESC" },
       take: 100,
     });
   }

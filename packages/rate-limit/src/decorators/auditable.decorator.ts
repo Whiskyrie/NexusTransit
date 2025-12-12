@@ -1,10 +1,10 @@
-import { SetMetadata } from '@nestjs/common';
-import type { IAuditableOptions as AuditableOptions } from '@nexus/audit';
+import { SetMetadata } from "@nestjs/common";
+import type { IAuditableOptions as AuditableOptions } from "@nexus/audit";
 
 /**
  * Chave para metadados de entidades auditáveis do Rate Limit
  */
-export const AUDITABLE_ENTITY_KEY = 'auditable_rate_limit_entity';
+export const AUDITABLE_ENTITY_KEY = "auditable_rate_limit_entity";
 
 /**
  * Opções padrão para auditoria de Rate Limit
@@ -13,9 +13,9 @@ export const DEFAULT_AUDITABLE_OPTIONS: AuditableOptions = {
   trackCreation: true,
   trackUpdates: true,
   trackDeletion: true,
-  excludeFields: ['updated_at', 'created_at'],
+  excludeFields: ["updated_at", "created_at"],
   trackOldValues: true,
-  entityDisplayName: '',
+  entityDisplayName: "",
 };
 
 /**
@@ -85,14 +85,14 @@ export const NonAuditable = (): ClassDecorator =>
  * ```
  */
 export const AuditableOperations = (
-  operations: ('CREATE' | 'UPDATE' | 'DELETE')[],
+  operations: ("CREATE" | "UPDATE" | "DELETE")[],
 ): ClassDecorator => {
   return SetMetadata(AUDITABLE_ENTITY_KEY, {
-    trackCreation: operations.includes('CREATE'),
-    trackUpdates: operations.includes('UPDATE'),
-    trackDeletion: operations.includes('DELETE'),
-    excludeFields: ['updated_at', 'created_at'],
+    trackCreation: operations.includes("CREATE"),
+    trackUpdates: operations.includes("UPDATE"),
+    trackDeletion: operations.includes("DELETE"),
+    excludeFields: ["updated_at", "created_at"],
     trackOldValues: true,
-    entityDisplayName: '',
+    entityDisplayName: "",
   });
 };

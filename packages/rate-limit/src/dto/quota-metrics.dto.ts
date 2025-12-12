@@ -1,14 +1,14 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty } from "@nestjs/swagger";
 
 /**
  * DTO de métricas de quota
  */
 export class QuotaMetricsDto {
   @ApiProperty({
-    description: 'Período das métricas',
+    description: "Período das métricas",
     example: {
-      from: '2024-01-01T00:00:00Z',
-      to: '2024-01-01T01:00:00Z',
+      from: "2024-01-01T00:00:00Z",
+      to: "2024-01-01T01:00:00Z",
     },
   })
   period!: {
@@ -17,34 +17,34 @@ export class QuotaMetricsDto {
   };
 
   @ApiProperty({
-    description: 'Total de requests no período',
+    description: "Total de requests no período",
     example: 10000,
   })
   totalRequests!: number;
 
   @ApiProperty({
-    description: 'Requests bloqueados no período',
+    description: "Requests bloqueados no período",
     example: 150,
   })
   blockedRequests!: number;
 
   @ApiProperty({
-    description: 'Taxa de bloqueio em porcentagem',
+    description: "Taxa de bloqueio em porcentagem",
     example: 1.5,
   })
   blockRate!: number;
 
   @ApiProperty({
-    description: 'Top violadores',
-    type: 'array',
+    description: "Top violadores",
+    type: "array",
     example: [
       {
-        clientId: 'abc123',
-        ip: '192.168.1.1',
-        userId: '123e4567-e89b-12d3-a456-426614174000',
+        clientId: "abc123",
+        ip: "192.168.1.1",
+        userId: "123e4567-e89b-12d3-a456-426614174000",
         violationCount: 25,
-        lastViolation: '2024-01-01T00:30:00Z',
-        endpoints: ['/api/users', '/api/orders'],
+        lastViolation: "2024-01-01T00:30:00Z",
+        endpoints: ["/api/users", "/api/orders"],
       },
     ],
   })
@@ -58,12 +58,12 @@ export class QuotaMetricsDto {
   }[];
 
   @ApiProperty({
-    description: 'Uso de quota por endpoint',
-    type: 'array',
+    description: "Uso de quota por endpoint",
+    type: "array",
     example: [
       {
-        endpoint: '/api/users',
-        method: 'GET',
+        endpoint: "/api/users",
+        method: "GET",
         totalRequests: 5000,
         blockedRequests: 50,
         blockRate: 1.0,
@@ -83,15 +83,15 @@ export class QuotaMetricsDto {
   }[];
 
   @ApiProperty({
-    description: 'Uso de quota por usuário',
-    type: 'array',
+    description: "Uso de quota por usuário",
+    type: "array",
     example: [
       {
-        userId: '123e4567-e89b-12d3-a456-426614174000',
+        userId: "123e4567-e89b-12d3-a456-426614174000",
         totalRequests: 500,
         blockedRequests: 10,
         blockRate: 2.0,
-        endpoints: ['/api/users', '/api/orders'],
+        endpoints: ["/api/users", "/api/orders"],
       },
     ],
   })
@@ -104,11 +104,11 @@ export class QuotaMetricsDto {
   }[];
 
   @ApiProperty({
-    description: 'Uso de quota por IP',
-    type: 'array',
+    description: "Uso de quota por IP",
+    type: "array",
     example: [
       {
-        ip: '192.168.1.1',
+        ip: "192.168.1.1",
         totalRequests: 300,
         blockedRequests: 15,
         blockRate: 5.0,

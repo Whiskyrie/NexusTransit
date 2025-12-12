@@ -1,6 +1,6 @@
-import { Entity, Column, Index } from 'typeorm';
-import { BaseEntity } from '@nexus/common';
-import { Auditable } from '@nexus/audit';
+import { Entity, Column, Index } from "typeorm";
+import { BaseEntity } from "@nexus/common";
+import { Auditable } from "@nexus/audit";
 
 /**
  * Quota Usage Entity
@@ -13,113 +13,113 @@ import { Auditable } from '@nexus/audit';
  * - When and where violations occur
  * - Patterns that indicate potential abuse
  */
-@Entity('quota_usage')
+@Entity("quota_usage")
 @Auditable({
   trackCreation: true,
   trackUpdates: false,
   trackDeletion: false,
   excludeFields: [],
-  entityDisplayName: 'Quota Usage',
+  entityDisplayName: "Quota Usage",
 })
-@Index(['client_id', 'created_at'])
-@Index(['ip', 'created_at'])
-@Index(['user_id', 'created_at'])
-@Index(['endpoint', 'created_at'])
-@Index(['blocked', 'created_at'])
-@Index(['created_at'])
+@Index(["client_id", "created_at"])
+@Index(["ip", "created_at"])
+@Index(["user_id", "created_at"])
+@Index(["endpoint", "created_at"])
+@Index(["blocked", "created_at"])
+@Index(["created_at"])
 export class QuotaUsage extends BaseEntity {
   @Column({
-    type: 'varchar',
+    type: "varchar",
     length: 64,
-    comment: 'Unique client identifier (hash of IP + user agent)',
-    name: 'client_id',
+    comment: "Unique client identifier (hash of IP + user agent)",
+    name: "client_id",
   })
   client_id!: string;
 
   @Column({
-    type: 'varchar',
+    type: "varchar",
     length: 45,
-    comment: 'Client IP address',
+    comment: "Client IP address",
   })
   ip!: string;
 
   @Column({
-    type: 'uuid',
+    type: "uuid",
     nullable: true,
-    comment: 'User ID if authenticated',
-    name: 'user_id',
+    comment: "User ID if authenticated",
+    name: "user_id",
   })
   user_id?: string;
 
   @Column({
-    type: 'uuid',
+    type: "uuid",
     nullable: true,
-    comment: 'API Key ID if using API key authentication',
-    name: 'api_key_id',
+    comment: "API Key ID if using API key authentication",
+    name: "api_key_id",
   })
   api_key_id?: string;
 
   @Column({
-    type: 'varchar',
+    type: "varchar",
     length: 255,
-    comment: 'HTTP endpoint accessed',
+    comment: "HTTP endpoint accessed",
   })
   endpoint!: string;
 
   @Column({
-    type: 'varchar',
+    type: "varchar",
     length: 10,
-    comment: 'HTTP method (GET, POST, etc.)',
+    comment: "HTTP method (GET, POST, etc.)",
   })
   method!: string;
 
   @Column({
-    type: 'uuid',
-    comment: 'Rate limit rule that was applied',
-    name: 'rule_id',
+    type: "uuid",
+    comment: "Rate limit rule that was applied",
+    name: "rule_id",
   })
   rule_id!: string;
 
   @Column({
-    type: 'int',
-    comment: 'Number of requests made at the time',
+    type: "int",
+    comment: "Number of requests made at the time",
   })
   requests_count!: number;
 
   @Column({
-    type: 'int',
-    comment: 'Limit that was configured',
+    type: "int",
+    comment: "Limit that was configured",
   })
   limit!: number;
 
   @Column({
-    type: 'boolean',
+    type: "boolean",
     default: false,
-    comment: 'Whether this request was blocked due to rate limiting',
+    comment: "Whether this request was blocked due to rate limiting",
   })
   blocked!: boolean;
 
   @Column({
-    type: 'varchar',
+    type: "varchar",
     length: 500,
     nullable: true,
-    comment: 'User agent string',
-    name: 'user_agent',
+    comment: "User agent string",
+    name: "user_agent",
   })
   user_agent?: string;
 
   @Column({
-    type: 'jsonb',
+    type: "jsonb",
     nullable: true,
-    comment: 'Additional metadata (headers, query params, etc.)',
+    comment: "Additional metadata (headers, query params, etc.)",
   })
   metadata?: Record<string, unknown>;
 
   @Column({
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-    comment: 'Timestamp of the request',
-    name: 'request_time',
+    type: "timestamp",
+    default: () => "CURRENT_TIMESTAMP",
+    comment: "Timestamp of the request",
+    name: "request_time",
   })
   request_time!: Date;
 }

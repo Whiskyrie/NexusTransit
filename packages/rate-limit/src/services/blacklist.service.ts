@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { RedisService } from '@nexus/redis';
+import { Injectable, Logger } from "@nestjs/common";
+import { RedisService } from "@nexus/redis";
 
-export type BlacklistType = 'IP' | 'USER' | 'API_KEY';
+export type BlacklistType = "IP" | "USER" | "API_KEY";
 
 export interface BlacklistEntry {
   identifier: string;
@@ -22,9 +22,9 @@ export interface BlacklistEntry {
 export class BlacklistService {
   private readonly logger = new Logger(BlacklistService.name);
 
-  private readonly WHITELIST_PREFIX = 'whitelist';
-  private readonly BLACKLIST_PREFIX = 'blacklist';
-  private readonly BLACKLIST_INFO_PREFIX = 'blacklist_info';
+  private readonly WHITELIST_PREFIX = "whitelist";
+  private readonly BLACKLIST_PREFIX = "blacklist";
+  private readonly BLACKLIST_INFO_PREFIX = "blacklist_info";
 
   constructor(private readonly redisService: RedisService) {}
 
@@ -39,12 +39,12 @@ export class BlacklistService {
     try {
       const key = this.getWhitelistKey(identifier, type);
       const result = await this.redisService.get<string>(key);
-      return result === '1';
+      return result === "1";
     } catch (error) {
-      this.logger.error('Failed to check whitelist', {
+      this.logger.error("Failed to check whitelist", {
         identifier,
         type,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
       });
       return false;
     }
@@ -61,12 +61,12 @@ export class BlacklistService {
     try {
       const key = this.getBlacklistKey(identifier, type);
       const result = await this.redisService.get<string>(key);
-      return result === '1';
+      return result === "1";
     } catch (error) {
-      this.logger.error('Failed to check blacklist', {
+      this.logger.error("Failed to check blacklist", {
         identifier,
         type,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
       });
       // Fail safe - don't block if Redis is down
       return false;
@@ -91,22 +91,22 @@ export class BlacklistService {
       const key = this.getWhitelistKey(identifier, type);
 
       if (permanent || !ttlSeconds) {
-        await this.redisService.set(key, '1');
+        await this.redisService.set(key, "1");
       } else {
-        await this.redisService.set(key, '1', ttlSeconds);
+        await this.redisService.set(key, "1", ttlSeconds);
       }
 
-      this.logger.log('Added to whitelist', {
+      this.logger.log("Added to whitelist", {
         identifier,
         type,
         permanent,
         ttlSeconds,
       });
     } catch (error) {
-      this.logger.error('Failed to add to whitelist', {
+      this.logger.error("Failed to add to whitelist", {
         identifier,
         type,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
       });
       throw error;
     }
@@ -123,12 +123,12 @@ export class BlacklistService {
       const key = this.getWhitelistKey(identifier, type);
       await this.redisService.delete(key);
 
-      this.logger.log('Removed from whitelist', { identifier, type });
+      this.logger.log("Removed from whitelist", { identifier, type });
     } catch (error) {
-      this.logger.error('Failed to remove from whitelist', {
+      this.logger.error("Failed to remove from whitelist", {
         identifier,
         type,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
       });
       throw error;
     }
@@ -166,14 +166,14 @@ export class BlacklistService {
       };
 
       if (options?.durationSeconds) {
-        await this.redisService.set(key, '1', options.durationSeconds);
+        await this.redisService.set(key, "1", options.durationSeconds);
         await this.redisService.set(infoKey, entry, options.durationSeconds);
       } else {
-        await this.redisService.set(key, '1');
+        await this.redisService.set(key, "1");
         await this.redisService.set(infoKey, entry);
       }
 
-      this.logger.warn('Added to blacklist', {
+      this.logger.warn("Added to blacklist", {
         identifier,
         type,
         reason: options?.reason,
@@ -181,10 +181,10 @@ export class BlacklistService {
         createdBy: options?.createdBy,
       });
     } catch (error) {
-      this.logger.error('Failed to add to blacklist', {
+      this.logger.error("Failed to add to blacklist", {
         identifier,
         type,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
       });
       throw error;
     }
@@ -203,12 +203,12 @@ export class BlacklistService {
 
       await Promise.all([this.redisService.delete(key), this.redisService.delete(infoKey)]);
 
-      this.logger.log('Removed from blacklist', { identifier, type });
+      this.logger.log("Removed from blacklist", { identifier, type });
     } catch (error) {
-      this.logger.error('Failed to remove from blacklist', {
+      this.logger.error("Failed to remove from blacklist", {
         identifier,
         type,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
       });
       throw error;
     }
@@ -227,10 +227,10 @@ export class BlacklistService {
       const entry = await this.redisService.get<BlacklistEntry>(infoKey);
       return entry ?? null;
     } catch (error) {
-      this.logger.error('Failed to get blacklist info', {
+      this.logger.error("Failed to get blacklist info", {
         identifier,
         type,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
       });
       return null;
     }
@@ -270,10 +270,10 @@ export class BlacklistService {
     await this.addToBlacklist(identifier, type, {
       reason: `Auto-blacklisted after ${violationCount} rate limit violations`,
       durationSeconds,
-      createdBy: 'system',
+      createdBy: "system",
     });
 
-    this.logger.warn('Auto-blacklisted for abuse', {
+    this.logger.warn("Auto-blacklisted for abuse", {
       identifier,
       type,
       violationCount,
@@ -301,16 +301,16 @@ export class BlacklistService {
       // If violations exist, we refresh the expiration time (sliding window)
       // using the provided windowSeconds, ensuring the count stays active
       // while being monitored.
-      if (typeof count === 'number' && count > 0) {
+      if (typeof count === "number" && count > 0) {
         await this.redisService.set(key, count, windowSeconds);
       }
 
       return count ?? 0;
     } catch (error) {
-      this.logger.error('Failed to get recent violations', {
+      this.logger.error("Failed to get recent violations", {
         identifier,
         type,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
       });
       return 0;
     }
@@ -345,10 +345,10 @@ export class BlacklistService {
 
       return newCount;
     } catch (error) {
-      this.logger.error('Failed to record violation', {
+      this.logger.error("Failed to record violation", {
         identifier,
         type,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
       });
       return 0;
     }
@@ -365,12 +365,12 @@ export class BlacklistService {
       const key = `violations:${type.toLowerCase()}:${identifier}`;
       await this.redisService.delete(key);
 
-      this.logger.log('Cleared violations', { identifier, type });
+      this.logger.log("Cleared violations", { identifier, type });
     } catch (error) {
-      this.logger.error('Failed to clear violations', {
+      this.logger.error("Failed to clear violations", {
         identifier,
         type,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
       });
     }
   }
@@ -423,7 +423,7 @@ export class BlacklistService {
       // Get Redis client
       const redis = this.redisService.getRedisClient();
       if (!redis) {
-        this.logger.error('Redis client not available');
+        this.logger.error("Redis client not available");
         return {
           data: [],
           meta: {
@@ -486,11 +486,11 @@ export class BlacklistService {
         },
       };
     } catch (error) {
-      this.logger.error('Failed to list blacklist', {
+      this.logger.error("Failed to list blacklist", {
         type,
         page,
         limit,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
       });
       throw error;
     }

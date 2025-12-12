@@ -55,9 +55,9 @@ export interface IPUsage {
 
 export interface SuspiciousActivity {
   identifier: string;
-  type: 'IP' | 'USER' | 'API_KEY';
+  type: "IP" | "USER" | "API_KEY";
   violationCount: number;
-  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  riskLevel: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
   reason: string[];
   detectedAt: Date;
 }

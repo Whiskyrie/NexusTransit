@@ -5,15 +5,15 @@ import {
   Logger,
   HttpException,
   HttpStatus,
-} from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-import type { Request, Response } from 'express';
-import { RATE_LIMIT_KEY } from '../decorators/rate-limit.decorator';
-import { RateLimitType } from '../enums/rate-limit-type.enum';
-import { RoleLimits } from '../enums/role-limits.enum';
-import { RateLimitService } from '../services/rate-limit.service';
-import { BlacklistService } from '../services/blacklist.service';
-import type { RateLimitConfig, RateLimitResult } from '../interfaces/rate-limit.interface';
+} from "@nestjs/common";
+import { Reflector } from "@nestjs/core";
+import type { Request, Response } from "express";
+import { RATE_LIMIT_KEY } from "../decorators/rate-limit.decorator";
+import { RateLimitType } from "../enums/rate-limit-type.enum";
+import { RoleLimits } from "../enums/role-limits.enum";
+import { RateLimitService } from "../services/rate-limit.service";
+import { BlacklistService } from "../services/blacklist.service";
+import type { RateLimitConfig, RateLimitResult } from "../interfaces/rate-limit.interface";
 
 interface AuthenticatedRequest extends Request {
   user?: {
@@ -48,7 +48,7 @@ export class RateLimitGuard implements CanActivate {
 
     // Bypass health checks, metrics, and docs endpoints
     if (this.isWhitelistedPath(request.path)) {
-      this.logger.debug('Path is whitelisted, bypassing rate limit', { path: request.path });
+      this.logger.debug("Path is whitelisted, bypassing rate limit", { path: request.path });
       return true;
     }
 
@@ -68,40 +68,40 @@ export class RateLimitGuard implements CanActivate {
 
     try {
       // Check if IP is whitelisted (bypass all checks)
-      if (await this.blacklistService.isWhitelisted(clientIp, 'IP')) {
-        this.logger.debug('IP is whitelisted, bypassing rate limit', { ip: clientIp });
+      if (await this.blacklistService.isWhitelisted(clientIp, "IP")) {
+        this.logger.debug("IP is whitelisted, bypassing rate limit", { ip: clientIp });
         return true;
       }
 
       // Check if user is whitelisted
-      if (userId && (await this.blacklistService.isWhitelisted(userId, 'USER'))) {
-        this.logger.debug('User is whitelisted, bypassing rate limit', { userId });
+      if (userId && (await this.blacklistService.isWhitelisted(userId, "USER"))) {
+        this.logger.debug("User is whitelisted, bypassing rate limit", { userId });
         return true;
       }
 
       // Check if IP is blacklisted
-      if (await this.blacklistService.isBlacklisted(clientIp, 'IP')) {
-        this.logger.warn('IP is blacklisted', { ip: clientIp });
+      if (await this.blacklistService.isBlacklisted(clientIp, "IP")) {
+        this.logger.warn("IP is blacklisted", { ip: clientIp });
         throw new HttpException(
           {
-            message: 'Access denied',
-            error: 'Forbidden',
+            message: "Access denied",
+            error: "Forbidden",
             statusCode: HttpStatus.FORBIDDEN,
-            reason: 'IP address is blacklisted',
+            reason: "IP address is blacklisted",
           },
           HttpStatus.FORBIDDEN,
         );
       }
 
       // Check if user is blacklisted
-      if (userId && (await this.blacklistService.isBlacklisted(userId, 'USER'))) {
-        this.logger.warn('User is blacklisted', { userId });
+      if (userId && (await this.blacklistService.isBlacklisted(userId, "USER"))) {
+        this.logger.warn("User is blacklisted", { userId });
         throw new HttpException(
           {
-            message: 'Access denied',
-            error: 'Forbidden',
+            message: "Access denied",
+            error: "Forbidden",
             statusCode: HttpStatus.FORBIDDEN,
-            reason: 'User account is blacklisted',
+            reason: "User account is blacklisted",
           },
           HttpStatus.FORBIDDEN,
         );
@@ -125,7 +125,7 @@ export class RateLimitGuard implements CanActivate {
 
       if (!result.allowed) {
         // Record violation for potential auto-blacklisting
-        const violationType = userId ? 'USER' : 'IP';
+        const violationType = userId ? "USER" : "IP";
         await this.blacklistService.recordViolation(userId ?? clientIp, violationType);
 
         this.logger.warn(`Rate limit exceeded for ${rateLimitConfig.type}`, {
@@ -140,8 +140,8 @@ export class RateLimitGuard implements CanActivate {
 
         throw new HttpException(
           {
-            message: 'Rate limit exceeded',
-            error: 'Too Many Requests',
+            message: "Rate limit exceeded",
+            error: "Too Many Requests",
             statusCode: HttpStatus.TOO_MANY_REQUESTS,
             retryAfter: Math.ceil((result.resetTime - Date.now()) / 1000),
           },
@@ -151,9 +151,9 @@ export class RateLimitGuard implements CanActivate {
 
       // Set rate limit headers
       const response = context.switchToHttp().getResponse<Response>();
-      response.setHeader('X-RateLimit-Limit', result.limit.toString());
-      response.setHeader('X-RateLimit-Remaining', result.remaining.toString());
-      response.setHeader('X-RateLimit-Reset', Math.ceil(result.resetTime / 1000).toString());
+      response.setHeader("X-RateLimit-Limit", result.limit.toString());
+      response.setHeader("X-RateLimit-Remaining", result.remaining.toString());
+      response.setHeader("X-RateLimit-Reset", Math.ceil(result.resetTime / 1000).toString());
 
       return true;
     } catch (error) {
@@ -161,7 +161,7 @@ export class RateLimitGuard implements CanActivate {
         throw error;
       }
 
-      this.logger.error('Rate limiting error', error);
+      this.logger.error("Rate limiting error", error);
       // Allow request to proceed if rate limiting fails
       return true;
     }
@@ -203,26 +203,26 @@ export class RateLimitGuard implements CanActivate {
     } else {
       // Use default role limits
       switch (role) {
-        case 'ADMIN':
+        case "ADMIN":
           limit = RoleLimits.ADMIN;
           break;
-        case 'GESTOR':
+        case "GESTOR":
           limit = RoleLimits.GESTOR;
           break;
-        case 'DESPACHANTE':
+        case "DESPACHANTE":
           limit = RoleLimits.DESPACHANTE;
           break;
-        case 'MOTORISTA':
+        case "MOTORISTA":
           limit = RoleLimits.MOTORISTA;
           break;
-        case 'CLIENTE':
+        case "CLIENTE":
           limit = RoleLimits.CLIENTE;
           break;
         // Manter compatibilidade com nomes antigos
-        case 'DRIVER':
+        case "DRIVER":
           limit = RoleLimits.MOTORISTA;
           break;
-        case 'CUSTOMER':
+        case "CUSTOMER":
           limit = RoleLimits.CLIENTE;
           break;
         default:
@@ -230,7 +230,7 @@ export class RateLimitGuard implements CanActivate {
       }
     }
 
-    const key = `rate_limit:role:${role ?? 'GUEST'}:${context.userId ?? context.ip}:${context.endpoint}`;
+    const key = `rate_limit:role:${role ?? "GUEST"}:${context.userId ?? context.ip}:${context.endpoint}`;
     return this.rateLimitService.checkLimit(key, limit, windowMs);
   }
 
@@ -260,15 +260,15 @@ export class RateLimitGuard implements CanActivate {
   }
 
   private getClientIp(request: Request): string {
-    const forwarded = request.headers['x-forwarded-for'] as string;
-    const realIp = request.headers['x-real-ip'] as string;
-    const clientIp = request.headers['x-client-ip'] as string;
+    const forwarded = request.headers["x-forwarded-for"] as string;
+    const realIp = request.headers["x-real-ip"] as string;
+    const clientIp = request.headers["x-client-ip"] as string;
 
     if (forwarded) {
-      return forwarded.split(',')[0]?.trim() ?? '127.0.0.1';
+      return forwarded.split(",")[0]?.trim() ?? "127.0.0.1";
     }
 
-    return realIp ?? clientIp ?? request.socket.remoteAddress ?? '127.0.0.1';
+    return realIp ?? clientIp ?? request.socket.remoteAddress ?? "127.0.0.1";
   }
 
   /**
@@ -277,14 +277,14 @@ export class RateLimitGuard implements CanActivate {
    */
   private isWhitelistedPath(path: string): boolean {
     const whitelistedPaths = [
-      '/health',
-      '/metrics',
-      '/api/docs',
-      '/api-docs',
-      '/swagger',
-      '/api/health',
+      "/health",
+      "/metrics",
+      "/api/docs",
+      "/api-docs",
+      "/swagger",
+      "/api/health",
     ];
 
-    return whitelistedPaths.some(whitePath => path.startsWith(whitePath));
+    return whitelistedPaths.some((whitePath) => path.startsWith(whitePath));
   }
 }

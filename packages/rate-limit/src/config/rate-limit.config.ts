@@ -1,4 +1,4 @@
-import { registerAs } from '@nestjs/config';
+import { registerAs } from "@nestjs/config";
 
 /**
  * Configuração de Rate Limiting
@@ -93,19 +93,19 @@ export interface RateLimitConfiguration {
 }
 
 export default registerAs(
-  'rateLimit',
+  "rateLimit",
   (): RateLimitConfiguration => ({
-    enabled: process.env.RATE_LIMIT_ENABLED !== 'false',
+    enabled: process.env.RATE_LIMIT_ENABLED !== "false",
 
     defaults: {
-      limit: parseInt(process.env.RATE_LIMIT_DEFAULT_LIMIT ?? '100', 10),
-      windowMs: parseInt(process.env.RATE_LIMIT_DEFAULT_WINDOW_MS ?? '60000', 10),
-      strategy: process.env.RATE_LIMIT_DEFAULT_STRATEGY ?? 'SLIDING_WINDOW',
+      limit: parseInt(process.env.RATE_LIMIT_DEFAULT_LIMIT ?? "100", 10),
+      windowMs: parseInt(process.env.RATE_LIMIT_DEFAULT_WINDOW_MS ?? "60000", 10),
+      strategy: process.env.RATE_LIMIT_DEFAULT_STRATEGY ?? "SLIDING_WINDOW",
     },
 
     autoBlock: {
-      enabled: process.env.RATE_LIMIT_AUTO_BLOCK_ENABLED !== 'false',
-      threshold: parseInt(process.env.RATE_LIMIT_AUTO_BLOCK_THRESHOLD ?? '20', 10),
+      enabled: process.env.RATE_LIMIT_AUTO_BLOCK_ENABLED !== "false",
+      threshold: parseInt(process.env.RATE_LIMIT_AUTO_BLOCK_THRESHOLD ?? "20", 10),
       duration: parseInt(
         process.env.RATE_LIMIT_AUTO_BLOCK_DURATION_MS ?? String(24 * 60 * 60 * 1000),
         10,
@@ -113,7 +113,7 @@ export default registerAs(
     },
 
     monitoring: {
-      enabled: process.env.RATE_LIMIT_MONITORING_ENABLED !== 'false',
+      enabled: process.env.RATE_LIMIT_MONITORING_ENABLED !== "false",
       analysisInterval: parseInt(
         process.env.RATE_LIMIT_ANALYSIS_INTERVAL_MS ?? String(5 * 60 * 1000),
         10,
@@ -121,7 +121,7 @@ export default registerAs(
     },
 
     alerts: {
-      enabled: process.env.RATE_LIMIT_ALERTS_ENABLED !== 'false',
+      enabled: process.env.RATE_LIMIT_ALERTS_ENABLED !== "false",
       ...(process.env.RATE_LIMIT_ALERT_EMAIL && {
         emailRecipient: process.env.RATE_LIMIT_ALERT_EMAIL,
       }),
@@ -131,15 +131,15 @@ export default registerAs(
     },
 
     whitelistedPaths: [
-      '/health',
-      '/health/live',
-      '/health/ready',
-      '/metrics',
-      '/api/docs',
-      '/api-docs',
-      '/swagger',
-      '/api/health',
-      ...(process.env.RATE_LIMIT_WHITELISTED_PATHS?.split(',').map(p => p.trim()) ?? []),
+      "/health",
+      "/health/live",
+      "/health/ready",
+      "/metrics",
+      "/api/docs",
+      "/api-docs",
+      "/swagger",
+      "/api/health",
+      ...(process.env.RATE_LIMIT_WHITELISTED_PATHS?.split(",").map((p) => p.trim()) ?? []),
     ],
   }),
 );

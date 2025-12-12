@@ -1,5 +1,5 @@
-import { SetMetadata } from '@nestjs/common';
-import type { Role } from '../enums/role.enum';
+import { SetMetadata } from "@nestjs/common";
+import type { Role } from "../enums/role.enum";
 
 /**
  * Decorator para definir roles permitidas em um endpoint
@@ -10,6 +10,6 @@ import type { Role } from '../enums/role.enum';
  * async findAll() { ... }
  * ```
  */
-export const ROLES_KEY = 'roles';
+export const ROLES_KEY = "roles";
 export const Roles = (...roles: Role[]): ReturnType<typeof SetMetadata> =>
   SetMetadata(ROLES_KEY, roles);

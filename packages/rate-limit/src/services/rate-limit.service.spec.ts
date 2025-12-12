@@ -1,15 +1,15 @@
-import { Test, type TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { RateLimitService } from './rate-limit.service';
-import { RedisService } from '/redis';
-import { RateLimitRule } from '../entities/rate-limit-rule.entity';
-import { QuotaUsage } from '../entities/quota-usage.entity';
-import { SlidingWindowStrategy } from '../strategies/sliding-window.strategy';
-import { TokenBucketStrategy } from '../strategies/token-bucket.strategy';
-import { FixedWindowStrategy } from '../strategies/fixed-window.strategy';
-import type { RateLimitResult } from '../interfaces/rate-limit.interface';
+import { Test, type TestingModule } from "@nestjs/testing";
+import { getRepositoryToken } from "@nestjs/typeorm";
+import { RateLimitService } from "./rate-limit.service";
+import { RedisService } from "/redis";
+import { RateLimitRule } from "../entities/rate-limit-rule.entity";
+import { QuotaUsage } from "../entities/quota-usage.entity";
+import { SlidingWindowStrategy } from "../strategies/sliding-window.strategy";
+import { TokenBucketStrategy } from "../strategies/token-bucket.strategy";
+import { FixedWindowStrategy } from "../strategies/fixed-window.strategy";
+import type { RateLimitResult } from "../interfaces/rate-limit.interface";
 
-describe('RateLimitService', () => {
+describe("RateLimitService", () => {
   let service: RateLimitService;
   let redisService: jest.Mocked<RedisService>;
 
@@ -85,16 +85,16 @@ describe('RateLimitService', () => {
     jest.clearAllMocks();
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(service).toBeDefined();
   });
 
-  describe('checkLimit', () => {
-    const key = 'test:key';
+  describe("checkLimit", () => {
+    const key = "test:key";
     const limit = 5;
     const windowMs = 60000; // 1 minute
 
-    it('should allow request when under limit (new key)', async () => {
+    it("should allow request when under limit (new key)", async () => {
       // Simulate new key (no existing value)
       redisService.get.mockResolvedValue(null);
       redisService.set.mockResolvedValue(true);
@@ -105,7 +105,7 @@ describe('RateLimitService', () => {
       expect(result.limit).toBe(limit);
       expect(result.current).toBe(1);
       expect(result.remaining).toBe(limit - 1);
-      expect(typeof result.resetTime).toBe('number');
+      expect(typeof result.resetTime).toBe("number");
 
       expect(mockRedisService.set).toHaveBeenCalledWith(
         key,
@@ -117,7 +117,7 @@ describe('RateLimitService', () => {
       );
     });
 
-    it('should allow request when under limit (existing key)', async () => {
+    it("should allow request when under limit (existing key)", async () => {
       const now = Date.now();
       const existingEntry = {
         requests: [now - 30000, now - 20000], // 2 requests in the last minute
@@ -138,7 +138,7 @@ describe('RateLimitService', () => {
       expect(mockRedisService.set).toHaveBeenCalled();
     });
 
-    it('should deny request when limit exceeded', async () => {
+    it("should deny request when limit exceeded", async () => {
       const now = Date.now();
       const existingEntry = {
         requests: [
@@ -164,8 +164,8 @@ describe('RateLimitService', () => {
       expect(mockRedisService.set).not.toHaveBeenCalled();
     });
 
-    it('should handle redis errors gracefully', async () => {
-      redisService.get.mockRejectedValue(new Error('Redis connection failed'));
+    it("should handle redis errors gracefully", async () => {
+      redisService.get.mockRejectedValue(new Error("Redis connection failed"));
 
       const result: RateLimitResult = await service.checkLimit(key, limit, windowMs);
 
@@ -176,7 +176,7 @@ describe('RateLimitService', () => {
       expect(result.remaining).toBe(limit);
     });
 
-    it('should clean expired requests from window', async () => {
+    it("should clean expired requests from window", async () => {
       const now = Date.now();
       const existingEntry = {
         requests: [
@@ -209,29 +209,29 @@ describe('RateLimitService', () => {
     });
   });
 
-  describe('resetLimit', () => {
-    it('should reset rate limit for given key', async () => {
+  describe("resetLimit", () => {
+    it("should reset rate limit for given key", async () => {
       redisService.delete.mockResolvedValue(true);
 
-      await service.resetLimit('reset:key');
+      await service.resetLimit("reset:key");
 
-      expect(mockRedisService.delete).toHaveBeenCalledWith('reset:key');
+      expect(mockRedisService.delete).toHaveBeenCalledWith("reset:key");
     });
 
-    it('should handle reset errors gracefully', async () => {
-      redisService.delete.mockRejectedValue(new Error('Redis error'));
+    it("should handle reset errors gracefully", async () => {
+      redisService.delete.mockRejectedValue(new Error("Redis error"));
 
       // Should not throw
-      await expect(service.resetLimit('reset:key')).resolves.not.toThrow();
+      await expect(service.resetLimit("reset:key")).resolves.not.toThrow();
     });
   });
 
-  describe('getLimitStatus', () => {
-    const key = 'status:key';
+  describe("getLimitStatus", () => {
+    const key = "status:key";
     const limit = 10;
     const windowMs = 60000;
 
-    it('should return current rate limit status', async () => {
+    it("should return current rate limit status", async () => {
       const now = Date.now();
       const existingEntry = {
         requests: [now - 30000, now - 20000, now - 10000],
@@ -249,7 +249,7 @@ describe('RateLimitService', () => {
       expect(status.resetTime).toBeGreaterThan(Date.now());
     });
 
-    it('should handle non-existent key', async () => {
+    it("should handle non-existent key", async () => {
       redisService.get.mockResolvedValue(null);
 
       const status = await service.getLimitStatus(key, limit, windowMs);
@@ -261,8 +261,8 @@ describe('RateLimitService', () => {
       expect(status.resetTime).toBeGreaterThan(Date.now());
     });
 
-    it('should handle errors gracefully', async () => {
-      redisService.get.mockRejectedValue(new Error('Redis error'));
+    it("should handle errors gracefully", async () => {
+      redisService.get.mockRejectedValue(new Error("Redis error"));
 
       const status = await service.getLimitStatus(key, limit, windowMs);
 
@@ -272,8 +272,8 @@ describe('RateLimitService', () => {
     });
   });
 
-  describe('cleanup', () => {
-    it('should call cleanup method', () => {
+  describe("cleanup", () => {
+    it("should call cleanup method", () => {
       // This method just logs, so we test it doesn't throw
       expect(() => service.cleanup()).not.toThrow();
     });

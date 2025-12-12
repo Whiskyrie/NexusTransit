@@ -1,4 +1,4 @@
-import type { RateLimitResult } from './rate-limit.interface';
+import type { RateLimitResult } from "./rate-limit.interface";
 
 /**
  * Request information for rate limiting
@@ -104,7 +104,7 @@ export interface IRateLimitStrategy {
  * Strategy type enum for identifying different strategies
  */
 export enum RateLimitStrategyType {
-  SLIDING_WINDOW = 'SLIDING_WINDOW',
-  TOKEN_BUCKET = 'TOKEN_BUCKET',
-  FIXED_WINDOW = 'FIXED_WINDOW',
+  SLIDING_WINDOW = "SLIDING_WINDOW",
+  TOKEN_BUCKET = "TOKEN_BUCKET",
+  FIXED_WINDOW = "FIXED_WINDOW",
 }

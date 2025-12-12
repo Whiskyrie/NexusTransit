@@ -1,8 +1,8 @@
-import { SetMetadata } from '@nestjs/common';
-import { RateLimitType } from '../enums/rate-limit-type.enum';
-import type { RoleLimits } from '../enums/role-limits.enum';
+import { SetMetadata } from "@nestjs/common";
+import { RateLimitType } from "../enums/rate-limit-type.enum";
+import type { RoleLimits } from "../enums/role-limits.enum";
 
-export const RATE_LIMIT_KEY = 'rate-limit';
+export const RATE_LIMIT_KEY = "rate-limit";
 
 /**
  * Rate limiting decorator with custom configuration

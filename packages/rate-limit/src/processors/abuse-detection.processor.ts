@@ -1,20 +1,20 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, MoreThan } from 'typeorm';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { QuotaUsage } from '../entities/quota-usage.entity';
-import { AlertService, AlertType, AlertSeverity } from '../services/alert.service';
-import { BlacklistService } from '../services/blacklist.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository, MoreThan } from "typeorm";
+import { Cron, CronExpression } from "@nestjs/schedule";
+import { QuotaUsage } from "../entities/quota-usage.entity";
+import { AlertService, AlertType, AlertSeverity } from "../services/alert.service";
+import { BlacklistService } from "../services/blacklist.service";
 
 /**
  * Padrões de abuso detectados
  */
 export enum AbusePattern {
-  REPEATED_VIOLATIONS = 'REPEATED_VIOLATIONS',
-  SPIKE_REQUESTS = 'SPIKE_REQUESTS',
-  DISTRIBUTED_ATTACK = 'DISTRIBUTED_ATTACK',
-  BRUTE_FORCE = 'BRUTE_FORCE',
-  CREDENTIAL_STUFFING = 'CREDENTIAL_STUFFING',
+  REPEATED_VIOLATIONS = "REPEATED_VIOLATIONS",
+  SPIKE_REQUESTS = "SPIKE_REQUESTS",
+  DISTRIBUTED_ATTACK = "DISTRIBUTED_ATTACK",
+  BRUTE_FORCE = "BRUTE_FORCE",
+  CREDENTIAL_STUFFING = "CREDENTIAL_STUFFING",
 }
 
 /**
@@ -62,7 +62,7 @@ export class AbuseDetectionProcessor {
 
   @Cron(CronExpression.EVERY_5_MINUTES)
   async analyzeAbusePatterns(): Promise<void> {
-    this.logger.debug('Iniciando análise de padrões de abuso...');
+    this.logger.debug("Iniciando análise de padrões de abuso...");
 
     try {
       const windowStart = new Date(Date.now() - this.thresholds.windowMinutes * 60 * 1000);
@@ -73,12 +73,12 @@ export class AbuseDetectionProcessor {
           request_time: MoreThan(windowStart),
         },
         order: {
-          request_time: 'DESC',
+          request_time: "DESC",
         },
       });
 
       if (recentViolations.length === 0) {
-        this.logger.debug('Nenhuma violação recente encontrada');
+        this.logger.debug("Nenhuma violação recente encontrada");
         return;
       }
 
@@ -99,7 +99,7 @@ export class AbuseDetectionProcessor {
       this.logger.log(`Análise concluída. Detectados ${abuseResults.length} padrões de abuso`);
     } catch (error) {
       // Safe error typing
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
       const errorStack = error instanceof Error ? error.stack : undefined;
       this.logger.error(`Erro na análise de padrões de abuso: ${errorMessage}`, errorStack);
     }
@@ -116,14 +116,14 @@ export class AbuseDetectionProcessor {
           request_time: MoreThan(windowStart),
         },
         order: {
-          request_time: 'DESC',
+          request_time: "DESC",
         },
       });
 
       // Retorna diretamente (o método síncrono é envolvido na Promise do método async atual)
       return this.analyzeIdentifier(identifier, violations);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
       this.logger.error(`Erro na análise em tempo real para ${identifier}: ${errorMessage}`);
       return null;
     }
@@ -189,7 +189,7 @@ export class AbuseDetectionProcessor {
       return AbusePattern.BRUTE_FORCE;
     }
 
-    const authEndpoints = endpoints.filter(ep => ep.includes('/auth') || ep.includes('/login'));
+    const authEndpoints = endpoints.filter((ep) => ep.includes("/auth") || ep.includes("/login"));
     if (authEndpoints.length > 0 && violations.length > 10) {
       return AbusePattern.CREDENTIAL_STUFFING;
     }
@@ -247,13 +247,13 @@ export class AbuseDetectionProcessor {
 
   private async autoBlock(result: AbuseAnalysisResult): Promise<boolean> {
     try {
-      const isBlacklisted = await this.blacklistService.isBlacklisted(result.identifier, 'IP');
+      const isBlacklisted = await this.blacklistService.isBlacklisted(result.identifier, "IP");
       if (isBlacklisted) {
         return false;
       }
 
       const reason = `Auto-blocked: ${result.pattern} - ${result.violationCount} violações em ${result.timeWindow} minutos`;
-      await this.blacklistService.addToBlacklist(result.identifier, 'IP', {
+      await this.blacklistService.addToBlacklist(result.identifier, "IP", {
         reason,
         durationSeconds: 24 * 60 * 60,
       });
@@ -272,7 +272,7 @@ export class AbuseDetectionProcessor {
 
       return true;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
       this.logger.error(`Erro ao bloquear ${result.identifier}: ${errorMessage}`);
       return false;
     }
@@ -280,7 +280,7 @@ export class AbuseDetectionProcessor {
 
   private extractUniqueEndpoints(violations: QuotaUsage[]): string[] {
     const endpoints = violations
-      .map(v => v.metadata?.endpoint as string | undefined)
+      .map((v) => v.metadata?.endpoint as string | undefined)
       .filter((e): e is string => !!e);
     return [...new Set(endpoints)];
   }
