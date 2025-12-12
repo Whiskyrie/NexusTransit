@@ -5,7 +5,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { UsersModule } from '../users/users.module';
-import { RedisModule } from '../redis/redis.module';
+import { RedisModule } from '@nexus/redis';
 import { Role } from './entities/role.entity';
 import { Permission } from './entities/permission.entity';
 import { TokenBlacklistService } from './services/token-blacklist.service';

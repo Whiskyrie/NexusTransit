@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { createHash } from 'crypto';
-import { RedisService } from '../../redis/redis.service';
+import { RedisService } from '@nexus/redis';
 import type { JwtPayload } from '../interfaces/jwt-payload.interface';
 
 @Injectable()
