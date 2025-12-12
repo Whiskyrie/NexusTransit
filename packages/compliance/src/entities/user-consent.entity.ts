@@ -5,79 +5,79 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Index,
-} from 'typeorm';
-import { BaseEntity } from '@nexus/common';
-import { ConsentType } from '../enums/lgpdEnums';
+} from "typeorm";
+import { BaseEntity } from "@nexus/common";
+import { ConsentType } from "../enums/lgpdEnums";
 
 /**
  * Entidade para gerenciar consentimentos LGPD dos usuários
  * Registra o histórico de consentimentos e revogações conforme exigido pela LGPD
  */
-@Entity('user_consents')
-@Index(['userId', 'consentType'], { unique: false })
-@Index(['userId', 'isActive'])
-@Index(['consentType', 'isActive'])
+@Entity("user_consents")
+@Index(["userId", "consentType"], { unique: false })
+@Index(["userId", "isActive"])
+@Index(["consentType", "isActive"])
 export class UserConsentEntity extends BaseEntity {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   declare id: string;
 
   /** ID do usuário que deu o consentimento */
-  @Column({ type: 'uuid', name: 'user_id' })
+  @Column({ type: "uuid", name: "user_id" })
   @Index()
   declare userId: string;
 
   /** Tipo de consentimento (marketing, geolocalização, etc.) */
   @Column({
-    type: 'enum',
+    type: "enum",
     enum: ConsentType,
-    name: 'consent_type',
+    name: "consent_type",
   })
   declare consentType: ConsentType;
 
   /** Status atual do consentimento (ativo/revogado) */
-  @Column({ type: 'boolean', name: 'is_active', default: true })
+  @Column({ type: "boolean", name: "is_active", default: true })
   declare isActive: boolean;
 
   /** Versão dos termos aceitos */
-  @Column({ type: 'varchar', length: 50, name: 'terms_version' })
+  @Column({ type: "varchar", length: 50, name: "terms_version" })
   declare termsVersion: string;
 
   /** Endereço IP de onde o consentimento foi dado */
-  @Column({ type: 'inet', name: 'consent_ip', nullable: true })
+  @Column({ type: "inet", name: "consent_ip", nullable: true })
   declare consentIp: string;
 
   /** User Agent do browser usado para dar consentimento */
-  @Column({ type: 'text', name: 'user_agent', nullable: true })
+  @Column({ type: "text", name: "user_agent", nullable: true })
   declare userAgent: string;
 
   /** Método usado para coletar o consentimento (web, mobile, api) */
-  @Column({ type: 'varchar', length: 50, name: 'collection_method', default: 'web' })
+  @Column({ type: "varchar", length: 50, name: "collection_method", default: "web" })
   declare collectionMethod: string;
 
   /** Finalidade específica para qual o consentimento foi dado */
-  @Column({ type: 'text', name: 'purpose_description' })
+  @Column({ type: "text", name: "purpose_description" })
   declare purposeDescription: string;
 
   /** Data de expiração do consentimento (se aplicável) */
-  @Column({ type: 'timestamp', name: 'expires_at', nullable: true })
+  @Column({ type: "timestamp", name: "expires_at", nullable: true })
   declare expiresAt: Date;
 
   /** Data em que o consentimento foi revogado */
-  @Column({ type: 'timestamp', name: 'revoked_at', nullable: true })
+  @Column({ type: "timestamp", name: "revoked_at", nullable: true })
   declare revokedAt: Date;
 
   /** Motivo da revogação (se aplicável) */
-  @Column({ type: 'text', name: 'revocation_reason', nullable: true })
+  @Column({ type: "text", name: "revocation_reason", nullable: true })
   declare revocationReason: string;
 
   /** Dados adicionais sobre o contexto do consentimento */
-  @Column({ type: 'jsonb', name: 'metadata', nullable: true })
+  @Column({ type: "jsonb", name: "metadata", nullable: true })
   declare metadata: Record<string, unknown>;
 
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn({ name: "created_at" })
   declare createdAt: Date;
 
-  @UpdateDateColumn({ name: 'updated_at' })
+  @UpdateDateColumn({ name: "updated_at" })
   declare updatedAt: Date;
 
   /**

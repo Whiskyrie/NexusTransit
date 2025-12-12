@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import * as fs from 'fs/promises';
-import * as path from 'path';
-import * as crypto from 'crypto';
+import { Injectable } from "@nestjs/common";
+import * as fs from "fs/promises";
+import * as path from "path";
+import * as crypto from "crypto";
 
 interface UserDataExport {
   exportInfo: {
@@ -31,9 +31,9 @@ export class DataPortabilityService {
       const userData = this.collectUserData(userId);
 
       // Gera nome único para o arquivo
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
       const fileName = `user-data-export-${userId}-${timestamp}.json`;
-      const exportDir = path.join(process.cwd(), 'exports');
+      const exportDir = path.join(process.cwd(), "exports");
       const filePath = path.join(exportDir, fileName);
 
       // Garante que o diretório existe
@@ -41,11 +41,11 @@ export class DataPortabilityService {
 
       // Cria o arquivo JSON formatado
       const jsonData = JSON.stringify(userData, null, 2);
-      await fs.writeFile(filePath, jsonData, 'utf8');
+      await fs.writeFile(filePath, jsonData, "utf8");
 
       // Calcula hash e tamanho do arquivo
       const fileBuffer = await fs.readFile(filePath);
-      const fileHash = crypto.createHash('sha256').update(fileBuffer).digest('hex');
+      const fileHash = crypto.createHash("sha256").update(fileBuffer).digest("hex");
       const fileSize = fileBuffer.length;
 
       return {
@@ -55,7 +55,7 @@ export class DataPortabilityService {
       };
     } catch (error) {
       throw new Error(
-        `Erro ao exportar dados do usuário: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
+        `Erro ao exportar dados do usuário: ${error instanceof Error ? error.message : "Erro desconhecido"}`,
       );
     }
   }
@@ -68,8 +68,8 @@ export class DataPortabilityService {
       exportInfo: {
         userId,
         exportDate: new Date().toISOString(),
-        exportVersion: '1.0',
-        description: 'Exportação completa de dados pessoais conforme LGPD',
+        exportVersion: "1.0",
+        description: "Exportação completa de dados pessoais conforme LGPD",
       },
       userData: {},
       auditLogs: [],
@@ -95,25 +95,25 @@ export class DataPortabilityService {
 
       userData.userData = {
         message:
-          'Implementação da coleta de dados será adicionada conforme as entidades específicas do projeto',
+          "Implementação da coleta de dados será adicionada conforme as entidades específicas do projeto",
         tables: [
-          'users',
-          'user_roles',
-          'audit_logs',
-          'user_consents',
-          'data_requests',
-          'deliveries',
-          'routes',
-          'vehicles',
-          'incidents',
-          'tracking',
+          "users",
+          "user_roles",
+          "audit_logs",
+          "user_consents",
+          "data_requests",
+          "deliveries",
+          "routes",
+          "vehicles",
+          "incidents",
+          "tracking",
         ],
       };
 
       return userData;
     } catch (error) {
       throw new Error(
-        `Erro ao coletar dados do usuário: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
+        `Erro ao coletar dados do usuário: ${error instanceof Error ? error.message : "Erro desconhecido"}`,
       );
     }
   }
@@ -148,7 +148,7 @@ export class DataPortabilityService {
    */
   async cleanupOldExports(): Promise<number> {
     try {
-      const exportDir = path.join(process.cwd(), 'exports');
+      const exportDir = path.join(process.cwd(), "exports");
       const files = await fs.readdir(exportDir);
 
       const now = Date.now();
@@ -156,7 +156,7 @@ export class DataPortabilityService {
       let deletedCount = 0;
 
       for (const file of files) {
-        if (file.startsWith('user-data-export-')) {
+        if (file.startsWith("user-data-export-")) {
           const filePath = path.join(exportDir, file);
           const stats = await fs.stat(filePath);
 
@@ -183,7 +183,7 @@ export class DataPortabilityService {
       }
 
       const fileBuffer = await fs.readFile(filePath);
-      const actualHash = crypto.createHash('sha256').update(fileBuffer).digest('hex');
+      const actualHash = crypto.createHash("sha256").update(fileBuffer).digest("hex");
 
       return actualHash === expectedHash;
     } catch {
@@ -207,7 +207,7 @@ export class DataPortabilityService {
 
       const stats = await fs.stat(filePath);
       const fileBuffer = await fs.readFile(filePath);
-      const hash = crypto.createHash('sha256').update(fileBuffer).digest('hex');
+      const hash = crypto.createHash("sha256").update(fileBuffer).digest("hex");
 
       return {
         exists: true,

@@ -1,9 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { DataRequestEntity } from './entities/data-request.entity';
-import { CreateDataRequestDto, UpdateDataRequestDto } from './dto/lgpdDto';
-import { DataRequestStatus, DataRequestType } from './enums/lgpdEnums';
+import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { DataRequestEntity } from "./entities/data-request.entity";
+import { CreateDataRequestDto, UpdateDataRequestDto } from "./dto/lgpdDto";
+import { DataRequestStatus, DataRequestType } from "./enums/lgpdEnums";
 
 @Injectable()
 export class DataRequestService {
@@ -60,7 +60,7 @@ export class DataRequestService {
     });
 
     if (!dataRequest) {
-      throw new NotFoundException('Solicitação de dados não encontrada');
+      throw new NotFoundException("Solicitação de dados não encontrada");
     }
 
     // Atualiza campos permitidos
@@ -87,7 +87,7 @@ export class DataRequestService {
     });
 
     if (!dataRequest) {
-      throw new NotFoundException('Solicitação de dados não encontrada');
+      throw new NotFoundException("Solicitação de dados não encontrada");
     }
 
     dataRequest.complete(filePath, fileHash, fileSize);
@@ -103,7 +103,7 @@ export class DataRequestService {
     });
 
     if (!dataRequest) {
-      throw new NotFoundException('Solicitação de dados não encontrada');
+      throw new NotFoundException("Solicitação de dados não encontrada");
     }
 
     dataRequest.fail(errorMessage);
@@ -116,7 +116,7 @@ export class DataRequestService {
   async getUserDataRequests(userId: string): Promise<DataRequestEntity[]> {
     return this.dataRequestRepository.find({
       where: { userId },
-      order: { createdAt: 'DESC' },
+      order: { createdAt: "DESC" },
     });
   }
 
@@ -129,7 +129,7 @@ export class DataRequestService {
     });
 
     if (!dataRequest) {
-      throw new NotFoundException('Solicitação de dados não encontrada');
+      throw new NotFoundException("Solicitação de dados não encontrada");
     }
 
     return dataRequest;
@@ -148,18 +148,18 @@ export class DataRequestService {
     total: number;
     totalPages: number;
   }> {
-    const queryBuilder = this.dataRequestRepository.createQueryBuilder('request');
+    const queryBuilder = this.dataRequestRepository.createQueryBuilder("request");
 
     if (status) {
-      queryBuilder.andWhere('request.status = :status', { status });
+      queryBuilder.andWhere("request.status = :status", { status });
     }
 
     if (requestType) {
-      queryBuilder.andWhere('request.requestType = :requestType', { requestType });
+      queryBuilder.andWhere("request.requestType = :requestType", { requestType });
     }
 
     queryBuilder
-      .orderBy('request.createdAt', 'DESC')
+      .orderBy("request.createdAt", "DESC")
       .skip((page - 1) * limit)
       .take(limit);
 
@@ -181,13 +181,13 @@ export class DataRequestService {
     futureDate.setDate(futureDate.getDate() + days);
 
     return this.dataRequestRepository
-      .createQueryBuilder('request')
-      .where('request.status IN (:...statuses)', {
+      .createQueryBuilder("request")
+      .where("request.status IN (:...statuses)", {
         statuses: [DataRequestStatus.PENDING, DataRequestStatus.PROCESSING],
       })
-      .andWhere('request.dueDate <= :futureDate', { futureDate })
-      .andWhere('request.dueDate > :now', { now: new Date() })
-      .orderBy('request.dueDate', 'ASC')
+      .andWhere("request.dueDate <= :futureDate", { futureDate })
+      .andWhere("request.dueDate > :now", { now: new Date() })
+      .orderBy("request.dueDate", "ASC")
       .getMany();
   }
 
@@ -196,11 +196,11 @@ export class DataRequestService {
    */
   async expireOverdueRequests(): Promise<number> {
     const overdueRequests = await this.dataRequestRepository
-      .createQueryBuilder('request')
-      .where('request.status IN (:...statuses)', {
+      .createQueryBuilder("request")
+      .where("request.status IN (:...statuses)", {
         statuses: [DataRequestStatus.PENDING, DataRequestStatus.PROCESSING],
       })
-      .andWhere('request.dueDate < :now', { now: new Date() })
+      .andWhere("request.dueDate < :now", { now: new Date() })
       .getMany();
 
     for (const request of overdueRequests) {
@@ -227,7 +227,7 @@ export class DataRequestService {
     });
 
     if (!dataRequest) {
-      throw new NotFoundException('Solicitação não encontrada ou não pode ser cancelada');
+      throw new NotFoundException("Solicitação não encontrada ou não pode ser cancelada");
     }
 
     dataRequest.cancel();
@@ -248,10 +248,10 @@ export class DataRequestService {
 
     // Estatísticas por status
     const statusQuery = await this.dataRequestRepository
-      .createQueryBuilder('request')
-      .select('request.status', 'status')
-      .addSelect('COUNT(*)', 'count')
-      .groupBy('request.status')
+      .createQueryBuilder("request")
+      .select("request.status", "status")
+      .addSelect("COUNT(*)", "count")
+      .groupBy("request.status")
       .getRawMany<{ status: DataRequestStatus; count: number }>();
 
     const requestsByStatus = {} as Record<DataRequestStatus, number>;
@@ -261,10 +261,10 @@ export class DataRequestService {
 
     // Estatísticas por tipo
     const typeQuery = await this.dataRequestRepository
-      .createQueryBuilder('request')
-      .select('request.requestType', 'type')
-      .addSelect('COUNT(*)', 'count')
-      .groupBy('request.requestType')
+      .createQueryBuilder("request")
+      .select("request.requestType", "type")
+      .addSelect("COUNT(*)", "count")
+      .groupBy("request.requestType")
       .getRawMany<{ type: DataRequestType; count: number }>();
 
     const requestsByType = {} as Record<DataRequestType, number>;
@@ -274,25 +274,25 @@ export class DataRequestService {
 
     // Tempo médio de processamento (em horas)
     const avgProcessingQuery = await this.dataRequestRepository
-      .createQueryBuilder('request')
+      .createQueryBuilder("request")
       .select(
-        'AVG(EXTRACT(EPOCH FROM (request.completedAt - request.processingStartedAt)) / 3600)',
-        'avgHours',
+        "AVG(EXTRACT(EPOCH FROM (request.completedAt - request.processingStartedAt)) / 3600)",
+        "avgHours",
       )
-      .where('request.status = :status', { status: DataRequestStatus.COMPLETED })
-      .andWhere('request.processingStartedAt IS NOT NULL')
-      .andWhere('request.completedAt IS NOT NULL')
+      .where("request.status = :status", { status: DataRequestStatus.COMPLETED })
+      .andWhere("request.processingStartedAt IS NOT NULL")
+      .andWhere("request.completedAt IS NOT NULL")
       .getRawOne<{ avgHours: string }>();
 
-    const averageProcessingTime = parseFloat(avgProcessingQuery?.avgHours ?? '0');
+    const averageProcessingTime = parseFloat(avgProcessingQuery?.avgHours ?? "0");
 
     // Solicitações vencidas
     const overdueRequests = await this.dataRequestRepository
-      .createQueryBuilder('request')
-      .where('request.status IN (:...statuses)', {
+      .createQueryBuilder("request")
+      .where("request.status IN (:...statuses)", {
         statuses: [DataRequestStatus.PENDING, DataRequestStatus.PROCESSING],
       })
-      .andWhere('request.dueDate < :now', { now: new Date() })
+      .andWhere("request.dueDate < :now", { now: new Date() })
       .getCount();
 
     return {

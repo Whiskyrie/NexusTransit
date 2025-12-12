@@ -1,9 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { UserConsentEntity } from './entities/user-consent.entity';
-import { CreateConsentDto, RevokeConsentDto } from './dto/lgpdDto';
-import { ConsentType } from './enums/lgpdEnums';
+import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { UserConsentEntity } from "./entities/user-consent.entity";
+import { CreateConsentDto, RevokeConsentDto } from "./dto/lgpdDto";
+import { ConsentType } from "./enums/lgpdEnums";
 
 @Injectable()
 export class ConsentService {
@@ -21,7 +21,7 @@ export class ConsentService {
   ): Promise<UserConsentEntity> {
     // Validate the input DTO
     if (!createConsentDto?.consentType) {
-      throw new BadRequestException('Invalid consent data provided');
+      throw new BadRequestException("Invalid consent data provided");
     }
 
     // Verifica se já existe consentimento ativo para este tipo
@@ -83,7 +83,7 @@ export class ConsentService {
   async getUserConsents(userId: string): Promise<UserConsentEntity[]> {
     return this.consentRepository.find({
       where: { userId },
-      order: { createdAt: 'DESC' },
+      order: { createdAt: "DESC" },
     });
   }
 
@@ -96,11 +96,11 @@ export class ConsentService {
         userId,
         isActive: true,
       },
-      order: { createdAt: 'DESC' },
+      order: { createdAt: "DESC" },
     });
 
     // Filtra consentimentos expirados
-    return consents.filter(consent => consent.isValid());
+    return consents.filter((consent) => consent.isValid());
   }
 
   /**
@@ -116,14 +116,14 @@ export class ConsentService {
    */
   async updateExpiredConsents(): Promise<number> {
     const expiredConsents = await this.consentRepository
-      .createQueryBuilder('consent')
-      .where('consent.isActive = :isActive', { isActive: true })
-      .andWhere('consent.expiresAt IS NOT NULL')
-      .andWhere('consent.expiresAt < :now', { now: new Date() })
+      .createQueryBuilder("consent")
+      .where("consent.isActive = :isActive", { isActive: true })
+      .andWhere("consent.expiresAt IS NOT NULL")
+      .andWhere("consent.expiresAt < :now", { now: new Date() })
       .getMany();
 
     for (const consent of expiredConsents) {
-      consent.revoke('Consentimento expirado automaticamente');
+      consent.revoke("Consentimento expirado automaticamente");
     }
 
     if (expiredConsents.length > 0) {
@@ -155,19 +155,19 @@ export class ConsentService {
 
     // Conta consentimentos expirados (ainda ativos mas com data de expiração passada)
     const expiredConsents = await this.consentRepository
-      .createQueryBuilder('consent')
-      .where('consent.isActive = :isActive', { isActive: true })
-      .andWhere('consent.expiresAt IS NOT NULL')
-      .andWhere('consent.expiresAt < :now', { now: new Date() })
+      .createQueryBuilder("consent")
+      .where("consent.isActive = :isActive", { isActive: true })
+      .andWhere("consent.expiresAt IS NOT NULL")
+      .andWhere("consent.expiresAt < :now", { now: new Date() })
       .getCount();
 
     // Conta consentimentos por tipo
     const consentsByTypeQuery = await this.consentRepository
-      .createQueryBuilder('consent')
-      .select('consent.consentType', 'type')
-      .addSelect('COUNT(*)', 'count')
-      .where('consent.isActive = :isActive', { isActive: true })
-      .groupBy('consent.consentType')
+      .createQueryBuilder("consent")
+      .select("consent.consentType", "type")
+      .addSelect("COUNT(*)", "count")
+      .where("consent.isActive = :isActive", { isActive: true })
+      .groupBy("consent.consentType")
       .getRawMany<{ type: ConsentType; count: string }>();
 
     const consentsByType = {} as Record<ConsentType, number>;
@@ -189,7 +189,7 @@ export class ConsentService {
    */
   async revokeAllUserConsents(
     userId: string,
-    reason = 'Exclusão de conta do usuário',
+    reason = "Exclusão de conta do usuário",
   ): Promise<number> {
     const activeConsents = await this.consentRepository.find({
       where: {

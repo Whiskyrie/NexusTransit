@@ -4,20 +4,20 @@
  */
 export enum DataRequestStatus {
   /** Solicitação criada e aguardando processamento */
-  PENDING = 'pending',
+  PENDING = "pending",
 
   /** Solicitação em processamento */
-  PROCESSING = 'processing',
+  PROCESSING = "processing",
 
   /** Solicitação concluída com sucesso */
-  COMPLETED = 'completed',
+  COMPLETED = "completed",
 
   /** Solicitação falhou devido a erro */
-  FAILED = 'failed',
+  FAILED = "failed",
 
   /** Solicitação cancelada pelo usuário */
-  CANCELLED = 'cancelled',
+  CANCELLED = "cancelled",
 
   /** Solicitação expirou (não processada no prazo legal) */
-  EXPIRED = 'expired',
+  EXPIRED = "expired",
 }
