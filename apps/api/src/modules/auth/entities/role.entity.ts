@@ -1,6 +1,6 @@
 import { Entity, Column, ManyToMany } from 'typeorm';
 import { BaseEntity } from '@nexus/common';
-import { Role as RoleEnum } from '../enums/role.enum';
+import { Role as RoleEnum } from '@nexus/auth';
 import { User } from '../../users/entities/user.entity';
 
 /**

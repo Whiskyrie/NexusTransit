@@ -45,3 +45,14 @@ export function getAllRoles(): Role[] {
 export function isValidRole(role: string): role is Role {
   return Object.values(Role).includes(role as Role);
 }
+
+/**
+ * Descrições das roles para exibição
+ */
+export const RoleDescriptions: Record<Role, string> = {
+  [Role.ADMIN]: "Administrador com acesso total ao sistema",
+  [Role.GESTOR]: "Gerente de operações e equipe",
+  [Role.DESPACHANTE]: "Responsável por entregas e rotas",
+  [Role.MOTORISTA]: "Motorista que realiza entregas",
+  [Role.CLIENTE]: "Cliente que solicita serviços",
+};
