@@ -24,18 +24,24 @@ export class TestUsersSeed implements ISeed {
   async run(): Promise<void> {
     this.logger.log("Iniciando seed de usuários de teste...");
 
-    // Buscar roles
-    const managerRole = await this.roleRepository.findOne({
-      where: { name: "MANAGER" },
+    // Buscar todas as 5 roles
+    const adminRole = await this.roleRepository.findOne({
+      where: { name: "ADMIN" },
     });
-    const driverRole = await this.roleRepository.findOne({
-      where: { name: "DRIVER" },
+    const gestorRole = await this.roleRepository.findOne({
+      where: { name: "GESTOR" },
     });
-    const customerRole = await this.roleRepository.findOne({
-      where: { name: "CUSTOMER" },
+    const despachanteRole = await this.roleRepository.findOne({
+      where: { name: "DESPACHANTE" },
+    });
+    const motoristaRole = await this.roleRepository.findOne({
+      where: { name: "MOTORISTA" },
+    });
+    const clienteRole = await this.roleRepository.findOne({
+      where: { name: "CLIENTE" },
     });
 
-    if (!managerRole || !driverRole || !customerRole) {
+    if (!adminRole || !gestorRole || !despachanteRole || !motoristaRole || !clienteRole) {
       throw new Error("Roles não encontradas. Execute o seed de roles primeiro.");
     }
 
@@ -48,28 +54,44 @@ export class TestUsersSeed implements ISeed {
       role: RoleEntity;
     }> = [
       {
-        email: "manager@test.com",
-        first_name: "Gerente",
+        email: "admin.teste@nexustransit.com",
+        first_name: "Admin",
+        last_name: "Teste",
+        phone: "+5511999999999",
+        user_type: "ADMIN",
+        role: adminRole,
+      },
+      {
+        email: "gestor.teste@nexustransit.com",
+        first_name: "Gestor",
         last_name: "Teste",
         phone: "+5511988888888",
-        user_type: "MANAGER",
-        role: managerRole,
+        user_type: "GESTOR",
+        role: gestorRole,
       },
       {
-        email: "driver@test.com",
-        first_name: "Motorista",
+        email: "despachante.teste@nexustransit.com",
+        first_name: "Despachante",
         last_name: "Teste",
         phone: "+5511977777777",
-        user_type: "DRIVER",
-        role: driverRole,
+        user_type: "DESPACHANTE",
+        role: despachanteRole,
       },
       {
-        email: "customer@test.com",
-        first_name: "Cliente",
+        email: "motorista.teste@nexustransit.com",
+        first_name: "Motorista",
         last_name: "Teste",
         phone: "+5511966666666",
-        user_type: "CUSTOMER",
-        role: customerRole,
+        user_type: "MOTORISTA",
+        role: motoristaRole,
+      },
+      {
+        email: "cliente.teste@nexustransit.com",
+        first_name: "Cliente",
+        last_name: "Teste",
+        phone: "+5511955555555",
+        user_type: "CLIENTE",
+        role: clienteRole,
       },
     ];
 
@@ -94,9 +116,9 @@ export class TestUsersSeed implements ISeed {
         });
 
         await this.userRepository.save(user);
-        this.logger.log(`✅ Usuário criado: ${userData.email}`);
+        this.logger.log(`Usuário criado: ${userData.email}`);
       } else {
-        this.logger.log(`ℹ️  Usuário já existe: ${userData.email}`);
+        this.logger.debug(`Usuário já existe: ${userData.email}`);
       }
     }
 
