@@ -6,10 +6,14 @@
     "types": "dist/index.d.ts",
     "scripts": {
         "build": "tsc",
-        "seed": "ts-node src/cli/seed.ts",
+        "seed:run": "ts-node src/cli/seed.ts",
+        "seed:run:dev": "ts-node src/cli/seed.ts --env=dev",
+        "seed:run:test": "ts-node src/cli/seed.ts --env=test",
+        "seed:run:prod": "ts-node src/cli/seed.ts --env=prod",
         "seed:roles": "ts-node src/cli/seed.ts roles",
         "seed:admin": "ts-node src/cli/seed.ts admin",
-        "seed:users": "ts-node src/cli/seed.ts users"
+        "seed:users": "ts-node src/cli/seed.ts users",
+        "seed:list": "ts-node src/cli/seed.ts --list"
     },
     "dependencies": {
         "@nestjs/common": "^11.0.0",
