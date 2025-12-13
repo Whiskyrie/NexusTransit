@@ -1,13 +1,25 @@
-# NexusTransit
+# 🚚 NexusTransit
 
-[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
-[![Build Status](https://img.shields.io/badge/Build-Passing-success.svg)]()
+[![NestJS](https://img.shields.io/badge/NestJS-11.x-E0234E?logo=nestjs)](https://nestjs.com/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript)](https://www.typescriptlang.org/)
+[![Turborepo](https://img.shields.io/badge/Turborepo-2.6-EF4444?logo=turborepo)](https://turbo.build/)
+[![pnpm](https://img.shields.io/badge/pnpm-9.0-F69220?logo=pnpm)](https://pnpm.io/)
 [![Version](https://img.shields.io/badge/Version-1.0.0--MVP-blue.svg)]()
-[![Coverage](https://img.shields.io/badge/Coverage-85%25-yellow.svg)]()
 
-**Sistema de Gerenciamento de Transporte (SGT)**
+**Sistema de Gerenciamento de Transporte (SGT) - Monorepo NestJS**
 
-NexusTransit é uma plataforma completa de gestão logística que automatiza e otimiza operações de transporte, oferecendo visibilidade em tempo real, planejamento inteligente de rotas e ferramentas digitais para maximizar a eficiência operacional e o atendimento ao cliente.
+> Sistema completo de gestão logística com rastreamento em tempo real, otimização de rotas e analytics avançado.
+
+---
+
+## 📋 Quick Links
+
+- 📖 [Documentação Completa](./DEVELOPMENT.md)
+- 🚀 [Guia Rápido](./QUICKSTART.md)
+- 🏗️ [Padrões de Arquitetura](./.github/copilot-instructions.md)
+- 📊 [API Docs - Swagger](http://localhost:3000/api/docs)
+
+---
 
 ## Visão Geral
 
@@ -28,9 +40,87 @@ As empresas de transporte e logística enfrentam desafios críticos em seus proc
 
 O NexusTransit oferece uma solução integrada que aborda cada um desses pontos de dor através de automação inteligente, interfaces modernas e ferramentas de análise avançadas.
 
-## Arquitetura da Solução
+## 🏗️ Arquitetura Monorepo
 
-### Core Features - MVP
+```
+NexusTransit (Turborepo + pnpm)
+│
+├── apps/
+│   └── api/              # 🚀 API Principal (NestJS) - Porta 3000
+│
+└── packages/             # 📦 Código compartilhado
+    ├── audit/            # Sistema de auditoria
+    ├── auth/             # Utilitários de autenticação (guards, decorators)
+    ├── common/           # DTOs, validators, transformers base
+    ├── database/         # Database factory e configuração
+    ├── logger/           # Logging estruturado
+    └── redis/            # Cliente Redis configurado
+```
+
+**Stack Tecnológica:**
+- ⚡ NestJS 11.x + TypeScript 5.7 (Strict)
+- 🗄️ PostgreSQL 15 + PostGIS 3.4
+- 🔄 TypeORM 0.3.26
+- 💾 Redis 7 (Cache)
+- 🚀 Turborepo 2.6 + pnpm 9.0
+- 🐳 Docker + Docker Compose
+
+---
+
+## 🚀 Quick Start
+
+### Opção 1: Docker (Recomendado)
+
+```bash
+# Clonar e configurar
+git clone <repo-url>
+cd NexusTransit
+
+# Copiar variáveis de ambiente
+cp apps/api/.env.example apps/api/.env
+
+# Iniciar todos os serviços
+docker-compose -f docker-compose.dev.yml up -d
+
+# Acessar aplicação
+# API: http://localhost:3000
+# Swagger: http://localhost:3000/api/docs
+```
+
+### Opção 2: Local Development
+
+```bash
+# Instalar dependências
+pnpm install
+
+# Build de todos os pacotes
+pnpm build
+
+# Executar API
+pnpm dev:api
+```
+
+📚 **Ver**: [QUICKSTART.md](./QUICKSTART.md) para mais detalhes
+
+---
+
+## 📦 Pacotes do Monorepo
+
+| Pacote | Descrição | Status |
+|--------|-----------|--------|
+| `@nexus/api` | API principal (monolito modular) | ✅ Funcionando |
+| `@nexus/audit` | Sistema de auditoria compartilhado | ✅ Funcionando |
+| `@nexus/auth` | Utilitários de autenticação | ✅ Funcionando |
+| `@nexus/common` | DTOs, validators e transformers | ✅ Funcionando |
+| `@nexus/database` | Database factory e configuração | ✅ Funcionando |
+| `@nexus/logger` | Logging estruturado (Pino) | ✅ Funcionando |
+| `@nexus/redis` | Cliente Redis configurado | ✅ Funcionando |
+
+---
+
+---
+
+## 📚 Funcionalidades Principais
 
 **Gestão de Recursos**
 - Cadastro e gerenciamento de veículos, motoristas e rotas
@@ -307,3 +397,80 @@ Este projeto está licenciado sob a MIT License - consulte o arquivo [LICENSE](L
 ---
 
 **NexusTransit** | Transformando a logística através da tecnologia
+
+---
+
+## 🛠️ Scripts de Desenvolvimento
+
+```bash
+# Monorepo (Raiz)
+pnpm install          # Instalar todas as dependências
+pnpm build            # Build completo (Turborepo)
+pnpm dev              # Iniciar todos os serviços
+pnpm dev:api          # Apenas API principal
+pnpm dev:auth         # Apenas Auth Service
+pnpm test             # Testes em todos os pacotes
+pnpm lint             # Lint em todos os pacotes
+pnpm clean            # Limpar node_modules e builds
+pnpm clean:build      # Limpar apenas builds
+
+# Trabalhando em Apps Específicas
+cd apps/api
+pnpm dev              # Iniciar API
+pnpm build            # Build API
+pnpm migration:run    # Executar migrations
+pnpm migration:generate -- MigrationName  # Gerar migration
+```
+
+---
+
+## 📖 Documentação Completa
+
+- 📘 [DEVELOPMENT.md](./DEVELOPMENT.md) - Guia completo de desenvolvimento
+- 🚀 [QUICKSTART.md](./QUICKSTART.md) - Setup rápido e comandos úteis
+- 🏗️ [copilot-instructions.md](./.github/copilot-instructions.md) - Padrões de arquitetura
+
+**APIs Swagger:**
+- API Principal: http://localhost:3000/api/docs
+- Auth Service: http://localhost:3001/api/docs
+
+**Health Checks:**
+- API: http://localhost:3000/health
+- Auth: http://localhost:3001/health
+
+---
+
+## 🤝 Contribuindo
+
+1. **Fork** o repositório
+2. Crie uma **branch**: `git checkout -b feature/minha-feature`
+3. **Commit**: `git commit -am 'feat: adiciona nova feature'`
+4. **Push**: `git push origin feature/minha-feature`
+5. Abra um **Pull Request**
+
+**Padrões:**
+- Usar [Conventional Commits](https://www.conventionalcommits.org/)
+- Passar nos testes: `pnpm test`
+- Lint: `pnpm lint`
+- Documentar APIs com Swagger
+
+---
+
+## 📄 Licença
+
+**UNLICENSED** - Uso interno apenas.
+
+---
+
+## 👥 Equipe de Desenvolvimento
+
+**Core Team**
+- Evandro Filho - Lead Developer
+- Marlon Meireles - Backend Developer  
+- Luiz Gustavo - Frontend Developer
+- Marco França - Mobile Developer
+
+---
+
+**NexusTransit** | Transformando a logística através da tecnologia  
+**Última atualização**: Dezembro 2025 | **Versão**: 1.0.0-MVP

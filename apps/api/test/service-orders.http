@@ -1,0 +1,188 @@
+### Service Orders API - Testes
+
+# Variáveis
+@baseUrl = http://localhost:3000
+@apiVersion = /api/v1
+
+### 1. Health Check
+GET {{baseUrl}}/health
+
+### 2. Listar todas as ordens de serviço
+GET {{baseUrl}}{{apiVersion}}/service-orders
+Content-Type: application/json
+
+### 3. Listar com filtros - Status PENDING
+GET {{baseUrl}}{{apiVersion}}/service-orders?status=PENDING&page=1&limit=10
+Content-Type: application/json
+
+### 4. Listar com filtros - Prioridade HIGH
+GET {{baseUrl}}{{apiVersion}}/service-orders?priority=HIGH
+Content-Type: application/json
+
+### 5. Listar com filtros - Tipo MAINTENANCE
+GET {{baseUrl}}{{apiVersion}}/service-orders?service_type=MAINTENANCE
+Content-Type: application/json
+
+### 6. Buscar ordem específica por ID
+# Substitua {id} pelo ID real retornado nas queries acima
+GET {{baseUrl}}{{apiVersion}}/service-orders/{id}
+Content-Type: application/json
+
+### 7. Criar nova ordem de serviço
+POST {{baseUrl}}{{apiVersion}}/service-orders
+Content-Type: application/json
+
+{
+  "service_type": "MAINTENANCE",
+  "title": "Revisão Completa de 50.000 km",
+  "description": "Revisão completa incluindo troca de filtros, fluidos e inspeção geral",
+  "priority": "NORMAL",
+  "status": "PENDING",
+  "estimated_cost": 850.50,
+  "estimated_duration_minutes": 180,
+  "scheduled_date": "2024-12-15T09:00:00Z",
+  "service_location": "Oficina Autorizada - Av. Principal, 500",
+  "latitude": -23.5505199,
+  "longitude": -46.6333094,
+  "notes": "Cliente solicitou verificação especial no sistema de freios",
+  "created_by": "api_test"
+}
+
+### 8. Criar ordem com veículo e motorista
+POST {{baseUrl}}{{apiVersion}}/service-orders
+Content-Type: application/json
+
+{
+  "service_type": "DELIVERY",
+  "title": "Entrega Expressa - Centro",
+  "description": "Entrega de mercadorias para cliente no centro da cidade",
+  "priority": "HIGH",
+  "vehicle_id": "{{vehicleId}}",
+  "driver_id": "{{driverId}}",
+  "estimated_cost": 450.00,
+  "estimated_duration_minutes": 120,
+  "scheduled_date": "2024-12-12T14:00:00Z",
+  "service_location": "Cliente XYZ - Rua do Comércio, 789",
+  "latitude": -23.5329384,
+  "longitude": -46.6395550,
+  "metadata": {
+    "customer_id": "CUST-123",
+    "delivery_priority": "express"
+  },
+  "checklist": [
+    {
+      "id": "1",
+      "description": "Verificar documentação",
+      "completed": false
+    },
+    {
+      "id": "2",
+      "description": "Validar assinatura",
+      "completed": false
+    }
+  ],
+  "created_by": "logistics"
+}
+
+### 9. Atualizar ordem de serviço
+# Substitua {id} pelo ID real
+PATCH {{baseUrl}}{{apiVersion}}/service-orders/{id}
+Content-Type: application/json
+
+{
+  "notes": "Atualização: Cliente confirmou disponibilidade para amanhã às 14h",
+  "estimated_cost": 920.00
+}
+
+### 10. Iniciar ordem de serviço
+# Substitua {id} pelo ID real de uma ordem com status SCHEDULED ou PENDING
+POST {{baseUrl}}{{apiVersion}}/service-orders/{id}/start
+Content-Type: application/json
+
+{
+  "userId": "user_123"
+}
+
+### 11. Completar ordem de serviço
+# Substitua {id} pelo ID real de uma ordem com status IN_PROGRESS
+POST {{baseUrl}}{{apiVersion}}/service-orders/{id}/complete
+Content-Type: application/json
+
+{
+  "report": "Serviço executado conforme planejado. Todos os itens do checklist foram completados.",
+  "actual_cost": 875.50,
+  "userId": "user_123"
+}
+
+### 12. Cancelar ordem de serviço
+# Substitua {id} pelo ID real de uma ordem com status PENDING ou SCHEDULED
+POST {{baseUrl}}{{apiVersion}}/service-orders/{id}/cancel
+Content-Type: application/json
+
+{
+  "reason": "Cliente solicitou cancelamento - remarcado para próxima semana",
+  "userId": "user_123"
+}
+
+### 13. Excluir ordem de serviço (Soft Delete)
+# Substitua {id} pelo ID real
+DELETE {{baseUrl}}{{apiVersion}}/service-orders/{id}
+
+### 14. Buscar com paginação
+GET {{baseUrl}}{{apiVersion}}/service-orders?page=1&limit=5
+Content-Type: application/json
+
+### 15. Buscar por múltiplos filtros
+GET {{baseUrl}}{{apiVersion}}/service-orders?status=PENDING&priority=HIGH&service_type=DELIVERY
+Content-Type: application/json
+
+### 16. Buscar por data agendada
+GET {{baseUrl}}{{apiVersion}}/service-orders?scheduled_date_from=2024-12-10&scheduled_date_to=2024-12-15
+Content-Type: application/json
+
+### 17. Criar ordem com checklist completo
+POST {{baseUrl}}{{apiVersion}}/service-orders
+Content-Type: application/json
+
+{
+  "service_type": "INSPECTION",
+  "title": "Inspeção de Segurança Veicular",
+  "description": "Inspeção completa dos sistemas de segurança do veículo",
+  "priority": "URGENT",
+  "estimated_cost": 300.00,
+  "estimated_duration_minutes": 90,
+  "scheduled_date": "2024-12-11T10:00:00Z",
+  "service_location": "Centro de Inspeção Veicular",
+  "checklist": [
+    {"id": "1", "description": "Verificar freios", "completed": false},
+    {"id": "2", "description": "Testar luzes", "completed": false},
+    {"id": "3", "description": "Verificar pneus", "completed": false},
+    {"id": "4", "description": "Testar direção", "completed": false},
+    {"id": "5", "description": "Verificar emissões", "completed": false}
+  ],
+  "created_by": "inspection_team"
+}
+
+### 18. Validação - Criar sem campos obrigatórios (deve falhar)
+POST {{baseUrl}}{{apiVersion}}/service-orders
+Content-Type: application/json
+
+{
+  "service_type": "MAINTENANCE"
+}
+
+### 19. Validação - Status inválido (deve falhar)
+POST {{baseUrl}}{{apiVersion}}/service-orders
+Content-Type: application/json
+
+{
+  "service_type": "MAINTENANCE",
+  "title": "Teste",
+  "description": "Teste",
+  "status": "INVALID_STATUS"
+}
+
+### 20. Estatísticas - Contar por status
+# Nota: Endpoint personalizado (se implementado)
+GET {{baseUrl}}{{apiVersion}}/service-orders/statistics/by-status
+Content-Type: application/json
