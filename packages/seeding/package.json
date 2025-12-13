@@ -1,0 +1,38 @@
+{
+    "name": "@nexus/seeding",
+    "version": "1.0.0",
+    "description": "Database seeding utilities for NexusTransit",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsc",
+        "seed:run": "ts-node src/cli/seed.ts",
+        "seed:run:dev": "ts-node src/cli/seed.ts --env=dev",
+        "seed:run:test": "ts-node src/cli/seed.ts --env=test",
+        "seed:run:prod": "ts-node src/cli/seed.ts --env=prod",
+        "seed:roles": "ts-node src/cli/seed.ts roles",
+        "seed:admin": "ts-node src/cli/seed.ts admin",
+        "seed:users": "ts-node src/cli/seed.ts users",
+        "seed:list": "ts-node src/cli/seed.ts --list"
+    },
+    "dependencies": {
+        "@nestjs/common": "^11.0.0",
+        "@nestjs/typeorm": "^11.0.0",
+        "bcrypt": "^5.1.1",
+        "reflect-metadata": "^0.2.0",
+        "rxjs": "^7.8.0",
+        "typeorm": "^0.3.20"
+    },
+    "devDependencies": {
+        "@nestjs/core": "^11.1.9",
+        "@types/bcrypt": "^5.0.2",
+        "@types/node": "^20.0.0",
+        "ts-node": "^10.9.0",
+        "typescript": "^5.0.0"
+    },
+    "peerDependencies": {
+        "@nestjs/common": "^11.0.0",
+        "@nestjs/typeorm": "^11.0.0",
+        "typeorm": "^0.3.20"
+    }
+}
