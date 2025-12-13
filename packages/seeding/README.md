@@ -4,16 +4,27 @@ Pacote de utilitários para popular o banco de dados com dados iniciais do Nexus
 
 ## Funcionalidades
 
-- Seed de roles/permissões do sistema
+- Seed de 5 roles/permissões do sistema (ADMIN, GESTOR, DESPACHANTE, MOTORISTA, CLIENTE)
 - Criação de usuário administrador padrão
-- Geração de usuários de teste para desenvolvimento
+- Geração de usuários de teste para cada role
+- Suporte a diferentes ambientes (dev, test, prod)
+- Rollback automático em caso de erro
+- Idempotente (pode executar múltiplas vezes)
+- Logs detalhados de execução
 
 ## Uso
 
 ### Executar todos os seeds
 
 ```bash
-pnpm --filter @nexus/seeding seed
+# Ambiente de desenvolvimento (padrão)
+pnpm --filter @nexus/seeding seed:run
+
+# Ambiente de teste
+pnpm --filter @nexus/seeding seed:run --env=test
+
+# Ambiente de produção (sem usuários de teste)
+pnpm --filter @nexus/seeding seed:run --env=prod
 ```
 
 ### Executar seeds específicos
@@ -27,28 +38,54 @@ pnpm --filter @nexus/seeding seed:admin
 
 # Apenas usuários de teste
 pnpm --filter @nexus/seeding seed:users
+
+# Listar seeds disponíveis
+pnpm --filter @nexus/seeding seed:list
 ```
 
 ## Seeds Disponíveis
 
 ### Roles Seed
-Cria as roles padrão do sistema:
-- ADMIN
-- MANAGER
-- DRIVER
-- CUSTOMER
+
+Cria as 5 roles padrão do sistema com hierarquia:
+
+| Role | Descrição | Nível |
+|------|-----------|-------|
+| ADMIN | Administrador com acesso total | 0 |
+| GESTOR | Gestor de operações | 1 |
+| DESPACHANTE | Despachante de entregas | 2 |
+| MOTORISTA | Motorista | 3 |
+| CLIENTE | Cliente | 4 |
 
 ### Admin User Seed
+
 Cria o usuário administrador padrão:
-- Email: admin@nexustransit.com
-- Senha: Admin@123
-- Role: ADMIN
+
+- **Email:** admin@nexustransit.com
+- **Senha:** Admin@123
+- **Role:** ADMIN
 
 ### Test Users Seed
-Cria usuários de teste para desenvolvimento:
-- Manager de teste
-- Motorista de teste
-- Cliente de teste
+
+Cria usuários de teste para cada role:
+
+- admin.teste@nexustransit.com (ADMIN)
+- gestor.teste@nexustransit.com (GESTOR)
+- despachante.teste@nexustransit.com (DESPACHANTE)
+- motorista.teste@nexustransit.com (MOTORISTA)
+- cliente.teste@nexustransit.com (CLIENTE)
+
+**Senha padrão para todos:** Test@123
+
+**Nota:** Usuários de teste não são criados em ambiente de produção.
+
+## Comportamento por Ambiente
+
+| Ambiente | Roles | Admin | Usuários Teste |
+|----------|-------|-------|----------------|
+| dev | Sim | Sim | Sim |
+| test | Sim | Sim | Sim |
+| prod | Sim | Sim | Não |
 
 ## Integração
 
@@ -58,7 +95,6 @@ import { DataSource } from 'typeorm';
 
 @Module({
   imports: [
-    // ... outros módulos
     TypeOrmModule.forRoot({
       // configurações do TypeORM
     }),
@@ -74,6 +110,8 @@ export class AppModule {
 }
 ```
 
-## Aviso
+## Observações
 
-Os seeds são idempotentes e podem ser executados múltiplas vezes sem duplicar dados.
+- Os seeds são idempotentes e podem ser executados múltiplas vezes sem duplicar dados
+- Em caso de erro, um rollback automático é executado para manter a consistência
+- Usuários de teste nunca são criados em produção por segurança
