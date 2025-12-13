@@ -96,6 +96,21 @@ export class User extends BaseEntity {
   })
   email_verified_at?: Date;
 
+  @Column({
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+    comment: 'Token para recuperação de senha',
+  })
+  reset_password_token?: string;
+
+  @Column({
+    type: 'timestamp with time zone',
+    nullable: true,
+    comment: 'Data de expiração do token de recuperação',
+  })
+  reset_password_expires?: Date;
+
   // Relacionamentos
 
   @ManyToMany(() => Role, role => role.users)
