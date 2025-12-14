@@ -9,9 +9,8 @@ import { CreateRouteDto, CreateRouteStopDto } from './dto/create-route.dto';
 import { UpdateRouteDto } from './dto/update-route.dto';
 import { RouteFilterDto } from './dto/filter-route.dto';
 import { RouteResponseDto, RouteStopResponseDto } from './dto/route-response.dto';
-import { PaginatedResponseDto } from '@nexus/common';
+import { PaginatedResponseDto, DistanceCalculatorService } from '@nexus/common';
 import { RouteValidatorService } from './validators/route.validator';
-import { DistanceCalculatorService } from './validators/distance_calculator.validator';
 import { RouteStatus } from './enums/route-status';
 import { RouteType } from './enums/route.type';
 import { ROUTE_TYPE_CHARACTERISTICS } from './constants/route-calculation.constants';
@@ -41,6 +40,31 @@ export class RoutesService {
     private readonly validatorService: RouteValidatorService,
     private readonly distanceCalculator: DistanceCalculatorService,
   ) {}
+
+  /**
+   * Wrapper para parseCoordinates com tipagem explícita
+   * Resolve warnings de unsafe do ESLint em módulos externos
+   */
+  private parseCoords(point: string): { latitude: number; longitude: number } {
+    return this.distanceCalculator.parseCoordinates(point) as {
+      latitude: number;
+      longitude: number;
+    };
+  }
+
+  /**
+   * Wrapper para calculateDistance com tipagem explícita
+   */
+  private calcDistance(origin: string, destination: string): number {
+    return this.distanceCalculator.calculateDistance(origin, destination);
+  }
+
+  /**
+   * Wrapper para calculateEstimatedDuration com tipagem explícita
+   */
+  private calcDuration(distanceKm: number, avgSpeed?: number, delayFactor?: number): number {
+    return this.distanceCalculator.calculateEstimatedDuration(distanceKm, avgSpeed, delayFactor);
+  }
 
   async create(createDto: CreateRouteDto): Promise<RouteResponseDto> {
     this.logger.log(`Criando rota: ${createDto.route_code}`);
@@ -76,13 +100,13 @@ export class RoutesService {
     let calculatedDuration: number | undefined;
 
     if (createDto.origin_coordinates && createDto.destination_coordinates) {
-      calculatedDistance = this.distanceCalculator.calculateDistance(
+      calculatedDistance = this.calcDistance(
         createDto.origin_coordinates,
         createDto.destination_coordinates,
       );
 
       const characteristics = this.getRouteTypeCharacteristics(createDto.type);
-      calculatedDuration = this.distanceCalculator.calculateEstimatedDuration(
+      calculatedDuration = this.calcDuration(
         calculatedDistance,
         characteristics.avgSpeed,
         characteristics.delayFactor,
@@ -612,5 +636,106 @@ export class RoutesService {
     return plainToInstance(RouteStopResponseDto, stop, {
       excludeExtraneousValues: true,
     });
+  }
+
+  /**
+   * Obtém dados da rota formatados para visualização em mapa
+   *
+   * Retorna estrutura com coordenadas, marcadores de paradas e polyline da rota
+   *
+   * @param id - ID da rota
+   * @returns Dados formatados para mapa incluindo marcadores, polyline e metadados
+   * @throws NotFoundException - Se rota não existir
+   */
+  async getRouteMapData(id: string): Promise<{
+    route_id: string;
+    route_code: string;
+    status: RouteStatus;
+    route_date: Date;
+    start_location: { latitude: number; longitude: number } | null;
+    end_location: { latitude: number; longitude: number } | null;
+    stops: {
+      id: string;
+      sequence: number;
+      latitude: number | null;
+      longitude: number | null;
+      status: string;
+      address: string;
+      customer_address_id: string;
+      planned_arrival_time: string | null;
+      actual_arrival_time: Date | null;
+    }[];
+    polyline: { latitude: number; longitude: number }[];
+    total_distance_km: number | undefined;
+    total_duration_minutes: number | undefined;
+    optimization_score: number | undefined;
+  }> {
+    const route = await this.routeRepository.findOne({
+      where: { id },
+      relations: ['stops', 'stops.customer_address'],
+    });
+
+    if (!route) {
+      throw new NotFoundException(`Rota com ID ${id} não encontrada`);
+    }
+
+    // Ordenar paradas por sequência
+    const orderedStops = (route.stops ?? []).sort((a, b) => a.sequence_order - b.sequence_order);
+
+    // Montar array de coordenadas para polyline (linha conectando todas as paradas)
+    const polyline: { latitude: number; longitude: number }[] = [];
+
+    // Adicionar start_location à polyline se existir
+    if (route.start_location) {
+      const startCoords = this.parseCoords(route.start_location);
+      polyline.push(startCoords);
+    }
+
+    // Adicionar coordenadas de cada parada
+    for (const stop of orderedStops) {
+      if (stop.coordinates) {
+        const coords = this.parseCoords(stop.coordinates);
+        polyline.push(coords);
+      }
+    }
+
+    // Adicionar end_location à polyline se existir
+    if (route.end_location) {
+      const endCoords = this.parseCoords(route.end_location);
+      polyline.push(endCoords);
+    }
+
+    // Montar marcadores de paradas
+    const stops = orderedStops.map(stop => {
+      const coords = stop.coordinates
+        ? this.parseCoords(stop.coordinates)
+        : { latitude: 0, longitude: 0 };
+
+      return {
+        id: stop.id,
+        sequence: stop.sequence_order,
+        latitude: stop.coordinates ? coords.latitude : null,
+        longitude: stop.coordinates ? coords.longitude : null,
+        status: stop.status,
+        address: stop.address,
+        customer_address_id: stop.customer_address_id,
+        planned_arrival_time: stop.planned_arrival_time ?? null,
+        actual_arrival_time: stop.actual_arrival_time ?? null,
+      };
+    });
+
+    return {
+      route_id: route.id,
+      route_code: route.route_code,
+      status: route.status,
+      route_date: route.route_date,
+      start_location: route.start_location ? this.parseCoords(route.start_location) : null,
+      end_location: route.end_location ? this.parseCoords(route.end_location) : null,
+      stops,
+      polyline,
+      total_distance_km: route.total_distance,
+      total_duration_minutes: route.total_duration,
+      optimization_score: route.optimization_score,
+    };
   }
 }
