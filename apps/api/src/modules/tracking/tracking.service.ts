@@ -261,15 +261,17 @@ export class TrackingService {
   async update(id: string, updateDto: UpdateTrackingDto): Promise<TrackingResponseDto> {
     const tracking = await this.findTrackingOrFail(id);
 
-    // Converter datas se fornecidas
-    if (updateDto.event_timestamp) {
-      updateDto.event_timestamp = new Date(updateDto.event_timestamp) as any;
+    const { event_timestamp, estimated_delivery, ...rest } = updateDto;
+
+    Object.assign(tracking, rest);
+
+    if (event_timestamp) {
+      tracking.event_timestamp = new Date(event_timestamp);
     }
-    if (updateDto.estimated_delivery) {
-      updateDto.estimated_delivery = new Date(updateDto.estimated_delivery) as any;
+    if (estimated_delivery) {
+      tracking.estimated_delivery = new Date(estimated_delivery);
     }
 
-    Object.assign(tracking, updateDto);
     const updated = await this.trackingRepository.save(tracking);
 
     this.logger.log(`Registro de rastreamento atualizado: ${id}`);
