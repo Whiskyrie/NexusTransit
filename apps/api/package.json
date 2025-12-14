@@ -23,6 +23,8 @@
     "test:auth": "jest --testPathPatterns=auth",
     "test:auth:cov": "jest --testPathPatterns=auth --coverage",
     "test:auth:e2e": "cross-env NODE_ENV=test jest --config ./test/jest-e2e.json --testPathPatterns=auth --runInBand",
+    "test:deliveries": "jest --testPathPatterns=deliveries",
+    "test:deliveries:cov": "jest --testPathPatterns=deliveries --coverage",
     "test:db:up": "docker-compose -f docker-compose.test.yml up -d",
     "test:db:down": "docker-compose -f docker-compose.test.yml down",
     "test:db:clean": "docker-compose -f docker-compose.test.yml down -v",

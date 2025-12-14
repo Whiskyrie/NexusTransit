@@ -8,6 +8,11 @@ import { TimeWindowUtils } from '../utils/time-window.util';
 import { AddressUtils } from '../utils/address.util';
 import type { BrazilianAddress, Coordinates } from '../interfaces/address.interface';
 import type { ValidationResult } from '../interfaces/validation-result.interface';
+import type { DeliveryCreationData } from '../interfaces/delivery-creation-data.interface';
+import { Vehicle } from '../../vehicles/entities/vehicle.entity';
+import { Driver } from '../../drivers/entities/driver.entity';
+import { VehicleStatus } from '../../vehicles/enums/vehicle-status.enum';
+import { DriverStatus } from '../../drivers/enums/driver-status.enum';
 
 /**
  * Serviço de validação de entregas
@@ -25,6 +30,10 @@ export class DeliveryValidationService {
   constructor(
     @InjectRepository(Delivery)
     private readonly deliveryRepository: Repository<Delivery>,
+    @InjectRepository(Vehicle)
+    private readonly vehicleRepository: Repository<Vehicle>,
+    @InjectRepository(Driver)
+    private readonly driverRepository: Repository<Driver>,
   ) {}
 
   /**
@@ -304,6 +313,258 @@ export class DeliveryValidationService {
     return {
       valid: errors.length === 0,
       errors,
+    };
+  }
+
+  /**
+   * Valida disponibilidade do motorista
+   */
+  async validateDriverAvailability(
+    driverId: string,
+    _scheduledAt: Date,
+  ): Promise<ValidationResult> {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+
+    const driver = await this.driverRepository.findOne({
+      where: { id: driverId },
+    });
+
+    if (!driver) {
+      errors.push('Motorista não encontrado');
+      return { valid: false, errors };
+    }
+
+    // Verificar se motorista está ativo
+    if (!driver.is_active) {
+      errors.push('Motorista não está ativo no sistema');
+    }
+
+    // Verificar status operacional
+    if (driver.status !== DriverStatus.AVAILABLE) {
+      warnings.push(`Motorista está com status: ${driver.status}`);
+    }
+
+    // Buscar entregas ativas do motorista
+    const activeDeliveries = await this.deliveryRepository.count({
+      where: {
+        driver_id: driverId,
+        status: DeliveryStatus.IN_TRANSIT,
+      },
+    });
+
+    if (activeDeliveries > 0) {
+      warnings.push(`Motorista possui ${activeDeliveries} entrega(s) em andamento`);
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors,
+      warnings,
+    };
+  }
+
+  /**
+   * Valida capacidade do veículo para a entrega
+   */
+  async validateVehicleCapacity(
+    vehicleId: string,
+    deliveryWeight: number,
+  ): Promise<ValidationResult> {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+
+    const vehicle = await this.vehicleRepository.findOne({
+      where: { id: vehicleId },
+    });
+
+    if (!vehicle) {
+      errors.push('Veículo não encontrado');
+      return { valid: false, errors };
+    }
+
+    // Verificar se veículo está ativo
+    if (vehicle.status !== VehicleStatus.ACTIVE) {
+      errors.push(`Veículo não está disponível (status: ${vehicle.status})`);
+    }
+
+    // Verificar capacidade de carga
+    if (vehicle.load_capacity) {
+      if (deliveryWeight > vehicle.load_capacity) {
+        errors.push(
+          `Peso da entrega (${deliveryWeight}kg) excede a capacidade do veículo (${vehicle.load_capacity}kg)`,
+        );
+      } else if (deliveryWeight > vehicle.load_capacity * 0.9) {
+        warnings.push(
+          `Peso da entrega está próximo do limite (${Math.round((deliveryWeight / vehicle.load_capacity) * 100)}%)`,
+        );
+      }
+    } else {
+      warnings.push('Veículo não possui capacidade de carga definida');
+    }
+
+    // Buscar entregas já atribuídas ao veículo no mesmo período
+    const assignedDeliveries = await this.deliveryRepository.find({
+      where: {
+        vehicle_id: vehicleId,
+        status: DeliveryStatus.ASSIGNED,
+      },
+    });
+
+    if (assignedDeliveries.length > 10) {
+      warnings.push(
+        `Veículo possui ${assignedDeliveries.length} entregas atribuídas (pode estar sobrecarregado)`,
+      );
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors,
+      warnings,
+    };
+  }
+
+  /**
+   * Valida combinação de motorista e veículo
+   */
+  async validateDriverVehicleAssignment(
+    driverId: string,
+    vehicleId: string,
+    _deliveryId?: string,
+  ): Promise<ValidationResult> {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+
+    const driver = await this.driverRepository.findOne({
+      where: { id: driverId },
+      relations: ['license'],
+    });
+
+    if (!driver) {
+      errors.push('Motorista não encontrado');
+      return { valid: false, errors };
+    }
+
+    const vehicle = await this.vehicleRepository.findOne({
+      where: { id: vehicleId },
+    });
+
+    if (!vehicle) {
+      errors.push('Veículo não encontrado');
+      return { valid: false, errors };
+    }
+
+    // Verificar se a CNH do motorista permite dirigir o tipo de veículo
+    // Isso pode ser expandido com lógica mais complexa baseada no tipo de veículo e categoria da CNH
+    if (!driver.license) {
+      errors.push('Motorista não possui CNH cadastrada');
+    }
+
+    // Verificar se ambos estão disponíveis
+    if (driver.status !== DriverStatus.AVAILABLE) {
+      warnings.push(`Motorista não está disponível (status: ${driver.status})`);
+    }
+
+    if (vehicle.status !== VehicleStatus.ACTIVE) {
+      warnings.push(`Veículo não está ativo (status: ${vehicle.status})`);
+    }
+
+    // Verificar se o veículo já está sendo usado por outro motorista
+    const vehicleInUse = await this.deliveryRepository.findOne({
+      where: {
+        vehicle_id: vehicleId,
+        status: DeliveryStatus.IN_TRANSIT,
+      },
+    });
+
+    if (vehicleInUse && vehicleInUse.driver_id !== driverId) {
+      errors.push(`Veículo está sendo usado por outro motorista`);
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors,
+      warnings,
+    };
+  }
+
+  /**
+   * Validação completa antes de criar uma entrega
+   */
+  async validateDeliveryCreation(deliveryData: DeliveryCreationData): Promise<ValidationResult> {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+
+    // Validar endereço de coleta
+    const pickupValidation = this.validateAddress(deliveryData.pickup_address);
+    if (!pickupValidation.valid) {
+      errors.push(...pickupValidation.errors.map(e => `Endereço de coleta: ${e}`));
+    }
+    if (pickupValidation.warnings) {
+      warnings.push(...pickupValidation.warnings.map(w => `Endereço de coleta: ${w}`));
+    }
+
+    // Validar endereço de entrega
+    const deliveryValidation = this.validateAddress(deliveryData.delivery_address);
+    if (!deliveryValidation.valid) {
+      errors.push(...deliveryValidation.errors.map(e => `Endereço de entrega: ${e}`));
+    }
+    if (deliveryValidation.warnings) {
+      warnings.push(...deliveryValidation.warnings.map(w => `Endereço de entrega: ${w}`));
+    }
+
+    // Validar data de agendamento
+    const now = new Date();
+    if (deliveryData.scheduled_delivery_at < now) {
+      errors.push('Data de entrega não pode ser no passado');
+    }
+
+    // Se motorista foi fornecido, validar disponibilidade
+    if (deliveryData.driverId) {
+      const driverValidation = await this.validateDriverAvailability(
+        deliveryData.driverId,
+        deliveryData.scheduled_delivery_at,
+      );
+      if (!driverValidation.valid) {
+        errors.push(...driverValidation.errors);
+      }
+      if (driverValidation.warnings) {
+        warnings.push(...driverValidation.warnings);
+      }
+    }
+
+    // Se veículo foi fornecido, validar capacidade
+    if (deliveryData.vehicleId) {
+      const vehicleValidation = await this.validateVehicleCapacity(
+        deliveryData.vehicleId,
+        deliveryData.weight,
+      );
+      if (!vehicleValidation.valid) {
+        errors.push(...vehicleValidation.errors);
+      }
+      if (vehicleValidation.warnings) {
+        warnings.push(...vehicleValidation.warnings);
+      }
+    }
+
+    // Se ambos foram fornecidos, validar combinação
+    if (deliveryData.driverId && deliveryData.vehicleId) {
+      const assignmentValidation = await this.validateDriverVehicleAssignment(
+        deliveryData.driverId,
+        deliveryData.vehicleId,
+      );
+      if (!assignmentValidation.valid) {
+        errors.push(...assignmentValidation.errors);
+      }
+      if (assignmentValidation.warnings) {
+        warnings.push(...assignmentValidation.warnings);
+      }
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors,
+      warnings,
     };
   }
 }

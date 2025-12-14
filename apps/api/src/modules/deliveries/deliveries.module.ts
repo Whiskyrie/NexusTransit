@@ -9,6 +9,10 @@ import { DeliveryStatusHistory } from './entities/delivery-status-history.entity
 import { Customer } from '../customers/entities/customer.entity';
 import { Driver } from '../drivers/entities/driver.entity';
 import { Vehicle } from '../vehicles/entities/vehicle.entity';
+import { DeliveryValidationService } from './services/delivery-validation.service';
+import { TrackingCodeService } from './services/tracking-code.service';
+import { DeliveryNotificationService } from './services/delivery-notification.service';
+import { RouteOptimizationService } from './services/route-optimization.service';
 
 @Module({
   imports: [
@@ -23,7 +27,13 @@ import { Vehicle } from '../vehicles/entities/vehicle.entity';
     ]),
   ],
   controllers: [DeliveriesController],
-  providers: [DeliveriesService],
+  providers: [
+    DeliveriesService,
+    DeliveryValidationService,
+    TrackingCodeService,
+    DeliveryNotificationService,
+    RouteOptimizationService,
+  ],
   exports: [DeliveriesService, TypeOrmModule],
 })
 export class DeliveriesModule {}

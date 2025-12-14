@@ -27,6 +27,9 @@ import { DeliveryPriority } from './enums/delivery-priority.enum';
 import { Customer } from '../../modules/customers/entities/customer.entity';
 import { Driver } from '../../modules/drivers/entities/driver.entity';
 import { Vehicle } from '../../modules/vehicles/entities/vehicle.entity';
+import { DeliveryValidationService } from './services/delivery-validation.service';
+import { AddProofDto } from './dto/add-proof.dto';
+import type { DeliveryCreationData } from './interfaces/delivery-creation-data.interface';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
@@ -49,6 +52,7 @@ export class DeliveriesService {
     @InjectRepository(Vehicle)
     private readonly vehicleRepository: Repository<Vehicle>,
     private readonly dataSource: DataSource,
+    private readonly deliveryValidationService: DeliveryValidationService,
   ) {}
 
   /**
@@ -60,6 +64,39 @@ export class DeliveriesService {
     await queryRunner.startTransaction();
 
     try {
+      // Executar validações de negócio completas
+      const validationData: DeliveryCreationData = {
+        weight: createDeliveryDto.weight,
+        driverId: createDeliveryDto.driver_id,
+        vehicleId: createDeliveryDto.vehicle_id,
+        pickup_address: {
+          ...createDeliveryDto.pickup_address,
+          neighborhood: createDeliveryDto.pickup_address.neighborhood ?? '',
+        },
+        delivery_address: {
+          ...createDeliveryDto.delivery_address,
+          neighborhood: createDeliveryDto.delivery_address.neighborhood ?? '',
+        },
+        scheduled_delivery_at: new Date(createDeliveryDto.scheduled_delivery_at),
+      };
+
+      const validation =
+        await this.deliveryValidationService.validateDeliveryCreation(validationData);
+
+      // Se houver erros críticos, lançar exceção
+      if (!validation.valid) {
+        throw new BadRequestException({
+          message: 'Validação da entrega falhou',
+          errors: validation.errors,
+          warnings: validation.warnings,
+        });
+      }
+
+      // Log de avisos (não bloqueia a criação)
+      if (validation.warnings && validation.warnings.length > 0) {
+        this.logger.warn('Avisos na criação de entrega:', validation.warnings);
+      }
+
       // Validar cliente
       const customer = await this.customerRepository.findOne({
         where: { id: createDeliveryDto.customer_id },
@@ -719,6 +756,8 @@ export class DeliveriesService {
       // Validar transição de status
       if (!changeStatusDto.force_change) {
         this.validateStatusTransition(oldStatus, newStatus);
+        // Validar requisitos específicos do novo status
+        this.validateStatusRequirements(delivery, newStatus, changeStatusDto);
       }
 
       // Gerar ID de mudança de status usando uuidv4
@@ -971,6 +1010,123 @@ export class DeliveriesService {
   }
 
   /**
+   * Buscar entrega por código de rastreamento
+   */
+  async findByTrackingCode(trackingCode: string): Promise<DeliveryResponseDto> {
+    const delivery = await this.deliveryRepository.findOne({
+      where: { tracking_code: trackingCode },
+      relations: ['customer', 'driver', 'vehicle', 'attempts', 'proofs', 'statusHistory'],
+    });
+
+    if (!delivery) {
+      throw new NotFoundException(
+        `Entrega com código de rastreamento ${trackingCode} não encontrada`,
+      );
+    }
+
+    this.logger.log(`Entrega encontrada por tracking code: ${trackingCode} (${delivery.id})`);
+
+    return DeliveryResponseDto.fromEntity(delivery);
+  }
+
+  /**
+   * Buscar histórico de status de uma entrega
+   */
+  async getStatusHistory(deliveryId: string): Promise<DeliveryStatusHistory[]> {
+    // Verificar se a entrega existe
+    await this.findOneWithRelations(deliveryId);
+
+    const history = await this.deliveryStatusHistoryRepository.find({
+      where: { delivery_id: deliveryId },
+      order: { changed_at: 'ASC' },
+    });
+
+    this.logger.log(
+      `Histórico de status recuperado para entrega ${deliveryId}: ${history.length} registros`,
+    );
+
+    return history;
+  }
+
+  /**
+   * Adicionar comprovação de entrega
+   */
+  async addProof(deliveryId: string, proofData: AddProofDto): Promise<DeliveryProof> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const delivery = await this.findOneWithRelations(deliveryId);
+
+      // Validar se a entrega está em um status que permite comprovação
+      if (![DeliveryStatus.OUT_FOR_DELIVERY, DeliveryStatus.DELIVERED].includes(delivery.status)) {
+        throw new BadRequestException(
+          'Comprovação só pode ser adicionada para entregas em status OUT_FOR_DELIVERY ou DELIVERED',
+        );
+      }
+
+      // Gerar ID de comprovação
+      const proofId = uuidv4();
+
+      // Criar comprovação
+      const proof = new DeliveryProof();
+      Object.assign(proof, {
+        ...proofData,
+        delivery_id: deliveryId,
+        created_at: new Date(),
+      });
+
+      const savedProof = await queryRunner.manager.save(proof);
+
+      // Se a comprovação for adicionada e a entrega ainda não foi marcada como entregue,
+      // atualizar o status automaticamente
+      if (delivery.status === DeliveryStatus.OUT_FOR_DELIVERY && proofData.proof_type) {
+        delivery.status = DeliveryStatus.DELIVERED;
+        delivery.actual_delivery_at = new Date();
+        await queryRunner.manager.save(delivery);
+
+        // Criar histórico de status
+        const statusHistory = new DeliveryStatusHistory();
+        statusHistory.delivery_id = deliveryId;
+        statusHistory.from_status = DeliveryStatus.OUT_FOR_DELIVERY;
+        statusHistory.to_status = DeliveryStatus.DELIVERED;
+        statusHistory.changed_at = new Date();
+        statusHistory.automatic_change = true;
+        statusHistory.reason = 'Comprovação de entrega adicionada automaticamente';
+        statusHistory.context = {
+          request_id: proofId,
+          source: 'API' as const,
+        };
+
+        await queryRunner.manager.save(statusHistory);
+      }
+
+      await queryRunner.commitTransaction();
+
+      this.logger.log(
+        `Comprovação adicionada à entrega ${delivery.tracking_code} (Proof ID: ${proofId})`,
+      );
+
+      return savedProof;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      this.logger.error('Erro ao adicionar comprovação:', error);
+
+      if (error instanceof BadRequestException || error instanceof NotFoundException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException(
+        'Erro interno ao adicionar comprovação',
+        error instanceof Error ? error.message : String(error),
+      );
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  /**
    * Buscar entregas por motorista
    */
   async findByDriver(
@@ -1045,6 +1201,88 @@ export class DeliveriesService {
       throw new BadRequestException(
         `Transição inválida: não é possível mudar de ${currentStatus} para ${newStatus}`,
       );
+    }
+  }
+
+  /**
+   * Validar requisitos específicos para mudança de status
+   */
+  private validateStatusRequirements(
+    delivery: Delivery,
+    newStatus: DeliveryStatus,
+    changeStatusDto: ChangeStatusDto,
+  ): void {
+    switch (newStatus) {
+      case DeliveryStatus.ASSIGNED:
+        // Deve ter driver_id e vehicle_id
+        if (!changeStatusDto.driver_id && !delivery.driver_id) {
+          throw new BadRequestException(
+            'Para atribuir uma entrega, é necessário informar o motorista (driver_id)',
+          );
+        }
+        if (!changeStatusDto.vehicle_id && !delivery.vehicle_id) {
+          throw new BadRequestException(
+            'Para atribuir uma entrega, é necessário informar o veículo (vehicle_id)',
+          );
+        }
+        break;
+
+      case DeliveryStatus.PICKED_UP:
+        // Deve ter actual_pickup_at ou status_data.pickup_data
+        if (!delivery.actual_pickup_at && !changeStatusDto.status_data?.pickup_data) {
+          throw new BadRequestException(
+            'Para marcar como coletado, é necessário informar os dados de coleta (status_data.pickup_data)',
+          );
+        }
+        break;
+
+      case DeliveryStatus.IN_TRANSIT:
+        // Deve ter sido coletado primeiro
+        if (!delivery.actual_pickup_at) {
+          throw new BadRequestException('A entrega deve ser coletada antes de estar em trânsito');
+        }
+        break;
+
+      case DeliveryStatus.DELIVERED:
+        // Deve ter recipient_name e algum tipo de comprovação
+        if (!changeStatusDto.status_data?.delivery_data?.recipient_name) {
+          throw new BadRequestException(
+            'Para marcar como entregue, é necessário informar o nome de quem recebeu (status_data.delivery_data.recipient_name)',
+          );
+        }
+        // Validar que existe comprovação (será adicionada junto ou já existe)
+        break;
+
+      case DeliveryStatus.FAILED:
+        // Deve ter motivo da falha
+        if (!changeStatusDto.status_data?.failure_data?.failure_reason) {
+          throw new BadRequestException(
+            'Para marcar como falha, é necessário informar o motivo (status_data.failure_data.failure_reason)',
+          );
+        }
+        // Deve ter failure_reason em notes também
+        if (!changeStatusDto.reason) {
+          throw new BadRequestException(
+            'Para marcar como falha, é necessário adicionar uma observação explicando o motivo',
+          );
+        }
+        break;
+
+      case DeliveryStatus.CANCELLED:
+        // Deve ter motivo do cancelamento
+        if (
+          !changeStatusDto.reason &&
+          !changeStatusDto.status_data?.cancellation_data?.cancellation_reason
+        ) {
+          throw new BadRequestException(
+            'Para cancelar uma entrega, é necessário informar o motivo',
+          );
+        }
+        break;
+
+      default:
+        // Sem validações específicas para outros status
+        break;
     }
   }
 
