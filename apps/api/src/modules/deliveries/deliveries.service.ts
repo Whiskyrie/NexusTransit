@@ -1010,6 +1010,123 @@ export class DeliveriesService {
   }
 
   /**
+   * Buscar entrega por código de rastreamento
+   */
+  async findByTrackingCode(trackingCode: string): Promise<DeliveryResponseDto> {
+    const delivery = await this.deliveryRepository.findOne({
+      where: { tracking_code: trackingCode },
+      relations: ['customer', 'driver', 'vehicle', 'attempts', 'proofs', 'statusHistory'],
+    });
+
+    if (!delivery) {
+      throw new NotFoundException(
+        `Entrega com código de rastreamento ${trackingCode} não encontrada`,
+      );
+    }
+
+    this.logger.log(`Entrega encontrada por tracking code: ${trackingCode} (${delivery.id})`);
+
+    return DeliveryResponseDto.fromEntity(delivery);
+  }
+
+  /**
+   * Buscar histórico de status de uma entrega
+   */
+  async getStatusHistory(deliveryId: string): Promise<DeliveryStatusHistory[]> {
+    // Verificar se a entrega existe
+    await this.findOneWithRelations(deliveryId);
+
+    const history = await this.deliveryStatusHistoryRepository.find({
+      where: { delivery_id: deliveryId },
+      order: { changed_at: 'ASC' },
+    });
+
+    this.logger.log(
+      `Histórico de status recuperado para entrega ${deliveryId}: ${history.length} registros`,
+    );
+
+    return history;
+  }
+
+  /**
+   * Adicionar comprovação de entrega
+   */
+  async addProof(deliveryId: string, proofData: AddProofDto): Promise<DeliveryProof> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const delivery = await this.findOneWithRelations(deliveryId);
+
+      // Validar se a entrega está em um status que permite comprovação
+      if (![DeliveryStatus.OUT_FOR_DELIVERY, DeliveryStatus.DELIVERED].includes(delivery.status)) {
+        throw new BadRequestException(
+          'Comprovação só pode ser adicionada para entregas em status OUT_FOR_DELIVERY ou DELIVERED',
+        );
+      }
+
+      // Gerar ID de comprovação
+      const proofId = uuidv4();
+
+      // Criar comprovação
+      const proof = new DeliveryProof();
+      Object.assign(proof, {
+        ...proofData,
+        delivery_id: deliveryId,
+        created_at: new Date(),
+      });
+
+      const savedProof = await queryRunner.manager.save(proof);
+
+      // Se a comprovação for adicionada e a entrega ainda não foi marcada como entregue,
+      // atualizar o status automaticamente
+      if (delivery.status === DeliveryStatus.OUT_FOR_DELIVERY && proofData.proof_type) {
+        delivery.status = DeliveryStatus.DELIVERED;
+        delivery.actual_delivery_at = new Date();
+        await queryRunner.manager.save(delivery);
+
+        // Criar histórico de status
+        const statusHistory = new DeliveryStatusHistory();
+        statusHistory.delivery_id = deliveryId;
+        statusHistory.from_status = DeliveryStatus.OUT_FOR_DELIVERY;
+        statusHistory.to_status = DeliveryStatus.DELIVERED;
+        statusHistory.changed_at = new Date();
+        statusHistory.automatic_change = true;
+        statusHistory.reason = 'Comprovação de entrega adicionada automaticamente';
+        statusHistory.context = {
+          request_id: proofId,
+          source: 'API' as const,
+        };
+
+        await queryRunner.manager.save(statusHistory);
+      }
+
+      await queryRunner.commitTransaction();
+
+      this.logger.log(
+        `Comprovação adicionada à entrega ${delivery.tracking_code} (Proof ID: ${proofId})`,
+      );
+
+      return savedProof;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      this.logger.error('Erro ao adicionar comprovação:', error);
+
+      if (error instanceof BadRequestException || error instanceof NotFoundException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException(
+        'Erro interno ao adicionar comprovação',
+        error instanceof Error ? error.message : String(error),
+      );
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  /**
    * Buscar entregas por motorista
    */
   async findByDriver(
