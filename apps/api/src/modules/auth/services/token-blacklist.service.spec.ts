@@ -1,7 +1,7 @@
 import { Test, type TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
 import { TokenBlacklistService } from './token-blacklist.service';
-import { RedisService } from '../../redis/redis.service';
+import { RedisService } from '@nexus/redis';
 
 describe('TokenBlacklistService', () => {
   let service: TokenBlacklistService;
