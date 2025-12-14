@@ -1,4 +1,4 @@
-import { Entity, Column, OneToOne, OneToMany } from 'typeorm';
+import { Entity, Column, OneToOne, OneToMany, Relation } from 'typeorm';
 import { BaseEntity } from '@nexus/common';
 import { DriverStatus } from '../enums/driver-status.enum';
 import { DriverLicense } from './driver-license.entity';
@@ -8,6 +8,7 @@ import { DeliveryAttempt } from '../../deliveries/entities/delivery-attempt.enti
 import { DeliveryStatusHistory } from '../../deliveries/entities/delivery-status-history.entity';
 import { Auditable } from '@nexus/audit';
 import { Route } from '../../routes/entities/route.entity';
+import { type ServiceOrder } from '../../service-orders/entities/service-order.entity';
 
 /**
  * Driver Entity - Sistema de gerenciamento de motoristas
@@ -96,6 +97,6 @@ export class Driver extends BaseEntity {
   @OneToMany(() => Route, route => route.driver)
   routes?: Route[];
 
-  // Service Orders
-  service_orders?: any[]; // Importar ServiceOrder causaria dependência circular
+  @OneToMany('ServiceOrder', 'driver')
+  service_orders?: Relation<ServiceOrder[]>;
 }
