@@ -126,6 +126,7 @@ export default defineConfig([
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/unbound-method': 'off', // Desabilita falsos positivos em mocks do Jest
       'no-console': 'off',
     },
   },
