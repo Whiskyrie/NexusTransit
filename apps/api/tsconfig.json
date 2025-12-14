@@ -67,6 +67,9 @@
       ],
       "@/filters/*": [
         "./src/filters/*"
+      ],
+      "@nexus/common": [
+        "../../packages/common/src/index.ts"
       ]
     }
   },

@@ -1,12 +1,13 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { getDistance } from 'geolib';
-import type { GeolibInputCoordinates } from 'geolib/es/types';
+import { Injectable, Logger } from "@nestjs/common";
+import { getDistance } from "geolib";
 
 /**
- * Service para cálculo de distâncias e métricas de rota
+ * Service para cálculo de distâncias e métricas geográficas
  *
- * Usa biblioteca geolib para cálculos geográficos
+ * Usa biblioteca geolib para cálculos geográficos precisos
  * Precisão: < 5% de erro conforme requisito
+ *
+ * @module Common/Utils
  */
 @Injectable()
 export class DistanceCalculatorService {
@@ -25,19 +26,22 @@ export class DistanceCalculatorService {
       const destCoords = this.parseCoordinates(destination);
 
       // getDistance retorna distância em metros (sempre número)
-      const distanceMeters: number = getDistance(originCoords, destCoords);
+      const distanceMeters: number = getDistance(
+        { latitude: originCoords.latitude, longitude: originCoords.longitude },
+        { latitude: destCoords.latitude, longitude: destCoords.longitude },
+      );
 
       // Validar se o resultado é um número válido
-      if (typeof distanceMeters !== 'number' || distanceMeters === null || isNaN(distanceMeters)) {
-        this.logger.warn('Não foi possível calcular distância entre coordenadas');
+      if (typeof distanceMeters !== "number" || distanceMeters === null || isNaN(distanceMeters)) {
+        this.logger.warn("Não foi possível calcular distância entre coordenadas");
         return 0;
       }
 
       // Converter para km e arredondar com 2 casas decimais
       return Math.round((distanceMeters / 1000) * 100) / 100;
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-      this.logger.error('Erro ao calcular distância:', errorMessage);
+      const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
+      this.logger.error("Erro ao calcular distância:", errorMessage);
       return 0;
     }
   }
@@ -132,9 +136,9 @@ export class DistanceCalculatorService {
    * Parse coordenadas do formato PostGIS POINT
    *
    * @param point String "POINT(lat lng)"
-   * @returns Objeto compatível com geolib
+   * @returns Objeto com latitude e longitude
    */
-  private parseCoordinates(point: string): GeolibInputCoordinates {
+  parseCoordinates(point: string): { latitude: number; longitude: number } {
     // Formato: "POINT(-23.561414 -46.656250)"
     const matches = /POINT\(([-\d.]+)\s+([-\d.]+)\)/.exec(point);
 

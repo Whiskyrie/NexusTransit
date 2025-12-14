@@ -377,6 +377,12 @@ importers:
       class-validator:
         specifier: ^0.14.2
         version: 0.14.3
+      geolib:
+        specifier: ^3.3.4
+        version: 3.3.4
+      nestjs-cls:
+        specifier: ^6.1.0
+        version: 6.1.0(@nestjs/common@11.1.9(class-transformer@0.5.1)(class-validator@0.14.3)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.9)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
