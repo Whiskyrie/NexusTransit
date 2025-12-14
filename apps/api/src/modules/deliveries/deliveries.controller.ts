@@ -31,10 +31,13 @@ import { DeliveryFilterDto } from './dto/delivery-filter.dto';
 import { DeliveryResponseDto } from './dto/delivery-response.dto';
 import { ChangeStatusDto } from './dto/change-status.dto';
 import { CreateDeliveryAttemptDto } from './dto/delivery-attempt.dto';
+import { AddProofDto } from './dto/add-proof.dto';
 import { PaginatedResponseDto } from '@nexus/common';
 import { DeliveryStatus } from './enums/delivery-status.enum';
 import { DeliveryPriority } from './enums/delivery-priority.enum';
 import { DeliveryAttempt } from './entities/delivery-attempt.entity';
+import { DeliveryProof } from './entities/delivery-proof.entity';
+import { DeliveryStatusHistory } from './entities/delivery-status-history.entity';
 
 @ApiTags('Deliveries')
 @Controller('deliveries')
@@ -198,6 +201,33 @@ export class DeliveriesController {
     return this.deliveriesService.findAll(filterDto);
   }
 
+  @Get('tracking/:code')
+  @ApiOperation({
+    summary: 'Buscar entrega por código de rastreamento',
+    description:
+      'Retorna os detalhes completos de uma entrega através do seu código de rastreamento único',
+  })
+  @ApiParam({
+    name: 'code',
+    description: 'Código de rastreamento da entrega',
+    example: 'NEX123456789BR',
+    type: String,
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Entrega encontrada com sucesso',
+    type: DeliveryResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Entrega não encontrada com o código informado',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Token de autenticação inválido ou ausente',
+  })
+  async findByTrackingCode(@Param('code') code: string): Promise<DeliveryResponseDto> {
+    return this.deliveriesService.findByTrackingCode(code);
+  }
+
   @Get(':id')
   @ApiOperation({
     summary: 'Buscar entrega por ID',
@@ -221,6 +251,56 @@ export class DeliveriesController {
   })
   async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<DeliveryResponseDto> {
     return this.deliveriesService.findOne(id);
+  }
+
+  @Get(':id/history')
+  @ApiOperation({
+    summary: 'Buscar histórico de status da entrega',
+    description: 'Retorna o histórico completo de mudanças de status de uma entrega',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID da entrega',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Histórico retornado com sucesso',
+    type: [DeliveryStatusHistory],
+  })
+  @ApiNotFoundResponse({
+    description: 'Entrega não encontrada',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Token de autenticação inválido ou ausente',
+  })
+  async getHistory(@Param('id', ParseUUIDPipe) id: string): Promise<DeliveryStatusHistory[]> {
+    return this.deliveriesService.getStatusHistory(id);
+  }
+
+  @Get(':id/proofs')
+  @ApiOperation({
+    summary: 'Buscar comprovantes da entrega',
+    description: 'Retorna todos os comprovantes de entrega (fotos, assinaturas, códigos)',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID da entrega',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Comprovantes retornados com sucesso',
+    type: [DeliveryProof],
+  })
+  @ApiNotFoundResponse({
+    description: 'Entrega não encontrada',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Token de autenticação inválido ou ausente',
+  })
+  async getProofs(@Param('id', ParseUUIDPipe) id: string): Promise<DeliveryProof[]> {
+    return this.deliveriesService.findDeliveryProofs(id);
   }
 
   @Patch(':id')
@@ -283,6 +363,42 @@ export class DeliveriesController {
   })
   async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     return this.deliveriesService.remove(id);
+  }
+
+  @Post(':id/proof')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'Adicionar comprovação de entrega',
+    description:
+      'Registra uma comprovação de entrega (foto, assinatura digital ou código de confirmação)',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID da entrega',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Comprovação registrada com sucesso',
+    type: DeliveryProof,
+  })
+  @ApiNotFoundResponse({
+    description: 'Entrega não encontrada',
+  })
+  @ApiBadRequestResponse({
+    description: 'Dados de comprovação inválidos',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Token de autenticação inválido ou ausente',
+  })
+  @ApiForbiddenResponse({
+    description: 'Usuário não possui permissão para adicionar comprovação',
+  })
+  async addProof(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() proofDto: AddProofDto,
+  ): Promise<DeliveryProof> {
+    return this.deliveriesService.addProof(id, proofDto);
   }
 
   @Patch(':id/status')
