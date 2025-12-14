@@ -156,3 +156,30 @@ export interface IRoute {
    */
   deleted_at?: Date;
 }
+
+/**
+ * Interface para dados de visualização em mapa
+ */
+export interface RouteMapData {
+  route_id: string;
+  route_code: string;
+  status: RouteStatus;
+  route_date: Date;
+  start_location: { latitude: number; longitude: number } | null;
+  end_location: { latitude: number; longitude: number } | null;
+  stops: {
+    id: string;
+    sequence: number;
+    latitude: number | null;
+    longitude: number | null;
+    status: string;
+    address: string;
+    customer_address_id?: string;
+    planned_arrival_time: string | null;
+    actual_arrival_time: Date | null;
+  }[];
+  polyline: { latitude: number; longitude: number }[];
+  total_distance_km?: number;
+  total_duration_minutes?: number;
+  optimization_score?: number;
+}
