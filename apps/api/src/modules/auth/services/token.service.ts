@@ -1,8 +1,24 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
+import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { JwtPayload } from '@nexus/auth';
 import { randomBytes } from 'crypto';
+
+/**
+ * Par de tokens (access e refresh)
+ */
+interface TokenPair {
+  access_token: string;
+  refresh_token: string;
+}
+
+/**
+ * Payload específico para refresh token
+ */
+interface RefreshTokenPayload {
+  sub: string;
+  type: 'refresh';
+}
 
 /**
  * Token Service
@@ -30,8 +46,9 @@ export class TokenService {
    */
   generateAccessToken(payload: Omit<JwtPayload, 'iat' | 'exp'>): string {
     const expiresIn = this.configService.get<string>('JWT_ACCESS_TOKEN_EXPIRES_IN', '15m');
+    const options: JwtSignOptions = { expiresIn: this.parseTimeToSeconds(expiresIn) };
 
-    return this.jwtService.sign(payload as any, { expiresIn } as any);
+    return this.jwtService.sign({ ...payload }, options);
   }
 
   /**
@@ -42,13 +59,14 @@ export class TokenService {
    */
   generateRefreshToken(userId: string): string {
     const expiresIn = this.configService.get<string>('JWT_REFRESH_TOKEN_EXPIRES_IN', '7d');
+    const options: JwtSignOptions = { expiresIn: this.parseTimeToSeconds(expiresIn) };
 
-    const payload = {
+    const payload: RefreshTokenPayload = {
       sub: userId,
       type: 'refresh',
     };
 
-    return this.jwtService.sign(payload as any, { expiresIn } as any);
+    return this.jwtService.sign(payload, options);
   }
 
   /**
@@ -57,7 +75,7 @@ export class TokenService {
    * @param payload - Dados do usuário
    * @returns Objeto com access_token e refresh_token
    */
-  generateTokens(payload: Omit<JwtPayload, 'iat' | 'exp'>) {
+  generateTokens(payload: Omit<JwtPayload, 'iat' | 'exp'>): TokenPair {
     return {
       access_token: this.generateAccessToken(payload),
       refresh_token: this.generateRefreshToken(payload.sub),
@@ -89,7 +107,7 @@ export class TokenService {
    */
   decodeToken(token: string): JwtPayload | null {
     try {
-      return this.jwtService.decode(token);
+      return this.jwtService.decode<JwtPayload>(token);
     } catch {
       return null;
     }
@@ -129,7 +147,6 @@ export class TokenService {
   getAccessTokenExpiresIn(): number {
     const expiresIn = this.configService.get<string>('JWT_ACCESS_TOKEN_EXPIRES_IN', '15m');
 
-    // Converte string de tempo para segundos
     return this.parseTimeToSeconds(expiresIn);
   }
 
@@ -150,7 +167,7 @@ export class TokenService {
     const match = /^(\d+)([smhd])$/.exec(time);
     if (!match) {
       this.logger.warn(`Formato de tempo inválido: ${time}, usando 900s como padrão`);
-      return 900; // 15 minutos
+      return 900;
     }
 
     const [, value, unit] = match;
