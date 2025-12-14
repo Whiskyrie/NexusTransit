@@ -6,10 +6,13 @@ import { RoutesController } from './routes.controller';
 
 // Services
 import { RoutesService } from './routes.service';
+import { RouteOptimizationService } from './services/route-optimization.service';
+import { RouteValidationService } from './services/route-validation.service';
+import { RouteMetricsService } from './services/route-metrics.service';
 
 // Validators
 import { RouteValidatorService } from './validators/route.validator';
-import { DistanceCalculatorService } from './validators/distance_calculator.validator';
+import { DistanceCalculatorService, ClsAuditUtils } from '@nexus/common';
 
 // Entities
 import { Route } from './entities/route.entity';
@@ -26,12 +29,10 @@ import {
 // Subscribers
 import { RouteSubscriber, RouteStopSubscriber } from './subscribers';
 
-// Utils
-import { ClsAuditUtils } from './utils';
-
 // Módulos relacionados
 import { VehiclesModule } from '../vehicles/vehicles.module';
 import { DriversModule } from '../drivers/drivers.module';
+import { DeliveriesModule } from '../deliveries/deliveries.module';
 
 /**
  * Módulo de Rotas
@@ -56,6 +57,7 @@ import { DriversModule } from '../drivers/drivers.module';
     // Importar módulos relacionados para validações
     VehiclesModule,
     DriversModule,
+    DeliveriesModule,
   ],
 
   controllers: [RoutesController],
@@ -64,9 +66,17 @@ import { DriversModule } from '../drivers/drivers.module';
     // Service principal
     RoutesService,
 
+    // Services auxiliares
+    RouteOptimizationService,
+    RouteValidationService,
+    RouteMetricsService,
+
     // Validators
     RouteValidatorService,
     DistanceCalculatorService,
+
+    // Utils
+    ClsAuditUtils,
 
     // Interceptors (não globais, serão aplicados no controller)
     AuditContextInterceptor,
@@ -76,24 +86,23 @@ import { DriversModule } from '../drivers/drivers.module';
     // Subscribers TypeORM
     RouteSubscriber,
     RouteStopSubscriber,
-
-    // Utils
-    ClsAuditUtils,
   ],
 
   exports: [
     // Exportar service para uso em outros módulos
     RoutesService,
+    RouteOptimizationService,
+    RouteValidationService,
+    RouteMetricsService,
 
     // Exportar TypeORM para acesso aos repositories
     TypeOrmModule,
 
+    // Exportar utils para uso em outros módulos
+    ClsAuditUtils,
     // Exportar validators para reutilização
     RouteValidatorService,
     DistanceCalculatorService,
-
-    // Exportar utils para uso em outros módulos
-    ClsAuditUtils,
   ],
 })
 export class RoutesModule {}
