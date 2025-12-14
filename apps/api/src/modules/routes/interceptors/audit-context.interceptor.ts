@@ -17,7 +17,7 @@ import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } fr
 import { ClsService } from 'nestjs-cls';
 import { Observable } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
-import { RequestUser, RequestWithUser } from '../interfaces';
+import { RequestUser, RequestWithUser } from '@nexus/common';
 
 @Injectable()
 export class AuditContextInterceptor implements NestInterceptor {
