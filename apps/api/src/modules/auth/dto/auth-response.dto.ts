@@ -2,42 +2,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
 
 /**
- * DTO de resposta de autenticação
- */
-export class AuthResponseDto {
-  @ApiProperty({
-    description: 'Token de acesso JWT',
-    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-  })
-  access_token!: string;
-
-  @ApiProperty({
-    description: 'Token de renovação',
-    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-  })
-  refresh_token!: string;
-
-  @ApiProperty({
-    description: 'Tipo do token',
-    example: 'Bearer',
-    default: 'Bearer',
-  })
-  token_type = 'Bearer';
-
-  @ApiProperty({
-    description: 'Tempo de expiração do access token em segundos',
-    example: 900,
-  })
-  expires_in!: number;
-
-  @ApiProperty({
-    description: 'Dados do usuário autenticado',
-    type: () => UserPayloadDto,
-  })
-  user!: UserPayloadDto;
-}
-
-/**
  * DTO com dados do usuário no payload
  */
 export class UserPayloadDto {
@@ -74,6 +38,42 @@ export class UserPayloadDto {
 
   @Exclude()
   password_hash?: string;
+}
+
+/**
+ * DTO de resposta de autenticação
+ */
+export class AuthResponseDto {
+  @ApiProperty({
+    description: 'Token de acesso JWT',
+    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+  })
+  access_token!: string;
+
+  @ApiProperty({
+    description: 'Token de renovação',
+    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+  })
+  refresh_token!: string;
+
+  @ApiProperty({
+    description: 'Tipo do token',
+    example: 'Bearer',
+    default: 'Bearer',
+  })
+  token_type = 'Bearer';
+
+  @ApiProperty({
+    description: 'Tempo de expiração do access token em segundos',
+    example: 900,
+  })
+  expires_in!: number;
+
+  @ApiProperty({
+    description: 'Dados do usuário autenticado',
+    type: () => UserPayloadDto,
+  })
+  user!: UserPayloadDto;
 }
 
 /**
