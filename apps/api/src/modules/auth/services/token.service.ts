@@ -71,7 +71,7 @@ export class TokenService {
    * @returns Payload do token se válido
    * @throws Error se token inválido
    */
-  async validateToken(token: string): Promise<JwtPayload> {
+  validateToken(token: string): JwtPayload {
     try {
       return this.jwtService.verify<JwtPayload>(token);
     } catch (error) {
