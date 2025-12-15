@@ -25,6 +25,7 @@ import { RouteHistory } from './route_history.entity';
 @Index(['type'])
 @Index(['vehicle_id'])
 @Index(['driver_id'])
+@Index(['route_date'])
 @Index(['planned_date'])
 @Index(['created_at'])
 @Auditable({
@@ -56,6 +57,12 @@ export class Route extends BaseEntity {
     comment: 'Data da rota',
   })
   route_date!: Date;
+
+  @Column({
+    type: 'date',
+    comment: 'Data planejada para execução',
+  })
+  planned_date!: Date;
 
   @Column({
     type: 'point',
@@ -217,12 +224,6 @@ export class Route extends BaseEntity {
   destination_coordinates?: string;
 
   // Datas e Horários
-  @Column({
-    type: 'date',
-    comment: 'Data planejada para execução',
-  })
-  planned_date!: Date;
-
   @Column({
     type: 'time',
     nullable: true,
@@ -517,7 +518,7 @@ export class Route extends BaseEntity {
     }
 
     const now = new Date();
-    const dateString = `${this.planned_date.toISOString().split('T')[0]}T${this.planned_end_time}`;
+    const dateString = `${this.route_date.toISOString().split('T')[0]}T${this.planned_end_time}`;
     const plannedEnd = new Date(dateString);
 
     return now > plannedEnd && !this.isFinalStatus();

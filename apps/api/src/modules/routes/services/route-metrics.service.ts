@@ -165,9 +165,6 @@ export class RouteMetricsService {
    */
   async getAggregatedMetrics(startDate: Date, endDate: Date): Promise<AggregatedMetrics> {
     const routes = await this.routeRepository.find({
-      where: {
-        planned_date: undefined, // Será filtrado no código
-      },
       relations: ['stops'],
     });
 

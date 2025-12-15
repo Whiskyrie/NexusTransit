@@ -94,13 +94,22 @@ export class RouteOptimizationService {
         `Score: ${optimizationScore}`,
     );
 
-    return {
+    const result: OptimizationResult = {
       optimized_route: optimizedRoute,
       total_distance_km: totalDistance,
       total_duration_minutes: totalDuration,
       optimization_score: optimizationScore,
       algorithm_used: 'NEAREST_NEIGHBOR',
     };
+
+    return result;
+  }
+
+  /**
+   * Extrai prioridade de um GeoPoint de forma segura
+   */
+  private getPointPriority(point: GeoPoint): number {
+    return typeof point.priority === 'number' ? point.priority : 1;
   }
 
   /**
@@ -115,20 +124,31 @@ export class RouteOptimizationService {
     }
 
     // Ordenar por prioridade (mais urgentes primeiro)
-    const sortedPoints = [...points].sort((a, b) => (b.priority ?? 1) - (a.priority ?? 1));
+    const sortedPoints: GeoPoint[] = [...points].sort(
+      (a, b) => this.getPointPriority(b) - this.getPointPriority(a),
+    );
 
     // Começar com o ponto de maior prioridade
     const optimizedRoute: GeoPoint[] = [];
     const visitedIndices = new Set<number>();
 
-    // Encontrar o ponto de maior prioridade
-    const startIndex = sortedPoints.findIndex(
-      p => p.priority === Math.max(...sortedPoints.map(p => p.priority ?? 1)),
+    // Encontrar o ponto de maior prioridade de forma segura
+    const priorities: number[] = sortedPoints.map(p => this.getPointPriority(p));
+    const maxPriority: number = priorities.length > 0 ? Math.max(...priorities) : 1;
+
+    const startIndex: number = sortedPoints.findIndex(
+      p => this.getPointPriority(p) === maxPriority,
     );
-    optimizedRoute.push(sortedPoints[startIndex]);
+
+    if (startIndex === -1) {
+      return [];
+    }
+
+    const firstPoint: GeoPoint = sortedPoints[startIndex];
+    optimizedRoute.push(firstPoint);
     visitedIndices.add(startIndex);
 
-    let currentPoint = sortedPoints[startIndex];
+    let currentPoint: GeoPoint = firstPoint;
 
     while (visitedIndices.size < sortedPoints.length) {
       let nearestIndex = -1;
@@ -137,11 +157,17 @@ export class RouteOptimizationService {
       // Encontrar o ponto mais próximo não visitado
       for (let i = 0; i < sortedPoints.length; i++) {
         if (!visitedIndices.has(i)) {
+          const nextPoint: GeoPoint = sortedPoints[i];
+          const currentLat = Number(currentPoint.latitude);
+          const currentLon = Number(currentPoint.longitude);
+          const nextLat = Number(nextPoint.latitude);
+          const nextLon = Number(nextPoint.longitude);
+
           const distance = this.calculateHaversineDistance(
-            currentPoint.latitude,
-            currentPoint.longitude,
-            sortedPoints[i].latitude,
-            sortedPoints[i].longitude,
+            currentLat,
+            currentLon,
+            nextLat,
+            nextLon,
           );
 
           if (distance < minDistance) {
@@ -152,9 +178,10 @@ export class RouteOptimizationService {
       }
 
       if (nearestIndex !== -1) {
-        optimizedRoute.push(sortedPoints[nearestIndex]);
+        const nearestPoint: GeoPoint = sortedPoints[nearestIndex];
+        optimizedRoute.push(nearestPoint);
         visitedIndices.add(nearestIndex);
-        currentPoint = sortedPoints[nearestIndex];
+        currentPoint = nearestPoint;
       }
     }
 
@@ -176,12 +203,15 @@ export class RouteOptimizationService {
 
     // Calcular distância total entre pontos consecutivos
     for (let i = 0; i < route.length - 1; i++) {
-      const distance = this.calculateHaversineDistance(
-        route[i].latitude,
-        route[i].longitude,
-        route[i + 1].latitude,
-        route[i + 1].longitude,
-      );
+      const currentPoint: GeoPoint = route[i];
+      const nextPoint: GeoPoint = route[i + 1];
+
+      const lat1 = Number(currentPoint.latitude);
+      const lon1 = Number(currentPoint.longitude);
+      const lat2 = Number(nextPoint.latitude);
+      const lon2 = Number(nextPoint.longitude);
+
+      const distance = this.calculateHaversineDistance(lat1, lon1, lat2, lon2);
       totalDistance += distance;
     }
 
@@ -222,19 +252,32 @@ export class RouteOptimizationService {
     const avgSpeed = this.getAverageSpeedByRouteType(route.type);
 
     for (let i = 0; i < route.stops.length - 1; i++) {
-      const distance = this.calculateHaversineDistance(
-        route.stops[i].customer_address?.latitude ?? 0,
-        route.stops[i].customer_address?.longitude ?? 0,
-        route.stops[i + 1].customer_address?.latitude ?? 0,
-        route.stops[i + 1].customer_address?.longitude ?? 0,
-      );
+      const currentStop = route.stops[i];
+      const nextStop = route.stops[i + 1];
+
+      const lat1 = Number(currentStop.customer_address?.latitude ?? 0);
+      const lon1 = Number(currentStop.customer_address?.longitude ?? 0);
+      const lat2 = Number(nextStop.customer_address?.latitude ?? 0);
+      const lon2 = Number(nextStop.customer_address?.longitude ?? 0);
+
+      const distance = this.calculateHaversineDistance(lat1, lon1, lat2, lon2);
       originalDistance += distance;
+    }
+
+    // Evitar divisão por zero
+    if (originalDistance === 0) {
+      return 0;
     }
 
     const originalTravelTimeHours = originalDistance / avgSpeed;
     const originalTravelTimeMinutes = originalTravelTimeHours * 60;
     const originalServiceTime = (route.stops.length - 1) * 15;
     const originalDuration = originalTravelTimeMinutes + originalServiceTime;
+
+    // Evitar divisão por zero
+    if (originalDuration === 0) {
+      return 0;
+    }
 
     // Calcular melhoria percentual
     const distanceImprovement = 1 - optimizedDistance / originalDistance;
@@ -316,13 +359,13 @@ export class RouteOptimizationService {
 
     // Atualizar paradas com a nova sequência
     for (let i = 0; i < optimizationResult.optimized_route.length; i++) {
-      const point = optimizationResult.optimized_route[i];
+      const point: GeoPoint = optimizationResult.optimized_route[i];
       const stop = route.stops?.find(s => s.delivery_id === point.delivery_id);
 
       if (stop) {
         stop.sequence_order = i + 1;
-        stop.planned_arrival_time = point.time_window_start;
-        stop.planned_departure_time = point.time_window_end;
+        stop.planned_arrival_time = point.time_window_start ?? undefined;
+        stop.planned_departure_time = point.time_window_end ?? undefined;
 
         await this.routeStopRepository.save(stop);
       }
@@ -434,21 +477,22 @@ export class RouteOptimizationService {
       // Aplicar otimização Nearest Neighbor ao cluster
       const points: GeoPoint[] = cluster.map(delivery => ({
         delivery_id: delivery.id,
-        latitude: delivery.delivery_address.latitude ?? 0,
-        longitude: delivery.delivery_address.longitude ?? 0,
+        latitude: Number(delivery.delivery_address?.latitude ?? 0),
+        longitude: Number(delivery.delivery_address?.longitude ?? 0),
         sequence: 0,
       }));
 
-      const optimizedSequence = this.nearestNeighborAlgorithm(points);
+      const optimizedSequence: GeoPoint[] = this.nearestNeighborAlgorithm(points);
 
-      // Calcular métricas da rota sugerida - converter para formato POINT
-      const pointStrings = optimizedSequence.map(p => `POINT(${p.latitude} ${p.longitude})`);
-      const totalDistance = this.distanceCalculator.calculateTotalDistance(pointStrings);
-
-      const totalDuration = this.distanceCalculator.calculateEstimatedDuration(totalDistance);
+      // Calcular métricas da rota sugerida
+      const totalDistance: number = this.calculateTotalDistanceFromPoints(optimizedSequence);
+      const totalDuration: number = this.calculateEstimatedDurationFromDistance(totalDistance);
 
       // Calcular optimization score
       const optimizationScore = this.calculateScorePoints(totalDistance, cluster.length);
+
+      const firstPoint: GeoPoint | undefined = optimizedSequence[0];
+      const lastPoint: GeoPoint | undefined = optimizedSequence[optimizedSequence.length - 1];
 
       suggestions.push({
         suggested_route_code: `ROTA-SUG-${String(i + 1).padStart(3, '0')}`,
@@ -459,26 +503,58 @@ export class RouteOptimizationService {
         estimated_duration_minutes: Math.round(totalDuration),
         estimated_deliveries: cluster.length,
         optimization_score: optimizationScore,
-        start_location:
-          optimizedSequence.length > 0
-            ? {
-                latitude: optimizedSequence[0].latitude,
-                longitude: optimizedSequence[0].longitude,
-              }
-            : undefined,
-        end_location:
-          optimizedSequence.length > 0
-            ? {
-                latitude: optimizedSequence[optimizedSequence.length - 1].latitude,
-                longitude: optimizedSequence[optimizedSequence.length - 1].longitude,
-              }
-            : undefined,
+        start_location: firstPoint
+          ? {
+              latitude: Number(firstPoint.latitude),
+              longitude: Number(firstPoint.longitude),
+            }
+          : undefined,
+        end_location: lastPoint
+          ? {
+              latitude: Number(lastPoint.latitude),
+              longitude: Number(lastPoint.longitude),
+            }
+          : undefined,
       });
     }
 
     this.logger.log(`${suggestions.length} rotas sugeridas geradas com sucesso`);
 
     return suggestions;
+  }
+
+  /**
+   * Calcula distância total a partir de pontos GeoPoint
+   */
+  private calculateTotalDistanceFromPoints(points: GeoPoint[]): number {
+    if (points.length <= 1) {
+      return 0;
+    }
+
+    let totalDistance = 0;
+    for (let i = 0; i < points.length - 1; i++) {
+      const currentPoint: GeoPoint = points[i];
+      const nextPoint: GeoPoint = points[i + 1];
+
+      const lat1 = Number(currentPoint.latitude);
+      const lon1 = Number(currentPoint.longitude);
+      const lat2 = Number(nextPoint.latitude);
+      const lon2 = Number(nextPoint.longitude);
+
+      totalDistance += this.calculateHaversineDistance(lat1, lon1, lat2, lon2);
+    }
+
+    return totalDistance;
+  }
+
+  /**
+   * Calcula duração estimada a partir da distância
+   * Assume velocidade média de 40 km/h + 15 min por parada
+   */
+  private calculateEstimatedDurationFromDistance(distanceKm: number): number {
+    const avgSpeedKmh = 40;
+    const travelTimeMinutes = (distanceKm / avgSpeedKmh) * 60;
+    return travelTimeMinutes;
   }
 
   /**
@@ -507,8 +583,8 @@ export class RouteOptimizationService {
 
       usedIndices.add(randomIndex);
       centroids.push({
-        latitude: deliveries[randomIndex].delivery_address.latitude ?? 0,
-        longitude: deliveries[randomIndex].delivery_address.longitude ?? 0,
+        latitude: Number(deliveries[randomIndex].delivery_address?.latitude ?? 0),
+        longitude: Number(deliveries[randomIndex].delivery_address?.longitude ?? 0),
       });
     }
 
@@ -517,8 +593,8 @@ export class RouteOptimizationService {
 
     for (const delivery of deliveries) {
       const point = {
-        latitude: delivery.delivery_address.latitude ?? 0,
-        longitude: delivery.delivery_address.longitude ?? 0,
+        latitude: Number(delivery.delivery_address?.latitude ?? 0),
+        longitude: Number(delivery.delivery_address?.longitude ?? 0),
       };
 
       let nearestClusterIndex = 0;
