@@ -74,7 +74,7 @@ export class RouteFilterDto extends BaseFilterDto {
   driver_id?: string;
 
   @ApiPropertyOptional({
-    description: 'Data planejada inicial (YYYY-MM-DD)',
+    description: 'Data da rota inicial (YYYY-MM-DD)',
     example: new Date().toISOString().split('T')[0],
     type: 'string',
     format: 'date',
@@ -83,7 +83,7 @@ export class RouteFilterDto extends BaseFilterDto {
   @IsDateString(
     {},
     {
-      message: 'Data planejada inicial deve estar no formato YYYY-MM-DD',
+      message: 'Data da rota inicial deve estar no formato YYYY-MM-DD',
     },
   )
   @Transform(({ value }: { value: string }) => {
@@ -94,10 +94,10 @@ export class RouteFilterDto extends BaseFilterDto {
     const date = new Date(value);
     return date.toISOString().split('T')[0];
   })
-  planned_date_from?: string;
+  route_date_from?: string;
 
   @ApiPropertyOptional({
-    description: 'Data planejada final (YYYY-MM-DD)',
+    description: 'Data da rota final (YYYY-MM-DD)',
     example: (() => {
       const d = new Date();
       d.setDate(d.getDate() + 7);
@@ -110,7 +110,7 @@ export class RouteFilterDto extends BaseFilterDto {
   @IsDateString(
     {},
     {
-      message: 'Data planejada final deve estar no formato YYYY-MM-DD',
+      message: 'Data da rota final deve estar no formato YYYY-MM-DD',
     },
   )
   @Transform(({ value }: { value: string }) => {
@@ -121,7 +121,7 @@ export class RouteFilterDto extends BaseFilterDto {
     const date = new Date(value);
     return date.toISOString().split('T')[0];
   })
-  planned_date_to?: string;
+  route_date_to?: string;
 
   @ApiPropertyOptional({
     description: 'Filtrar por distância mínima estimada (km)',

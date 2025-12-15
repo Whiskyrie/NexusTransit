@@ -225,7 +225,7 @@ export class CreateRouteDto {
   route_date!: string;
 
   @ApiProperty({
-    description: 'Data planejada para execução (YYYY-MM-DD)',
+    description: 'Data planejada da rota (YYYY-MM-DD)',
     example: getExampleFutureDate(),
   })
   @IsDateString()
