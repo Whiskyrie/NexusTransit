@@ -32,14 +32,17 @@ import { RouteValidationService } from './services/route-validation.service';
 import { CreateRouteDto } from './dto/create-route.dto';
 import { UpdateRouteDto } from './dto/update-route.dto';
 import { RouteFilterDto } from './dto/filter-route.dto';
-import { RouteResponseDto } from './dto/route-response.dto';
+import { RouteResponseDto, RouteStopResponseDto } from './dto/route-response.dto';
 import { PaginatedResponseDto } from '@nexus/common';
 import { CancelRouteDto } from './dto/cancel_route.dto';
 import { SuggestRoutesDto, SuggestRoutesResponseDto } from './dto/suggest-routes.dto';
 import { AutoAssignDto, AutoAssignResponseDto } from './dto/auto-assign.dto';
+import { AddDeliveryToRouteDto } from './dto/add-delivery-to-route.dto';
+import { ReorderDeliveriesDto } from './dto/reorder-deliveries.dto';
 import { RouteStatusInterceptor } from './interceptors/route-status.interceptor';
 import { RouteValidationInterceptor } from './interceptors/route-validation.interceptor';
 import { RouteStatistics, RouteMapData, GeoPoint } from './interfaces';
+import { RouteStop } from './entities/route_stop.entity';
 
 /**
  * Controller de rotas
@@ -678,5 +681,126 @@ export class RoutesController {
       assignment_reason: assignment.assignment_reason,
       confidence_score: assignment.confidence_score,
     };
+  }
+
+  @Get(':id/deliveries')
+  @ApiOperation({
+    summary: 'Listar entregas da rota',
+    description: 'Lista todas as entregas (paradas) da rota em ordem de sequência',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID da rota',
+    type: String,
+    format: 'uuid',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de paradas da rota',
+    type: [RouteStopResponseDto],
+  })
+  @ApiNotFoundResponse({
+    description: 'Rota não encontrada',
+  })
+  async getRouteDeliveries(@Param('id', ParseUUIDPipe) id: string): Promise<RouteStop[]> {
+    return this.routesService.getRouteDeliveries(id);
+  }
+
+  @Post(':id/deliveries')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'Adicionar entrega à rota',
+    description: 'Adiciona uma entrega à rota em uma posição específica ou ao final',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID da rota',
+    type: String,
+    format: 'uuid',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Entrega adicionada com sucesso',
+  })
+  @ApiBadRequestResponse({
+    description: 'Rota não pode ser editada ou entrega já está em outra rota',
+  })
+  @ApiNotFoundResponse({
+    description: 'Rota ou entrega não encontrada',
+  })
+  async addDeliveryToRoute(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() addDeliveryDto: AddDeliveryToRouteDto,
+  ): Promise<RouteStop> {
+    return this.routesService.addDeliveryToRoute(
+      id,
+      addDeliveryDto.delivery_id,
+      addDeliveryDto.sequence_order,
+      addDeliveryDto.notes,
+    );
+  }
+
+  @Delete(':id/deliveries/:deliveryId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Remover entrega da rota',
+    description: 'Remove uma entrega da rota e reordena as demais',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID da rota',
+    type: String,
+    format: 'uuid',
+  })
+  @ApiParam({
+    name: 'deliveryId',
+    description: 'ID da entrega',
+    type: String,
+    format: 'uuid',
+  })
+  @ApiResponse({
+    status: 204,
+    description: 'Entrega removida com sucesso',
+  })
+  @ApiBadRequestResponse({
+    description: 'Rota não pode ser editada',
+  })
+  @ApiNotFoundResponse({
+    description: 'Rota ou entrega não encontrada',
+  })
+  async removeDeliveryFromRoute(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('deliveryId', ParseUUIDPipe) deliveryId: string,
+  ): Promise<void> {
+    return this.routesService.removeDeliveryFromRoute(id, deliveryId);
+  }
+
+  @Patch(':id/deliveries/reorder')
+  @ApiOperation({
+    summary: 'Reordenar entregas da rota',
+    description: 'Reordena as entregas da rota manualmente',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID da rota',
+    type: String,
+    format: 'uuid',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Entregas reordenadas com sucesso',
+    type: [RouteStopResponseDto],
+  })
+  @ApiBadRequestResponse({
+    description: 'Rota não pode ser editada ou sequências inválidas',
+  })
+  @ApiNotFoundResponse({
+    description: 'Rota não encontrada',
+  })
+  async reorderDeliveries(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() reorderDto: ReorderDeliveriesDto,
+  ): Promise<RouteStop[]> {
+    return this.routesService.reorderDeliveries(id, reorderDto.stops);
   }
 }
