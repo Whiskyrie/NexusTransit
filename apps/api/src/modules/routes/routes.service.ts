@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere, ILike, Between } from 'typeorm';
+import { InjectRepository, InjectEntityManager } from '@nestjs/typeorm';
+import { Repository, FindOptionsWhere, ILike, Between, EntityManager } from 'typeorm';
 import { plainToInstance } from 'class-transformer';
 import { Route } from './entities/route.entity';
 import { RouteStop } from './entities/route_stop.entity';
@@ -37,6 +37,31 @@ interface RouteTypeCharacteristics {
 }
 
 /**
+ * Interface para registro de entrega retornado pelo repositório genérico
+ */
+interface DeliveryRecord {
+  id: string;
+  customer_id: string;
+}
+
+/**
+ * Interface para registro de endereço do cliente retornado pelo repositório genérico
+ */
+interface CustomerAddressRecord {
+  id: string;
+  customer_id: string;
+  full_address: string;
+  coordinates: string | null;
+}
+
+/**
+ * Interface para resultado da query de sequência máxima
+ */
+interface MaxSequenceResult {
+  max: number | null;
+}
+
+/**
  * Interface para métodos de verificação de estado da Route
  */
 interface RouteWithStatusMethods {
@@ -59,6 +84,8 @@ export class RoutesService {
     private readonly routeStopRepository: Repository<RouteStop>,
     @InjectRepository(RouteHistory)
     private readonly routeHistoryRepository: Repository<RouteHistory>,
+    @InjectEntityManager()
+    private readonly entityManager: EntityManager,
     private readonly validatorService: RouteValidatorService,
     private readonly distanceCalculator: DistanceCalculatorService,
   ) {}
@@ -923,5 +950,367 @@ export class RoutesService {
       total_duration_minutes: route.total_duration,
       optimization_score: route.optimization_score,
     };
+  }
+
+  /**
+   * Lista entregas de uma rota em ordem de sequência
+   *
+   * @param routeId - ID da rota
+   * @returns Lista de paradas com informações das entregas
+   */
+  async getRouteDeliveries(routeId: string): Promise<RouteStop[]> {
+    await this.findRouteOrFail(routeId);
+
+    const stops = await this.routeStopRepository.find({
+      where: { route_id: routeId },
+      order: { sequence_order: 'ASC' },
+      relations: ['customer_address', 'customer_address.customer'],
+    });
+
+    return stops;
+  }
+
+  /**
+   * Adiciona uma entrega à rota
+   *
+   * @param routeId - ID da rota
+   * @param deliveryId - ID da entrega
+   * @param sequenceOrder - Posição na sequência (opcional)
+   * @param notes - Observações (opcional)
+   * @returns Parada criada
+   */
+  async addDeliveryToRoute(
+    routeId: string,
+    deliveryId: string,
+    sequenceOrder?: number,
+    notes?: string,
+  ): Promise<RouteStop> {
+    const route = await this.findRouteOrFail(routeId);
+
+    // Validar se rota pode ser editada
+    if (!this.canRouteBeEdited(route)) {
+      throw new BadRequestException(
+        `Rota com status ${route.status} não pode ter entregas adicionadas`,
+      );
+    }
+
+    // Verificar se entrega existe e está disponível
+    const deliveryRepository = this.entityManager.getRepository('deliveries');
+    const deliveryResult: unknown = await deliveryRepository.findOne({
+      where: { id: deliveryId },
+    });
+
+    if (!deliveryResult) {
+      throw new NotFoundException(`Entrega com ID ${deliveryId} não encontrada`);
+    }
+
+    // Validar e fazer type assertion segura para delivery
+    const delivery = this.validateDeliveryRecord(deliveryResult);
+
+    // Verificar se entrega já está em outra rota ativa
+    const existingStop = await this.routeStopRepository
+      .createQueryBuilder('stop')
+      .innerJoin('stop.route', 'route')
+      .where('stop.delivery_id = :deliveryId', { deliveryId })
+      .andWhere('route.status IN (:...statuses)', {
+        statuses: [RouteStatus.PLANNED, RouteStatus.IN_PROGRESS],
+      })
+      .getOne();
+
+    if (existingStop) {
+      throw new BadRequestException('Entrega já está vinculada a outra rota ativa');
+    }
+
+    // Buscar endereço do cliente da entrega
+    const customerAddressRepository = this.entityManager.getRepository('customer_addresses');
+    const customerAddressResult: unknown = await customerAddressRepository.findOne({
+      where: { customer_id: delivery.customer_id },
+    });
+
+    if (!customerAddressResult) {
+      throw new NotFoundException('Endereço do cliente não encontrado');
+    }
+
+    // Validar e fazer type assertion segura para customerAddress
+    const customerAddress = this.validateCustomerAddressRecord(customerAddressResult);
+
+    // Determinar sequência
+    let finalSequence = sequenceOrder;
+    if (!finalSequence) {
+      const maxSequenceResult: unknown = await this.routeStopRepository
+        .createQueryBuilder('stop')
+        .select('MAX(stop.sequence_order)', 'max')
+        .where('stop.route_id = :routeId', { routeId })
+        .getRawOne();
+
+      const maxSequence = this.validateMaxSequenceResult(maxSequenceResult);
+      finalSequence = (maxSequence.max ?? 0) + 1;
+    } else {
+      // Reordenar paradas existentes se necessário
+      await this.routeStopRepository
+        .createQueryBuilder()
+        .update(RouteStop)
+        .set({ sequence_order: () => 'sequence_order + 1' })
+        .where('route_id = :routeId', { routeId })
+        .andWhere('sequence_order >= :sequence', { sequence: finalSequence })
+        .execute();
+    }
+
+    // Criar parada
+    const stop = this.routeStopRepository.create({
+      route_id: routeId,
+      customer_address_id: customerAddress.id,
+      delivery_id: deliveryId,
+      sequence_order: finalSequence,
+      address: customerAddress.full_address,
+      coordinates: customerAddress.coordinates ?? undefined,
+      status: 'PENDING',
+      notes,
+    });
+
+    const savedStop = await this.routeStopRepository.save(stop);
+
+    // Atualizar métricas da rota
+    await this.updateRouteMetricsAfterChange(routeId);
+
+    // Registrar histórico
+    await this.createHistoryEntry(routeId, {
+      event_type: 'DELIVERY_ADDED',
+      description: `Entrega ${deliveryId} adicionada na posição ${finalSequence}`,
+      new_status: route.status,
+    });
+
+    this.logger.log(`Entrega ${deliveryId} adicionada à rota ${routeId}`);
+
+    return savedStop;
+  }
+
+  /**
+   * Valida e converte resultado do repositório para DeliveryRecord
+   */
+  private validateDeliveryRecord(result: unknown): DeliveryRecord {
+    if (
+      typeof result === 'object' &&
+      result !== null &&
+      'id' in result &&
+      'customer_id' in result
+    ) {
+      const record = result as Record<string, unknown>;
+      return {
+        id: String(record.id),
+        customer_id: String(record.customer_id),
+      };
+    }
+    throw new BadRequestException('Formato de entrega inválido');
+  }
+
+  /**
+   * Valida e converte resultado do repositório para CustomerAddressRecord
+   */
+  private validateCustomerAddressRecord(result: unknown): CustomerAddressRecord {
+    if (
+      typeof result === 'object' &&
+      result !== null &&
+      'id' in result &&
+      'customer_id' in result &&
+      'full_address' in result
+    ) {
+      const record = result as Record<string, unknown>;
+
+      // Tratar coordinates de forma segura - pode ser string, objeto ou null
+      let coordinatesValue: string | null = null;
+      if (record.coordinates !== null && record.coordinates !== undefined) {
+        if (typeof record.coordinates === 'string') {
+          coordinatesValue = record.coordinates;
+        } else if (typeof record.coordinates === 'object') {
+          // Se for objeto, converter para JSON string
+          coordinatesValue = JSON.stringify(record.coordinates);
+        }
+      }
+
+      return {
+        id: String(record.id),
+        customer_id: String(record.customer_id),
+        full_address: String(record.full_address),
+        coordinates: coordinatesValue,
+      };
+    }
+    throw new BadRequestException('Formato de endereço do cliente inválido');
+  }
+
+  /**
+   * Valida e converte resultado da query de sequência máxima
+   */
+  private validateMaxSequenceResult(result: unknown): MaxSequenceResult {
+    if (typeof result === 'object' && result !== null && 'max' in result) {
+      const record = result as Record<string, unknown>;
+      const maxValue = record.max;
+      return {
+        max: typeof maxValue === 'number' ? maxValue : null,
+      };
+    }
+    return { max: null };
+  }
+
+  /**
+   * Remove uma entrega da rota
+   *
+   * @param routeId - ID da rota
+   * @param deliveryId - ID da entrega
+   */
+  async removeDeliveryFromRoute(routeId: string, deliveryId: string): Promise<void> {
+    const route = await this.findRouteOrFail(routeId);
+
+    // Validar se rota pode ser editada
+    if (!this.canRouteBeEdited(route)) {
+      throw new BadRequestException(
+        `Rota com status ${route.status} não pode ter entregas removidas`,
+      );
+    }
+
+    // Buscar parada
+    const stop = await this.routeStopRepository.findOne({
+      where: { route_id: routeId, delivery_id: deliveryId },
+    });
+
+    if (!stop) {
+      throw new NotFoundException(`Entrega ${deliveryId} não encontrada na rota`);
+    }
+
+    const removedSequence = stop.sequence_order;
+
+    // Remover parada
+    await this.routeStopRepository.softRemove(stop);
+
+    // Reordenar paradas restantes
+    await this.routeStopRepository
+      .createQueryBuilder()
+      .update(RouteStop)
+      .set({ sequence_order: () => 'sequence_order - 1' })
+      .where('route_id = :routeId', { routeId })
+      .andWhere('sequence_order > :sequence', { sequence: removedSequence })
+      .execute();
+
+    // Atualizar métricas da rota
+    await this.updateRouteMetricsAfterChange(routeId);
+
+    // Registrar histórico
+    await this.createHistoryEntry(routeId, {
+      event_type: 'DELIVERY_REMOVED',
+      description: `Entrega ${deliveryId} removida da posição ${removedSequence}`,
+      new_status: route.status,
+    });
+
+    this.logger.log(`Entrega ${deliveryId} removida da rota ${routeId}`);
+  }
+
+  /**
+   * Reordena entregas na rota
+   *
+   * @param routeId - ID da rota
+   * @param reorderData - Dados de reordenação
+   */
+  async reorderDeliveries(
+    routeId: string,
+    reorderData: { stop_id: string; new_sequence: number }[],
+  ): Promise<RouteStop[]> {
+    const route = await this.findRouteOrFail(routeId);
+
+    // Validar se rota pode ser editada
+    if (!this.canRouteBeEdited(route)) {
+      throw new BadRequestException(
+        `Rota com status ${route.status} não pode ter entregas reordenadas`,
+      );
+    }
+
+    // Buscar todas as paradas da rota
+    const stops = await this.routeStopRepository.find({
+      where: { route_id: routeId },
+    });
+
+    // Validar se todos os IDs existem
+    const stopIds = stops.map(s => s.id);
+    const requestedIds = reorderData.map(r => r.stop_id);
+
+    for (const id of requestedIds) {
+      if (!stopIds.includes(id)) {
+        throw new NotFoundException(`Parada com ID ${id} não encontrada na rota`);
+      }
+    }
+
+    // Validar se não há sequências duplicadas
+    const sequences = reorderData.map(r => r.new_sequence);
+    const uniqueSequences = new Set(sequences);
+    if (sequences.length !== uniqueSequences.size) {
+      throw new BadRequestException('Sequências duplicadas não são permitidas');
+    }
+
+    // Aplicar nova ordenação
+    for (const item of reorderData) {
+      await this.routeStopRepository.update(
+        { id: item.stop_id },
+        { sequence_order: item.new_sequence },
+      );
+    }
+
+    // Atualizar métricas da rota (recalcular distâncias)
+    await this.updateRouteMetricsAfterChange(routeId);
+
+    // Registrar histórico
+    await this.createHistoryEntry(routeId, {
+      event_type: 'DELIVERIES_REORDERED',
+      description: `${reorderData.length} paradas foram reordenadas`,
+      new_status: route.status,
+    });
+
+    this.logger.log(`Entregas da rota ${routeId} reordenadas`);
+
+    // Retornar paradas atualizadas
+    return this.routeStopRepository.find({
+      where: { route_id: routeId },
+      order: { sequence_order: 'ASC' },
+      relations: ['customer_address'],
+    });
+  }
+
+  /**
+   * Atualiza métricas da rota após mudanças nas paradas
+   *
+   * @param routeId - ID da rota
+   */
+  private async updateRouteMetricsAfterChange(routeId: string): Promise<void> {
+    const stops = await this.routeStopRepository.find({
+      where: { route_id: routeId },
+      order: { sequence_order: 'ASC' },
+    });
+
+    // Recalcular distâncias entre paradas
+    let totalDistance = 0;
+
+    for (let i = 0; i < stops.length - 1; i++) {
+      const current = stops[i];
+      const next = stops[i + 1];
+
+      if (current?.coordinates && next?.coordinates) {
+        const distance = this.calcDistance(current.coordinates, next.coordinates);
+
+        // Atualizar distância da próxima parada
+        await this.routeStopRepository.update(
+          { id: next.id },
+          { distance_from_previous_km: distance },
+        );
+
+        totalDistance += distance;
+      }
+    }
+
+    // Atualizar totais da rota
+    await this.routeRepository.update(
+      { id: routeId },
+      {
+        total_deliveries: stops.length,
+        total_distance: totalDistance,
+      },
+    );
   }
 }
