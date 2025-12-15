@@ -217,7 +217,15 @@ export class CreateRouteDto {
   destination_coordinates?: string;
 
   @ApiProperty({
-    description: 'Data planejada para execução (YYYY-MM-DD)',
+    description: 'Data da rota (YYYY-MM-DD)',
+    example: getExampleFutureDate(),
+  })
+  @IsDateString()
+  @IsNotEmpty()
+  route_date!: string;
+
+  @ApiProperty({
+    description: 'Data planejada da rota (YYYY-MM-DD)',
     example: getExampleFutureDate(),
   })
   @IsDateString()
@@ -241,6 +249,98 @@ export class CreateRouteDto {
   @IsString()
   @Length(5, 5)
   planned_end_time?: string;
+
+  @ApiPropertyOptional({
+    description: 'Origem da rota (lat, lng)',
+    example: 'POINT(-23.561414 -46.656250)',
+  })
+  @IsOptional()
+  @IsString()
+  start_location?: string;
+
+  @ApiPropertyOptional({
+    description: 'Destino final da rota (lat, lng)',
+    example: 'POINT(-23.551415 -46.656251)',
+  })
+  @IsOptional()
+  @IsString()
+  end_location?: string;
+
+  @ApiPropertyOptional({
+    description: 'Distância total em km',
+    example: 45.5,
+    minimum: 0,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  total_distance?: number;
+
+  @ApiPropertyOptional({
+    description: 'Duração total em minutos',
+    example: 180,
+    minimum: 1,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  total_duration?: number;
+
+  @ApiPropertyOptional({
+    description: 'Número total de entregas',
+    example: 10,
+    minimum: 0,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  total_deliveries?: number;
+
+  @ApiPropertyOptional({
+    description: 'Número de entregas concluídas',
+    example: 5,
+    minimum: 0,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  completed_deliveries?: number;
+
+  @ApiPropertyOptional({
+    description: 'Número de entregas falhadas',
+    example: 1,
+    minimum: 0,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  failed_deliveries?: number;
+
+  @ApiPropertyOptional({
+    description: 'Score de otimização (0-100)',
+    example: 85,
+    minimum: 0,
+    maximum: 100,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  optimization_score?: number;
+
+  @ApiPropertyOptional({
+    description: 'Sequência de pontos otimizados',
+    example: [
+      { latitude: -23.561414, longitude: -46.65625, sequence: 1 },
+      { latitude: -23.551415, longitude: -46.656251, sequence: 2 },
+    ],
+  })
+  @IsOptional()
+  route_points?: {
+    latitude: number;
+    longitude: number;
+    sequence: number;
+  }[];
 
   @ApiPropertyOptional({
     description: 'Distância total estimada em km',

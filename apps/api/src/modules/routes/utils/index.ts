@@ -2,9 +2,10 @@
  * Barrel export para Utils do módulo Routes
  *
  * Centraliza exports para facilitar imports
+ * Utils genéricos foram movidos para @nexus/common
  */
 
-export * from './cls-audit.util';
 export * from './route.util';
-export * from './date-time.util';
-export * from './auditable.util';
+
+// Re-export utils do @nexus/common para compatibilidade
+export { ClsAuditUtils, AuditableUtils, DateTimeUtils } from '@nexus/common';

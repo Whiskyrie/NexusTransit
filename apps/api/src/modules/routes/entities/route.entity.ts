@@ -5,6 +5,7 @@ import { RouteStatus } from '../enums/route-status';
 import { RouteType } from '../enums/route.type';
 import { Vehicle } from '../../vehicles/entities/vehicle.entity';
 import { Driver } from '../../drivers/entities/driver.entity';
+import { Delivery } from '../../deliveries/entities/delivery.entity';
 import { RouteStop } from './route_stop.entity';
 import { RouteHistory } from './route_history.entity';
 /**
@@ -24,6 +25,7 @@ import { RouteHistory } from './route_history.entity';
 @Index(['type'])
 @Index(['vehicle_id'])
 @Index(['driver_id'])
+@Index(['route_date'])
 @Index(['planned_date'])
 @Index(['created_at'])
 @Auditable({
@@ -49,6 +51,94 @@ export class Route extends BaseEntity {
     comment: 'Nome identificador da rota',
   })
   name!: string;
+
+  @Column({
+    type: 'date',
+    comment: 'Data da rota',
+  })
+  route_date!: Date;
+
+  @Column({
+    type: 'date',
+    comment: 'Data planejada para execução',
+  })
+  planned_date!: Date;
+
+  @Column({
+    type: 'point',
+    nullable: true,
+    comment: 'Origem da rota (lat, lng)',
+    transformer: PointTransformer,
+  })
+  start_location?: string;
+
+  @Column({
+    type: 'point',
+    nullable: true,
+    comment: 'Destino final da rota (lat, lng)',
+    transformer: PointTransformer,
+  })
+  end_location?: string;
+
+  @Column({
+    type: 'time',
+    nullable: true,
+    comment: 'Horário planejado de início',
+  })
+  @Column({
+    type: 'decimal',
+    precision: 10,
+    scale: 2,
+    nullable: true,
+    comment: 'Distância total em km',
+  })
+  total_distance?: number;
+
+  @Column({
+    type: 'integer',
+    nullable: true,
+    comment: 'Duração total em minutos',
+  })
+  total_duration?: number;
+
+  @Column({
+    type: 'integer',
+    nullable: true,
+    comment: 'Número total de entregas',
+  })
+  total_deliveries?: number;
+
+  @Column({
+    type: 'integer',
+    nullable: true,
+    comment: 'Número de entregas concluídas',
+  })
+  completed_deliveries?: number;
+
+  @Column({
+    type: 'integer',
+    nullable: true,
+    comment: 'Número de entregas falhadas',
+  })
+  failed_deliveries?: number;
+
+  @Column({
+    type: 'integer',
+    nullable: true,
+    comment: 'Score de otimização (0-100)',
+  })
+  optimization_score?: number;
+
+  @Column({
+    type: 'jsonb',
+    nullable: true,
+    comment: 'Sequência de pontos otimizados',
+  })
+  route_points?: {
+    latitude: number;
+    longitude: number;
+    sequence: number;
+  }[];
 
   @Column({
     type: 'text',
@@ -134,12 +224,6 @@ export class Route extends BaseEntity {
   destination_coordinates?: string;
 
   // Datas e Horários
-  @Column({
-    type: 'date',
-    comment: 'Data planejada para execução',
-  })
-  planned_date!: Date;
-
   @Column({
     type: 'time',
     nullable: true,
@@ -332,6 +416,20 @@ export class Route extends BaseEntity {
   })
   history?: RouteHistory[];
 
+  @ManyToOne(() => Delivery, delivery => delivery.route, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'delivery_id' })
+  delivery?: Delivery;
+
+  @Column({
+    type: 'uuid',
+    nullable: true,
+    comment: 'ID da entrega associada',
+  })
+  delivery_id?: string;
+
   // Métodos auxiliares
 
   /**
@@ -420,7 +518,7 @@ export class Route extends BaseEntity {
     }
 
     const now = new Date();
-    const dateString = `${this.planned_date.toISOString().split('T')[0]}T${this.planned_end_time}`;
+    const dateString = `${this.route_date.toISOString().split('T')[0]}T${this.planned_end_time}`;
     const plannedEnd = new Date(dateString);
 
     return now > plannedEnd && !this.isFinalStatus();

@@ -128,7 +128,7 @@ describe('TokenService', () => {
   });
 
   describe('validateToken', () => {
-    it('deve validar token válido', async () => {
+    it('deve validar token válido', () => {
       const token = 'valid-token';
       const payload: JwtPayload = {
         sub: 'user-id',
@@ -140,30 +140,30 @@ describe('TokenService', () => {
 
       mockJwtService.verify.mockReturnValue(payload);
 
-      const result = await service.validateToken(token);
+      const result = service.validateToken(token);
 
       expect(result).toEqual(payload);
       expect(mockJwtService.verify).toHaveBeenCalledWith(token);
     });
 
-    it('deve lançar erro para token inválido', async () => {
+    it('deve lançar erro para token inválido', () => {
       const token = 'invalid-token';
 
       mockJwtService.verify.mockImplementation(() => {
         throw new Error('Token inválido');
       });
 
-      await expect(service.validateToken(token)).rejects.toThrow('Token inválido ou expirado');
+      expect(() => service.validateToken(token)).toThrow('Token inválido ou expirado');
     });
 
-    it('deve lançar erro para token expirado', async () => {
+    it('deve lançar erro para token expirado', () => {
       const token = 'expired-token';
 
       mockJwtService.verify.mockImplementation(() => {
         throw new Error('jwt expired');
       });
 
-      await expect(service.validateToken(token)).rejects.toThrow('Token inválido ou expirado');
+      expect(() => service.validateToken(token)).toThrow('Token inválido ou expirado');
     });
   });
 

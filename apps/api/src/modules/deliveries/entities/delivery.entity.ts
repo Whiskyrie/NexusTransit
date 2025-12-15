@@ -5,6 +5,7 @@ import { DeliveryPriority } from '../enums/delivery-priority.enum';
 import { Customer } from '../../customers/entities/customer.entity';
 import { Driver } from '../../drivers/entities/driver.entity';
 import { Vehicle } from '../../vehicles/entities/vehicle.entity';
+import { Route } from '../../routes/entities/route.entity';
 import { DeliveryAttempt } from './delivery-attempt.entity';
 import { DeliveryProof } from './delivery-proof.entity';
 import { DeliveryStatusHistory } from './delivery-status-history.entity';
@@ -349,4 +350,12 @@ export class Delivery extends BaseEntity {
 
   @OneToMany(() => DeliveryStatusHistory, history => history.delivery, { cascade: true })
   statusHistory!: DeliveryStatusHistory[];
+
+  // Relacionamento com Rota
+  @ManyToOne(() => Route, route => route.delivery, { nullable: true })
+  @JoinColumn({ name: 'route_id' })
+  route?: Route;
+
+  @Column('uuid', { nullable: true, comment: 'ID da rota associada' })
+  route_id?: string;
 }

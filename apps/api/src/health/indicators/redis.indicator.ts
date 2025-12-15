@@ -1,44 +1,33 @@
 import { Injectable } from '@nestjs/common';
-import { HealthIndicator, HealthIndicatorResult, HealthCheckError } from '@nestjs/terminus';
+import { HealthIndicatorService, HealthIndicatorResult } from '@nestjs/terminus';
 import { RedisService } from '@nexus/redis';
 
-/**
- * Health Indicator customizado para Redis
- *
- * Verifica se o Redis está respondendo corretamente
- * usando ping/pong
- */
 @Injectable()
-export class RedisHealthIndicator extends HealthIndicator {
-  constructor(private readonly redisService: RedisService) {
-    super();
-  }
+export class RedisHealthIndicator {
+  constructor(
+    private readonly redisService: RedisService,
+    private readonly healthIndicatorService: HealthIndicatorService,
+  ) {}
 
   async isHealthy(key: string): Promise<HealthIndicatorResult> {
+    const indicator = this.healthIndicatorService.check(key);
+
     try {
-      // Tenta fazer um set/get simples para validar conexão
       const testKey = '__health_check__';
       const testValue = Date.now().toString();
 
-      await this.redisService.set(testKey, testValue, 5000); // 5 segundos de TTL
-      const retrievedValue = await this.redisService.get(testKey);
+      await this.redisService.set(testKey, testValue, 5000);
+      const retrievedValue = (await this.redisService.get(testKey)) as string | null;
 
-      const isHealthy = retrievedValue === testValue;
-
-      const result = this.getStatus(key, isHealthy, {
-        message: isHealthy ? 'Redis is up and responding' : 'Redis connection issue',
-      });
-
-      if (!isHealthy) {
-        throw new HealthCheckError('Redis check failed', result);
+      if (retrievedValue === testValue) {
+        return indicator.up({ message: 'Redis is up and responding' });
       }
 
-      return result;
+      return indicator.down({ message: 'Redis connection issue' });
     } catch (error) {
-      const result = this.getStatus(key, false, {
+      return indicator.down({
         message: error instanceof Error ? error.message : 'Redis check failed',
       });
-      throw new HealthCheckError('Redis check failed', result);
     }
   }
 }

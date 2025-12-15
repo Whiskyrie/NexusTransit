@@ -176,7 +176,7 @@ export class AuthService {
   async refreshTokens(refreshToken: string): Promise<AuthResponseDto> {
     try {
       // Valida refresh token
-      const decoded = (await this.tokenService.validateToken(refreshToken)) as ExtendedJwtPayload;
+      const decoded = this.tokenService.validateToken(refreshToken) as ExtendedJwtPayload;
 
       if (decoded.type !== 'refresh') {
         throw new UnauthorizedException('Token inválido');

@@ -55,6 +55,13 @@ export class RouteStop extends BaseEntity {
   })
   customer_address_id!: string;
 
+  @Column({
+    type: 'uuid',
+    nullable: true,
+    comment: 'ID da entrega associada a esta parada',
+  })
+  delivery_id?: string;
+
   // Sequência
   @Column({
     type: 'integer',
@@ -163,6 +170,7 @@ export class RouteStop extends BaseEntity {
     requires_signature?: boolean;
     requires_photo?: boolean;
     special_instructions?: string;
+    priority?: number;
   };
 
   // Contato
