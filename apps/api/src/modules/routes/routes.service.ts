@@ -26,6 +26,28 @@ interface ChangedField {
   new_value: unknown;
 }
 
+interface ParsedCoordinates {
+  latitude: number;
+  longitude: number;
+}
+
+interface RouteTypeCharacteristics {
+  avgSpeed: number;
+  delayFactor: number;
+}
+
+/**
+ * Interface para métodos de verificação de estado da Route
+ */
+interface RouteWithStatusMethods {
+  canBeEdited?: () => boolean;
+  canBeStarted?: () => boolean;
+  canBePaused?: () => boolean;
+  canBeResumed?: () => boolean;
+  canBeCompleted?: () => boolean;
+  canBeCancelled?: () => boolean;
+}
+
 @Injectable()
 export class RoutesService {
   private readonly logger = new Logger(RoutesService.name);
@@ -42,28 +64,143 @@ export class RoutesService {
   ) {}
 
   /**
+   * Converte valor para Date de forma segura
+   * Aceita string, number ou Date e retorna Date válido
+   */
+  private toSafeDate(value: unknown): Date {
+    if (value instanceof Date) {
+      return value;
+    }
+    if (typeof value === 'string' || typeof value === 'number') {
+      return new Date(value);
+    }
+    return new Date();
+  }
+
+  /**
+   * Verifica se a rota pode ser editada de forma segura
+   */
+  private canRouteBeEdited(route: Route): boolean {
+    const routeWithMethods = route as RouteWithStatusMethods;
+    if (typeof routeWithMethods.canBeEdited === 'function') {
+      return routeWithMethods.canBeEdited();
+    }
+    // Fallback: verificar status diretamente
+    return route.status === RouteStatus.PLANNED;
+  }
+
+  /**
+   * Verifica se a rota pode ser iniciada de forma segura
+   */
+  private canRouteBeStarted(route: Route): boolean {
+    const routeWithMethods = route as RouteWithStatusMethods;
+    if (typeof routeWithMethods.canBeStarted === 'function') {
+      return routeWithMethods.canBeStarted();
+    }
+    return route.status === RouteStatus.PLANNED;
+  }
+
+  /**
+   * Verifica se a rota pode ser pausada de forma segura
+   */
+  private canRouteBePaused(route: Route): boolean {
+    const routeWithMethods = route as RouteWithStatusMethods;
+    if (typeof routeWithMethods.canBePaused === 'function') {
+      return routeWithMethods.canBePaused();
+    }
+    return route.status === RouteStatus.IN_PROGRESS;
+  }
+
+  /**
+   * Verifica se a rota pode ser retomada de forma segura
+   */
+  private canRouteBeResumed(route: Route): boolean {
+    const routeWithMethods = route as RouteWithStatusMethods;
+    if (typeof routeWithMethods.canBeResumed === 'function') {
+      return routeWithMethods.canBeResumed();
+    }
+    return route.status === RouteStatus.PAUSED;
+  }
+
+  /**
+   * Verifica se a rota pode ser finalizada de forma segura
+   */
+  private canRouteBeCompleted(route: Route): boolean {
+    const routeWithMethods = route as RouteWithStatusMethods;
+    if (typeof routeWithMethods.canBeCompleted === 'function') {
+      return routeWithMethods.canBeCompleted();
+    }
+    return route.status === RouteStatus.IN_PROGRESS;
+  }
+
+  /**
+   * Verifica se a rota pode ser cancelada de forma segura
+   */
+  private canRouteBeCancelled(route: Route): boolean {
+    const routeWithMethods = route as RouteWithStatusMethods;
+    if (typeof routeWithMethods.canBeCancelled === 'function') {
+      return routeWithMethods.canBeCancelled();
+    }
+    return (
+      route.status === RouteStatus.PLANNED ||
+      route.status === RouteStatus.IN_PROGRESS ||
+      route.status === RouteStatus.PAUSED
+    );
+  }
+
+  /**
    * Wrapper para parseCoordinates com tipagem explícita
    * Resolve warnings de unsafe do ESLint em módulos externos
    */
-  private parseCoords(point: string): { latitude: number; longitude: number } {
-    return this.distanceCalculator.parseCoordinates(point) as {
-      latitude: number;
-      longitude: number;
-    };
+  private parseCoords(point: string): ParsedCoordinates {
+    const result = (
+      this.distanceCalculator as unknown as {
+        parseCoordinates: (point: string) => { latitude: number; longitude: number };
+      }
+    ).parseCoordinates(point);
+
+    if (
+      typeof result === 'object' &&
+      result !== null &&
+      'latitude' in result &&
+      'longitude' in result
+    ) {
+      const parsed = result as { latitude: unknown; longitude: unknown };
+      return {
+        latitude: Number(parsed.latitude),
+        longitude: Number(parsed.longitude),
+      };
+    }
+
+    return { latitude: 0, longitude: 0 };
   }
 
   /**
    * Wrapper para calculateDistance com tipagem explícita
    */
   private calcDistance(origin: string, destination: string): number {
-    return this.distanceCalculator.calculateDistance(origin, destination);
+    const result = (
+      this.distanceCalculator as unknown as {
+        calculateDistance: (origin: string, destination: string) => number;
+      }
+    ).calculateDistance(origin, destination);
+    return typeof result === 'number' ? result : 0;
   }
 
   /**
    * Wrapper para calculateEstimatedDuration com tipagem explícita
    */
   private calcDuration(distanceKm: number, avgSpeed?: number, delayFactor?: number): number {
-    return this.distanceCalculator.calculateEstimatedDuration(distanceKm, avgSpeed, delayFactor);
+    const result = (
+      this.distanceCalculator as unknown as {
+        calculateEstimatedDuration: (
+          distanceKm: number,
+          avgSpeed?: number,
+          delayFactor?: number,
+        ) => number;
+      }
+    ).calculateEstimatedDuration(distanceKm, avgSpeed, delayFactor);
+    return typeof result === 'number' ? result : 0;
   }
 
   async create(createDto: CreateRouteDto): Promise<RouteResponseDto> {
@@ -71,19 +208,16 @@ export class RoutesService {
 
     await this.validatorService.validateUniqueRouteCode(createDto.route_code);
     await this.validatorService.validateDriverExists(createDto.driver_id);
-    await this.validatorService.validateDriverAssignment(
-      createDto.driver_id,
-      new Date(createDto.planned_date),
-    );
+
+    const plannedDateValue: Date = this.toSafeDate(createDto.planned_date);
+
+    await this.validatorService.validateDriverAssignment(createDto.driver_id, plannedDateValue);
 
     await this.validatorService.validateVehicleExists(createDto.vehicle_id);
-    await this.validatorService.validateVehicleAssignment(
-      createDto.vehicle_id,
-      new Date(createDto.planned_date),
-    );
+    await this.validatorService.validateVehicleAssignment(createDto.vehicle_id, plannedDateValue);
 
     this.validatorService.validateRouteDates(
-      new Date(createDto.planned_date),
+      plannedDateValue,
       createDto.planned_start_time,
       createDto.planned_end_time,
     );
@@ -115,6 +249,8 @@ export class RoutesService {
 
     const { stops, ...routeData } = createDto;
 
+    const routeDateValue: Date = this.toSafeDate(createDto.route_date);
+
     // Criar objeto LIMPO - sem campos undefined
     const preparedData: Partial<Route> = {
       route_code: routeData.route_code,
@@ -124,7 +260,8 @@ export class RoutesService {
       type: routeData.type,
       origin_address: routeData.origin_address,
       destination_address: routeData.destination_address,
-      planned_date: new Date(createDto.planned_date),
+      route_date: routeDateValue,
+      planned_date: plannedDateValue,
     };
 
     // Adicionar campos opcionais APENAS se tiverem valor
@@ -218,13 +355,19 @@ export class RoutesService {
       where.driver_id = filters.driver_id;
     }
 
-    if (filters.planned_date_from || filters.planned_date_to) {
-      const startDate = filters.planned_date_from
-        ? new Date(filters.planned_date_from)
-        : new Date(ROUTE_DATE_DEFAULTS.MIN_DATE);
-      const endDate = filters.planned_date_to
-        ? new Date(filters.planned_date_to)
-        : new Date(ROUTE_DATE_DEFAULTS.MAX_DATE);
+    if (filters.route_date_from || filters.route_date_to) {
+      const startDateInput: unknown = filters.route_date_from;
+      const endDateInput: unknown = filters.route_date_to;
+
+      const startDate: Date =
+        typeof startDateInput === 'string' || typeof startDateInput === 'number'
+          ? new Date(startDateInput)
+          : new Date(ROUTE_DATE_DEFAULTS.MIN_DATE);
+
+      const endDate: Date =
+        typeof endDateInput === 'string' || typeof endDateInput === 'number'
+          ? new Date(endDateInput)
+          : new Date(ROUTE_DATE_DEFAULTS.MAX_DATE);
 
       where.planned_date = Between(startDate, endDate);
     }
@@ -271,7 +414,7 @@ export class RoutesService {
     this.logger.log(`Atualizando rota: ${id}`);
 
     if (
-      !route.canBeEdited() &&
+      !this.canRouteBeEdited(route) &&
       Object.keys(updateDto).length > ROUTE_VALIDATION_DEFAULTS.MAX_CHANGES_PER_UPDATE
     ) {
       throw new BadRequestException(
@@ -302,8 +445,12 @@ export class RoutesService {
     }
 
     if (updateDto.planned_date || updateDto.planned_start_time || updateDto.planned_end_time) {
+      const plannedDateForValidation: Date = updateDto.planned_date
+        ? this.toSafeDate(updateDto.planned_date)
+        : route.planned_date;
+
       this.validatorService.validateRouteDates(
-        updateDto.planned_date ? new Date(updateDto.planned_date) : route.planned_date,
+        plannedDateForValidation,
         updateDto.planned_start_time ?? route.planned_start_time,
         updateDto.planned_end_time ?? route.planned_end_time,
       );
@@ -344,8 +491,11 @@ export class RoutesService {
     if (updateDto.destination_coordinates !== undefined) {
       route.destination_coordinates = updateDto.destination_coordinates;
     }
+    if (updateDto.route_date) {
+      route.route_date = this.toSafeDate(updateDto.route_date);
+    }
     if (updateDto.planned_date) {
-      route.planned_date = new Date(updateDto.planned_date);
+      route.planned_date = this.toSafeDate(updateDto.planned_date);
     }
     if (updateDto.planned_start_time !== undefined) {
       route.planned_start_time = updateDto.planned_start_time;
@@ -407,7 +557,7 @@ export class RoutesService {
   async startRoute(id: string): Promise<RouteResponseDto> {
     const route = await this.findRouteOrFail(id);
 
-    if (!route.canBeStarted()) {
+    if (!this.canRouteBeStarted(route)) {
       throw new BadRequestException(`Rota não pode ser iniciada no status ${route.status}`);
     }
 
@@ -431,7 +581,7 @@ export class RoutesService {
   async pauseRoute(id: string): Promise<RouteResponseDto> {
     const route = await this.findRouteOrFail(id);
 
-    if (!route.canBePaused()) {
+    if (!this.canRouteBePaused(route)) {
       throw new BadRequestException(`Rota não pode ser pausada no status ${route.status}`);
     }
 
@@ -454,7 +604,7 @@ export class RoutesService {
   async resumeRoute(id: string): Promise<RouteResponseDto> {
     const route = await this.findRouteOrFail(id);
 
-    if (!route.canBeResumed()) {
+    if (!this.canRouteBeResumed(route)) {
       throw new BadRequestException(`Rota não pode ser retomada no status ${route.status}`);
     }
 
@@ -477,7 +627,7 @@ export class RoutesService {
   async completeRoute(id: string): Promise<RouteResponseDto> {
     const route = await this.findRouteOrFail(id);
 
-    if (!route.canBeCompleted()) {
+    if (!this.canRouteBeCompleted(route)) {
       throw new BadRequestException(`Rota não pode ser finalizada no status ${route.status}`);
     }
 
@@ -506,7 +656,7 @@ export class RoutesService {
   async cancelRoute(id: string, reason: string): Promise<RouteResponseDto> {
     const route = await this.findRouteOrFail(id);
 
-    if (!route.canBeCancelled()) {
+    if (!this.canRouteBeCancelled(route)) {
       throw new BadRequestException(`Rota não pode ser cancelada no status ${route.status}`);
     }
 
@@ -570,12 +720,29 @@ export class RoutesService {
     await this.routeHistoryRepository.save(history);
   }
 
+  /**
+   * Obtém valor de uma propriedade do Route de forma segura
+   */
+  private getRoutePropertyValue(route: Route, key: string): unknown {
+    const routeRecord = route as unknown as Record<string, unknown>;
+    return routeRecord[key];
+  }
+
+  /**
+   * Obtém valor de uma propriedade do UpdateRouteDto de forma segura
+   */
+  private getUpdateDtoPropertyValue(dto: UpdateRouteDto, key: string): unknown {
+    const dtoRecord = dto as unknown as Record<string, unknown>;
+    return dtoRecord[key];
+  }
+
   private getChangedFields(original: Route, updated: UpdateRouteDto): ChangedField[] {
     const changed: ChangedField[] = [];
+    const keys = Object.keys(updated);
 
-    (Object.keys(updated) as (keyof UpdateRouteDto)[]).forEach(key => {
-      const oldValue = original[key as keyof Route];
-      const newValue = updated[key];
+    for (const key of keys) {
+      const oldValue: unknown = this.getRoutePropertyValue(original, key);
+      const newValue: unknown = this.getUpdateDtoPropertyValue(updated, key);
 
       if (oldValue !== newValue && newValue !== undefined) {
         changed.push({
@@ -584,30 +751,34 @@ export class RoutesService {
           new_value: newValue,
         });
       }
-    });
+    }
 
     return changed;
   }
 
-  private getRouteTypeCharacteristics(type: RouteType): {
-    avgSpeed: number;
-    delayFactor: number;
-  } {
-    const characteristics = ROUTE_TYPE_CHARACTERISTICS[type];
+  private getRouteTypeCharacteristics(type: RouteType): RouteTypeCharacteristics {
+    const characteristics: unknown = ROUTE_TYPE_CHARACTERISTICS[type];
 
-    if (!characteristics) {
-      this.logger.warn(
-        `Características não encontradas para tipo de rota: ${type}. Usando valores padrão.`,
-      );
-      return {
-        avgSpeed: 60,
-        delayFactor: 1.2,
-      };
+    if (
+      typeof characteristics === 'object' &&
+      characteristics !== null &&
+      'avgSpeed' in characteristics &&
+      'delayFactor' in characteristics
+    ) {
+      const parsed = characteristics as { avgSpeed: unknown; delayFactor: unknown };
+      const avgSpeed = typeof parsed.avgSpeed === 'number' ? parsed.avgSpeed : 60;
+      const delayFactor = typeof parsed.delayFactor === 'number' ? parsed.delayFactor : 1.2;
+
+      return { avgSpeed, delayFactor };
     }
 
+    this.logger.warn(
+      `Características não encontradas para tipo de rota: ${type}. Usando valores padrão.`,
+    );
+
     return {
-      avgSpeed: characteristics.avgSpeed,
-      delayFactor: characteristics.delayFactor,
+      avgSpeed: 60,
+      delayFactor: 1.2,
     };
   }
 
@@ -621,9 +792,11 @@ export class RoutesService {
    * - Converter nested objects (@Type)
    */
   private mapToResponseDto(route: Route): RouteResponseDto {
-    return plainToInstance(RouteResponseDto, route, {
+    const result: unknown = plainToInstance(RouteResponseDto, route, {
       excludeExtraneousValues: true,
     });
+
+    return result as RouteResponseDto;
   }
 
   /**
@@ -633,9 +806,11 @@ export class RoutesService {
    * Método auxiliar disponível para uso futuro em endpoints específicos de paradas
    */
   private mapStopToResponseDto(stop: RouteStop): RouteStopResponseDto {
-    return plainToInstance(RouteStopResponseDto, stop, {
+    const result: unknown = plainToInstance(RouteStopResponseDto, stop, {
       excludeExtraneousValues: true,
     });
+
+    return result as RouteStopResponseDto;
   }
 
   /**
@@ -652,8 +827,8 @@ export class RoutesService {
     route_code: string;
     status: RouteStatus;
     route_date: Date;
-    start_location: { latitude: number; longitude: number } | null;
-    end_location: { latitude: number; longitude: number } | null;
+    start_location: ParsedCoordinates | null;
+    end_location: ParsedCoordinates | null;
     stops: {
       id: string;
       sequence: number;
@@ -665,7 +840,7 @@ export class RoutesService {
       planned_arrival_time: string | null;
       actual_arrival_time: Date | null;
     }[];
-    polyline: { latitude: number; longitude: number }[];
+    polyline: ParsedCoordinates[];
     total_distance_km: number | undefined;
     total_duration_minutes: number | undefined;
     optimization_score: number | undefined;
@@ -680,34 +855,37 @@ export class RoutesService {
     }
 
     // Ordenar paradas por sequência
-    const orderedStops = (route.stops ?? []).sort((a, b) => a.sequence_order - b.sequence_order);
+    const routeStops: RouteStop[] = route.stops ?? [];
+    const orderedStops: RouteStop[] = [...routeStops].sort(
+      (a, b) => a.sequence_order - b.sequence_order,
+    );
 
     // Montar array de coordenadas para polyline (linha conectando todas as paradas)
-    const polyline: { latitude: number; longitude: number }[] = [];
+    const polyline: ParsedCoordinates[] = [];
 
     // Adicionar start_location à polyline se existir
     if (route.start_location) {
-      const startCoords = this.parseCoords(route.start_location);
+      const startCoords: ParsedCoordinates = this.parseCoords(route.start_location);
       polyline.push(startCoords);
     }
 
     // Adicionar coordenadas de cada parada
     for (const stop of orderedStops) {
       if (stop.coordinates) {
-        const coords = this.parseCoords(stop.coordinates);
+        const coords: ParsedCoordinates = this.parseCoords(stop.coordinates);
         polyline.push(coords);
       }
     }
 
     // Adicionar end_location à polyline se existir
     if (route.end_location) {
-      const endCoords = this.parseCoords(route.end_location);
+      const endCoords: ParsedCoordinates = this.parseCoords(route.end_location);
       polyline.push(endCoords);
     }
 
     // Montar marcadores de paradas
     const stops = orderedStops.map(stop => {
-      const coords = stop.coordinates
+      const coords: ParsedCoordinates = stop.coordinates
         ? this.parseCoords(stop.coordinates)
         : { latitude: 0, longitude: 0 };
 
@@ -724,13 +902,21 @@ export class RoutesService {
       };
     });
 
+    const startLocation: ParsedCoordinates | null = route.start_location
+      ? this.parseCoords(route.start_location)
+      : null;
+
+    const endLocation: ParsedCoordinates | null = route.end_location
+      ? this.parseCoords(route.end_location)
+      : null;
+
     return {
       route_id: route.id,
       route_code: route.route_code,
       status: route.status,
       route_date: route.route_date,
-      start_location: route.start_location ? this.parseCoords(route.start_location) : null,
-      end_location: route.end_location ? this.parseCoords(route.end_location) : null,
+      start_location: startLocation,
+      end_location: endLocation,
       stops,
       polyline,
       total_distance_km: route.total_distance,
