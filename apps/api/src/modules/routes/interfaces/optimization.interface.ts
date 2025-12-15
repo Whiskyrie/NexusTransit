@@ -6,14 +6,18 @@
  * @module Routes/Interfaces
  */
 
-import type { GeoPoint as BaseGeoPoint } from '@nexus/common';
-
 /**
  * GeoPoint estendido para rotas com delivery_id
  */
-export interface GeoPoint extends BaseGeoPoint {
+export interface GeoPoint {
+  latitude: number;
+  longitude: number;
   sequence: number;
   delivery_id?: string;
+  entity_id?: string;
+  priority?: number;
+  time_window_start?: string;
+  time_window_end?: string;
 }
 
 /**
