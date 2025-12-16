@@ -129,7 +129,7 @@ export class AddProofDto {
 
   @ApiPropertyOptional({
     description: 'Documento de quem recebeu (CPF/RG)',
-    example: '12345678900',
+    example: '43380928828',
   })
   @IsOptional()
   @IsString()

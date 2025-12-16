@@ -310,7 +310,7 @@ export class CreateDeliveryProofDto {
 
   @ApiProperty({
     description: 'Documento do recebedor',
-    example: '12345678901',
+    example: '43380928828',
     required: false,
   })
   @IsOptional()
@@ -479,7 +479,7 @@ export class UploadDeliveryProofDto {
 
   @ApiProperty({
     description: 'Documento do recebedor',
-    example: '12345678901',
+    example: '43380928828',
     required: false,
   })
   @IsOptional()
@@ -636,7 +636,7 @@ export class DeliveryProofResponseDto {
 
   @ApiProperty({
     description: 'Documento do recebedor',
-    example: '12345678901',
+    example: '43380928828',
     required: false,
   })
   recipient_document?: string;

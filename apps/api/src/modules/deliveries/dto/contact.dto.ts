@@ -30,7 +30,7 @@ export class ContactDto {
 
   @ApiPropertyOptional({
     description: 'Documento (CPF/CNPJ)',
-    example: '12345678901',
+    example: '43380928828',
   })
   @IsOptional()
   @IsString()
