@@ -96,7 +96,7 @@ export class DriverResponseDto {
 
   @ApiProperty({
     description: 'Número da CNH (formatado)',
-    example: '12345678901',
+    example: '35166528611',
   })
   @Expose()
   cnh_number!: string;

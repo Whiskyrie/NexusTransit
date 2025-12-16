@@ -27,7 +27,7 @@ export class DriverFilterDto {
 
   @ApiProperty({
     description: 'Filtrar por CPF',
-    example: '12345678901',
+    example: '43380928828',
     required: false,
   })
   @IsOptional()

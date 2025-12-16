@@ -22,7 +22,7 @@ import { IsCPF, IsCNH } from '@nexus/common';
 export class UpdateDriverDto extends PartialType(CreateDriverDto) {
   @ApiProperty({
     description: 'CPF do motorista (apenas números)',
-    example: '12345678901',
+    example: '43380928828',
     minLength: 11,
     maxLength: 11,
     required: false,
@@ -80,7 +80,7 @@ export class UpdateDriverDto extends PartialType(CreateDriverDto) {
 
   @ApiProperty({
     description: 'Número da CNH',
-    example: '12345678901',
+    example: '35166528611',
     minLength: 11,
     maxLength: 11,
     required: false,
