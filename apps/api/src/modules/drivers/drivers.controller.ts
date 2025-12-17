@@ -28,6 +28,7 @@ import { DriverFilterDto } from './dto/driver-filter.dto';
 import { DriverResponseDto } from './dto/driver-response.dto';
 import { PaginatedResponseDto } from '@nexus/common';
 import { DriverStatus } from './enums/driver-status.enum';
+import { CNHCategory } from './enums/cnh-category.enum';
 
 @ApiTags('Drivers')
 @Controller('drivers')
