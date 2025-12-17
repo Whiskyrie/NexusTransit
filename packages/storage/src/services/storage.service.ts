@@ -113,6 +113,70 @@ export class StorageService {
   }
 
   /**
+   * Upload de arquivo genérico (documentos PDF, etc.)
+   */
+  async uploadFile(
+    file: Express.Multer.File,
+    folder = "documents",
+    userId?: string,
+  ): Promise<{ filePath: string; fileHash: string; url: string }> {
+    try {
+      // Validar o arquivo
+      if (!file) {
+        throw new BadRequestException("No file provided");
+      }
+
+      if (file.size > this.storageConfig.upload.maxFileSize) {
+        throw new BadRequestException(
+          `File size too large. Maximum allowed: ${this.storageConfig.upload.maxFileSize / (1024 * 1024)}MB`,
+        );
+      }
+
+      // Gerar nome único para o arquivo
+      const fileExtension = this.getFileExtension(file.originalname);
+      const fileName = `${folder}/${uuidv4()}${fileExtension}`;
+      const fileHash = uuidv4();
+
+      // Upload do arquivo
+      const url = await this.uploadToB2(file.buffer, fileName, file.mimetype);
+
+      // Log da operação
+      this.logger.log(`File uploaded successfully: ${fileName}`, {
+        originalName: file.originalname,
+        size: file.size,
+        userId,
+      });
+
+      return {
+        filePath: fileName,
+        fileHash,
+        url,
+      };
+    } catch (error) {
+      this.logger.error("Failed to upload file", error instanceof Error ? error.stack : undefined);
+
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException("Failed to upload file");
+    }
+  }
+
+  /**
+   * Upload múltiplo de arquivos
+   */
+  async uploadMultipleFiles(
+    files: Express.Multer.File[],
+    folder = "documents",
+    userId?: string,
+  ): Promise<Array<{ filePath: string; fileHash: string; url: string }>> {
+    const uploadPromises = files.map((file) => this.uploadFile(file, folder, userId));
+
+    return Promise.all(uploadPromises);
+  }
+
+  /**
    * Deletar imagem e seus thumbnails
    */
   async deleteImage(imageUrl: string): Promise<void> {
