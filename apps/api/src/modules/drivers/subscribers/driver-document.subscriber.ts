@@ -1,6 +1,10 @@
 import { EntitySubscriberInterface, EventSubscriber, InsertEvent, UpdateEvent } from 'typeorm';
 import { Logger, Injectable } from '@nestjs/common';
 import { DriverDocument } from '../entities/driver-document.entity';
+import {
+  getDocumentValidityStatus,
+  DocumentValidityStatus,
+} from '../utils/document-validation.util';
 
 /**
  * TypeORM Subscriber para monitorar uploads e mudanças em documentos de motoristas
@@ -55,6 +59,9 @@ export class DriverDocumentSubscriber implements EntitySubscriberInterface<Drive
       this.logger.log(`Documento obrigatório recebido: ${entity.document_type}`);
     }
 
+    // Verificar data de expiração
+    this.checkDocumentExpiration(entity);
+
     // TODO: Implementar notificação para administradores revisarem o documento
     // this.notificationService.notifyNewDocument(entity);
   }
@@ -101,6 +108,66 @@ export class DriverDocumentSubscriber implements EntitySubscriberInterface<Drive
     // Detecta exclusão lógica
     if (entity.deleted_at && !databaseEntity.deleted_at) {
       this.logger.warn(`Documento ${entity.document_type} foi excluído (soft delete)`);
+    }
+
+    // Verificar mudança na data de expiração
+    if (
+      entity.expiration_date &&
+      entity.expiration_date?.toString() !== databaseEntity.expiration_date?.toString()
+    ) {
+      this.logger.log(
+        `Data de expiração do documento ${entity.document_type} foi atualizada: ` +
+          `${databaseEntity.expiration_date?.toString() ?? 'N/A'} → ${entity.expiration_date.toString()}`,
+      );
+      this.checkDocumentExpiration(entity);
+    }
+  }
+
+  /**
+   * Verifica e alerta sobre a expiração do documento
+   */
+  private checkDocumentExpiration(document: DriverDocument): void {
+    if (!document.expiration_date) {
+      return;
+    }
+
+    const validityStatus = getDocumentValidityStatus(document.expiration_date);
+    const driverId = document.driver?.id ?? document.driver_id ?? 'Unknown';
+
+    switch (validityStatus.status) {
+      case DocumentValidityStatus.EXPIRED:
+        this.logger.error(
+          `DOCUMENTO VENCIDO: ${document.document_type} do motorista ${driverId} ` +
+            `venceu há ${Math.abs(validityStatus.daysUntilExpiration)} dias`,
+        );
+        // TODO: Notificar sobre documento vencido
+        // this.notificationService.notifyExpiredDocument(document);
+        break;
+
+      case DocumentValidityStatus.EXPIRING_CRITICAL:
+        this.logger.warn(
+          `URGENTE: ${document.document_type} do motorista ${driverId} ` +
+            `vence em ${validityStatus.daysUntilExpiration} dias - RENOVAÇÃO URGENTE`,
+        );
+        // TODO: Notificar sobre vencimento crítico
+        // this.notificationService.notifyCriticalExpiration(document);
+        break;
+
+      case DocumentValidityStatus.EXPIRING_SOON:
+        this.logger.warn(
+          `ATENÇÃO: ${document.document_type} do motorista ${driverId} ` +
+            `vence em ${validityStatus.daysUntilExpiration} dias`,
+        );
+        // TODO: Notificar sobre vencimento próximo
+        // this.notificationService.notifyUpcomingExpiration(document);
+        break;
+
+      case DocumentValidityStatus.VALID:
+        this.logger.debug(
+          `Documento ${document.document_type} do motorista ${driverId} ` +
+            `válido por ${validityStatus.daysUntilExpiration} dias`,
+        );
+        break;
     }
   }
 
