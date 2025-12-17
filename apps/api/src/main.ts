@@ -34,7 +34,6 @@ async function bootstrap(): Promise<void> {
       'API para gerenciamento de entregas, rotas, motoristas, veículos e clientes do sistema NexusTransit',
     )
     .setVersion('1.0')
-    .addTag('Auth', 'Autenticação e autorização')
     .addTag('Users', 'Gerenciamento de usuários')
     .addTag('Drivers', 'Gerenciamento de motoristas')
     .addTag('Vehicles', 'Gerenciamento de veículos')
