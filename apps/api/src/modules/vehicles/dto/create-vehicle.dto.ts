@@ -16,6 +16,7 @@ import { Transform } from 'class-transformer';
 import { VehicleType } from '../enums/vehicle-type.enum';
 import { FuelType } from '../enums/fuel-type.enum';
 import { VehicleStatus } from '../enums/vehicle-status.enum';
+import { LicensePlateType } from '../enums/license-plate-type.enum';
 import { IsLicensePlate, normalizeLicensePlate } from '@nexus/common';
 
 export class CreateVehicleDto {
@@ -31,6 +32,17 @@ export class CreateVehicleDto {
     normalizeLicensePlate(typeof value === 'string' ? value : String(value)),
   )
   license_plate!: string;
+
+  @ApiProperty({
+    description: 'Tipo de formato da placa',
+    enum: LicensePlateType,
+    example: LicensePlateType.MERCOSUL,
+    default: LicensePlateType.MERCOSUL,
+    required: false,
+  })
+  @IsOptional()
+  @IsEnum(LicensePlateType)
+  license_plate_type?: LicensePlateType = LicensePlateType.MERCOSUL;
 
   @ApiProperty({
     description: 'Marca do veículo',
@@ -164,6 +176,119 @@ export class CreateVehicleDto {
   @IsOptional()
   @IsDateString()
   next_maintenance_at?: string;
+
+  @ApiProperty({
+    description: 'Próxima manutenção em km',
+    example: 20000,
+    required: false,
+    minimum: 0,
+  })
+  @IsOptional()
+  @IsPositive()
+  next_maintenance_km?: number;
+
+  @ApiProperty({
+    description: 'Número do chassi',
+    example: '9BWZZZ377VT000000',
+    required: false,
+    maxLength: 50,
+  })
+  @IsOptional()
+  @IsString()
+  @Length(1, 50)
+  chassis_number?: string;
+
+  @ApiProperty({
+    description: 'Número do RENAVAM',
+    example: '12345678901',
+    required: false,
+    maxLength: 50,
+  })
+  @IsOptional()
+  @IsString()
+  @Length(1, 50)
+  renavam?: string;
+
+  @ApiProperty({
+    description: 'Data de aquisição do veículo',
+    example: '2023-01-15',
+    required: false,
+    format: 'date',
+  })
+  @IsOptional()
+  @IsDateString()
+  acquisition_date?: string;
+
+  @ApiProperty({
+    description: 'Valor de aquisição',
+    example: 100000.0,
+    required: false,
+    minimum: 0,
+  })
+  @IsOptional()
+  @IsPositive()
+  acquisition_value?: number;
+
+  @ApiProperty({
+    description: 'Consumo médio em km/l',
+    example: 12.5,
+    required: false,
+    minimum: 0,
+  })
+  @IsOptional()
+  @IsPositive()
+  average_consumption?: number;
+
+  @ApiProperty({
+    description: 'Seguradora',
+    example: 'Seguradora XYZ',
+    required: false,
+    maxLength: 100,
+  })
+  @IsOptional()
+  @IsString()
+  @Length(1, 100)
+  insurance_company?: string;
+
+  @ApiProperty({
+    description: 'Número da apólice de seguro',
+    example: '123456789',
+    required: false,
+    maxLength: 50,
+  })
+  @IsOptional()
+  @IsString()
+  @Length(1, 50)
+  insurance_policy_number?: string;
+
+  @ApiProperty({
+    description: 'Data de vencimento do seguro',
+    example: '2024-12-31',
+    required: false,
+    format: 'date',
+  })
+  @IsOptional()
+  @IsDateString()
+  insurance_expiry_date?: string;
+
+  @ApiProperty({
+    description: 'Data de vencimento do licenciamento',
+    example: '2024-12-31',
+    required: false,
+    format: 'date',
+  })
+  @IsOptional()
+  @IsDateString()
+  license_expiry_date?: string;
+
+  @ApiProperty({
+    description: 'Observações gerais',
+    example: 'Veículo com ar condicionado e direção hidráulica',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  notes?: string;
 
   @ApiProperty({
     description: 'Possui rastreamento GPS',
