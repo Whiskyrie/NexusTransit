@@ -48,7 +48,7 @@ export class CustomerFilterDto {
     description: 'Filtrar por múltiplos status',
     enum: CustomerStatus,
     isArray: true,
-    example: [CustomerStatus.ACTIVE, CustomerStatus.PENDING],
+    example: [CustomerStatus.ACTIVE, CustomerStatus.PROSPECT],
   })
   @IsOptional()
   @IsArray()
