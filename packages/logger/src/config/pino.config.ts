@@ -78,9 +78,18 @@ export const getPinoConfig = (): Params => {
               target: "pino-pretty",
               options: {
                 colorize: true,
-                singleLine: true,
-                translateTime: "yyyy-mm-dd HH:MM:ss.l",
-                ignore: "pid,hostname",
+                levelFirst: true,
+                translateTime: "HH:MM:ss.l",
+                ignore: "pid,hostname,context",
+                messageFormat: "{context} | {msg}",
+                customColors: "info:blue,warn:yellow,error:red,debug:magenta",
+                customLevels: "trace:10,debug:20,info:30,warn:40,error:50,fatal:60",
+                singleLine: false,
+                hideObject: false,
+                messageKey: "msg",
+                timestampKey: "time",
+                errorLikeObjectKeys: ["err", "error"],
+                errorProps: "stack,message,type,name",
               },
             },
           }
@@ -123,12 +132,28 @@ export const getPinoConfig = (): Params => {
 
       // Personalizar mensagem de sucesso
       customSuccessMessage: (req: IncomingMessage, res: ServerResponse) => {
-        return `${req.method} ${req.url} - ${res.statusCode}`;
+        const typedReq = req as ExtendedRequest;
+        const method = req.method?.padEnd(7) ?? "UNKNOWN";
+        const statusCode = res.statusCode;
+        const url = typedReq.originalUrl ?? req.url ?? "/";
+        return `${method} | ${statusCode} | ${url}`;
       },
 
       // Personalizar mensagem de erro
       customErrorMessage: (req: IncomingMessage, res: ServerResponse, err: Error) => {
-        return `${req.method} ${req.url} - ${res.statusCode} - ${err.message}`;
+        const typedReq = req as ExtendedRequest;
+        const method = req.method?.padEnd(7) ?? "UNKNOWN";
+        const statusCode = res.statusCode;
+        const url = typedReq.originalUrl ?? req.url ?? "/";
+        return `${method} | ${statusCode} | ${url} | ${err.message}`;
+      },
+
+      // Atributos adicionais para cada log de requisição
+      customAttributeKeys: {
+        req: "request",
+        res: "response",
+        err: "error",
+        responseTime: "duration",
       },
     },
   };
