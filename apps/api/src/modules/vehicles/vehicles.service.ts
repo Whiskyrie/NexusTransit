@@ -1,23 +1,33 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Between, LessThan, MoreThan, In } from 'typeorm';
 import { Vehicle } from './entities/vehicle.entity';
 import { VehicleDocument } from './entities/vehicle-document.entity';
-import { CreateVehicleDto } from './dto/create-vehicle.dto';
-import { UpdateVehicleDto } from './dto/update-vehicle.dto';
-import { VehicleFilterDto } from './dto/vehicle-filter.dto';
-import { VehicleResponseDto } from './dto/vehicle-response.dto';
-import { UploadDocumentDto, DocumentResponseDto } from './dto/document.dto';
+import { VehicleMaintenance } from './entities/vehicle-maintenance.entity';
+import {
+  CreateVehicleDto,
+  UpdateVehicleDto,
+  VehicleFilterDto,
+  VehicleResponseDto,
+  UploadDocumentDto,
+  DocumentResponseDto,
+  DocumentType,
+  CreateMaintenanceDto,
+  UpdateMaintenanceDto,
+  CompleteMaintenanceDto,
+  MaintenanceResponseDto,
+  AlertSummaryDto,
+} from './dto';
 import {
   normalizeLicensePlate,
   IsLicensePlateConstraint,
   PaginatedResponseDto,
 } from '@nexus/common';
-import { VehicleStatus } from './enums/vehicle-status.enum';
-import { FuelType } from './enums/fuel-type.enum';
+import { VehicleStatus, FuelType, MaintenanceStatus } from './enums';
+import { StorageService } from '@nexus/storage';
+
 import { FileValidationUtils } from './config/upload.config';
 import { extname } from 'path';
-import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class VehiclesService {
@@ -28,6 +38,9 @@ export class VehiclesService {
     private readonly vehicleRepository: Repository<Vehicle>,
     @InjectRepository(VehicleDocument)
     private readonly vehicleDocumentRepository: Repository<VehicleDocument>,
+    @InjectRepository(VehicleMaintenance)
+    private readonly vehicleMaintenanceRepository: Repository<VehicleMaintenance>,
+    private readonly storageService: StorageService,
   ) {}
 
   async create(createVehicleDto: CreateVehicleDto): Promise<VehicleResponseDto> {
@@ -81,6 +94,39 @@ export class VehiclesService {
     if (createVehicleDto.next_maintenance_at) {
       vehicleData.next_maintenance_at = new Date(createVehicleDto.next_maintenance_at);
     }
+    if (createVehicleDto.next_maintenance_km) {
+      vehicleData.next_maintenance_km = createVehicleDto.next_maintenance_km;
+    }
+    if (createVehicleDto.chassis_number) {
+      vehicleData.chassis_number = createVehicleDto.chassis_number;
+    }
+    if (createVehicleDto.renavam) {
+      vehicleData.renavam = createVehicleDto.renavam;
+    }
+    if (createVehicleDto.acquisition_date) {
+      vehicleData.acquisition_date = new Date(createVehicleDto.acquisition_date);
+    }
+    if (createVehicleDto.acquisition_value) {
+      vehicleData.acquisition_value = createVehicleDto.acquisition_value;
+    }
+    if (createVehicleDto.average_consumption) {
+      vehicleData.average_consumption = createVehicleDto.average_consumption;
+    }
+    if (createVehicleDto.insurance_company) {
+      vehicleData.insurance_company = createVehicleDto.insurance_company;
+    }
+    if (createVehicleDto.insurance_policy_number) {
+      vehicleData.insurance_policy_number = createVehicleDto.insurance_policy_number;
+    }
+    if (createVehicleDto.insurance_expiry_date) {
+      vehicleData.insurance_expiry_date = new Date(createVehicleDto.insurance_expiry_date);
+    }
+    if (createVehicleDto.license_expiry_date) {
+      vehicleData.license_expiry_date = new Date(createVehicleDto.license_expiry_date);
+    }
+    if (createVehicleDto.notes) {
+      vehicleData.notes = createVehicleDto.notes;
+    }
     if (createVehicleDto.insurance_info) {
       vehicleData.insurance_info = createVehicleDto.insurance_info;
     }
@@ -102,6 +148,9 @@ export class VehiclesService {
       limit = 10,
       search,
       status,
+      license_plate_type,
+      insurance_expiring,
+      license_expiring,
       order_by = 'created_at',
       order_direction = 'DESC',
     } = filterDto;
@@ -122,6 +171,32 @@ export class VehiclesService {
 
     if (status) {
       queryBuilder.andWhere('vehicle.status = :status', { status });
+    }
+
+    if (license_plate_type) {
+      queryBuilder.andWhere('vehicle.license_plate_type = :license_plate_type', {
+        license_plate_type,
+      });
+    }
+
+    if (insurance_expiring) {
+      const today = new Date();
+      const thirtyDaysFromNow = new Date();
+      thirtyDaysFromNow.setDate(today.getDate() + 30);
+      queryBuilder.andWhere('vehicle.insurance_expiry_date BETWEEN :today AND :thirtyDaysFromNow', {
+        today,
+        thirtyDaysFromNow,
+      });
+    }
+
+    if (license_expiring) {
+      const today = new Date();
+      const thirtyDaysFromNow = new Date();
+      thirtyDaysFromNow.setDate(today.getDate() + 30);
+      queryBuilder.andWhere('vehicle.license_expiry_date BETWEEN :today AND :thirtyDaysFromNow', {
+        today,
+        thirtyDaysFromNow,
+      });
     }
 
     // Apply sorting
@@ -216,6 +291,33 @@ export class VehiclesService {
       ...(updateVehicleDto.cargo_volume && { cargo_volume: updateVehicleDto.cargo_volume }),
       ...(updateVehicleDto.fuel_capacity && { fuel_capacity: updateVehicleDto.fuel_capacity }),
       ...(updateVehicleDto.mileage !== undefined && { mileage: updateVehicleDto.mileage }),
+      ...(updateVehicleDto.next_maintenance_km && {
+        next_maintenance_km: updateVehicleDto.next_maintenance_km,
+      }),
+      ...(updateVehicleDto.chassis_number && { chassis_number: updateVehicleDto.chassis_number }),
+      ...(updateVehicleDto.renavam && { renavam: updateVehicleDto.renavam }),
+      ...(updateVehicleDto.acquisition_date && {
+        acquisition_date: new Date(updateVehicleDto.acquisition_date),
+      }),
+      ...(updateVehicleDto.acquisition_value && {
+        acquisition_value: updateVehicleDto.acquisition_value,
+      }),
+      ...(updateVehicleDto.average_consumption && {
+        average_consumption: updateVehicleDto.average_consumption,
+      }),
+      ...(updateVehicleDto.insurance_company && {
+        insurance_company: updateVehicleDto.insurance_company,
+      }),
+      ...(updateVehicleDto.insurance_policy_number && {
+        insurance_policy_number: updateVehicleDto.insurance_policy_number,
+      }),
+      ...(updateVehicleDto.insurance_expiry_date && {
+        insurance_expiry_date: new Date(updateVehicleDto.insurance_expiry_date),
+      }),
+      ...(updateVehicleDto.license_expiry_date && {
+        license_expiry_date: new Date(updateVehicleDto.license_expiry_date),
+      }),
+      ...(updateVehicleDto.notes && { notes: updateVehicleDto.notes }),
     });
 
     const updatedVehicle = await this.vehicleRepository.save(vehicle);
@@ -292,6 +394,39 @@ export class VehiclesService {
     if (createVehicleDto.next_maintenance_at) {
       vehicleData.next_maintenance_at = new Date(createVehicleDto.next_maintenance_at);
     }
+    if (createVehicleDto.next_maintenance_km) {
+      vehicleData.next_maintenance_km = createVehicleDto.next_maintenance_km;
+    }
+    if (createVehicleDto.chassis_number) {
+      vehicleData.chassis_number = createVehicleDto.chassis_number;
+    }
+    if (createVehicleDto.renavam) {
+      vehicleData.renavam = createVehicleDto.renavam;
+    }
+    if (createVehicleDto.acquisition_date) {
+      vehicleData.acquisition_date = new Date(createVehicleDto.acquisition_date);
+    }
+    if (createVehicleDto.acquisition_value) {
+      vehicleData.acquisition_value = createVehicleDto.acquisition_value;
+    }
+    if (createVehicleDto.average_consumption) {
+      vehicleData.average_consumption = createVehicleDto.average_consumption;
+    }
+    if (createVehicleDto.insurance_company) {
+      vehicleData.insurance_company = createVehicleDto.insurance_company;
+    }
+    if (createVehicleDto.insurance_policy_number) {
+      vehicleData.insurance_policy_number = createVehicleDto.insurance_policy_number;
+    }
+    if (createVehicleDto.insurance_expiry_date) {
+      vehicleData.insurance_expiry_date = new Date(createVehicleDto.insurance_expiry_date);
+    }
+    if (createVehicleDto.license_expiry_date) {
+      vehicleData.license_expiry_date = new Date(createVehicleDto.license_expiry_date);
+    }
+    if (createVehicleDto.notes) {
+      vehicleData.notes = createVehicleDto.notes;
+    }
     if (createVehicleDto.insurance_info) {
       vehicleData.insurance_info = createVehicleDto.insurance_info;
     }
@@ -319,7 +454,7 @@ export class VehiclesService {
       throw new NotFoundException(`Veículo com ID ${id} não encontrado`);
     }
 
-    await this.vehicleRepository.remove(vehicle);
+    await this.vehicleRepository.softRemove(vehicle);
 
     this.logger.log(`Veículo removido: ${vehicle.license_plate} (${id})`);
   }
@@ -500,6 +635,7 @@ export class VehiclesService {
     return {
       id: vehicle.id,
       license_plate: vehicle.license_plate,
+      license_plate_type: vehicle.license_plate_type,
       brand: vehicle.brand,
       model: vehicle.model,
       year: vehicle.year,
@@ -514,6 +650,17 @@ export class VehiclesService {
       passenger_capacity: vehicle.passenger_capacity,
       last_maintenance_at: vehicle.last_maintenance_at,
       next_maintenance_at: vehicle.next_maintenance_at,
+      next_maintenance_km: vehicle.next_maintenance_km,
+      chassis_number: vehicle.chassis_number,
+      renavam: vehicle.renavam,
+      acquisition_date: vehicle.acquisition_date,
+      acquisition_value: vehicle.acquisition_value,
+      average_consumption: vehicle.average_consumption,
+      insurance_company: vehicle.insurance_company,
+      insurance_policy_number: vehicle.insurance_policy_number,
+      insurance_expiry_date: vehicle.insurance_expiry_date,
+      license_expiry_date: vehicle.license_expiry_date,
+      notes: vehicle.notes,
       has_gps: vehicle.has_gps,
       has_refrigeration: vehicle.has_refrigeration,
       insurance_info: vehicle.insurance_info,
