@@ -16,16 +16,46 @@ import { UpdateDriverStatusBody } from '../interfaces/driver-status-update.inter
  * Mapa de transições válidas de status para motoristas
  */
 export const DriverStatusTransitions: Record<DriverStatus, DriverStatus[]> = {
+  // Status novos
+  [DriverStatus.ACTIVE]: [
+    DriverStatus.INACTIVE,
+    DriverStatus.SUSPENDED,
+    DriverStatus.ON_LEAVE,
+    DriverStatus.ON_ROUTE,
+    DriverStatus.UNAVAILABLE,
+  ],
+  [DriverStatus.INACTIVE]: [DriverStatus.ACTIVE, DriverStatus.SUSPENDED],
+  [DriverStatus.SUSPENDED]: [DriverStatus.ACTIVE, DriverStatus.INACTIVE],
+  [DriverStatus.ON_LEAVE]: [DriverStatus.ACTIVE, DriverStatus.INACTIVE],
+
+  // Status legados (mantidos para compatibilidade)
   [DriverStatus.AVAILABLE]: [
+    DriverStatus.ACTIVE,
     DriverStatus.ON_ROUTE,
     DriverStatus.UNAVAILABLE,
     DriverStatus.VACATION,
     DriverStatus.BLOCKED,
   ],
-  [DriverStatus.ON_ROUTE]: [DriverStatus.AVAILABLE, DriverStatus.UNAVAILABLE],
-  [DriverStatus.UNAVAILABLE]: [DriverStatus.AVAILABLE, DriverStatus.VACATION, DriverStatus.BLOCKED],
-  [DriverStatus.BLOCKED]: [DriverStatus.AVAILABLE, DriverStatus.UNAVAILABLE],
-  [DriverStatus.VACATION]: [DriverStatus.AVAILABLE, DriverStatus.UNAVAILABLE],
+  [DriverStatus.ON_ROUTE]: [DriverStatus.AVAILABLE, DriverStatus.ACTIVE, DriverStatus.UNAVAILABLE],
+  [DriverStatus.UNAVAILABLE]: [
+    DriverStatus.AVAILABLE,
+    DriverStatus.ACTIVE,
+    DriverStatus.VACATION,
+    DriverStatus.BLOCKED,
+    DriverStatus.ON_LEAVE,
+  ],
+  [DriverStatus.BLOCKED]: [
+    DriverStatus.AVAILABLE,
+    DriverStatus.ACTIVE,
+    DriverStatus.UNAVAILABLE,
+    DriverStatus.SUSPENDED,
+  ],
+  [DriverStatus.VACATION]: [
+    DriverStatus.AVAILABLE,
+    DriverStatus.ACTIVE,
+    DriverStatus.UNAVAILABLE,
+    DriverStatus.ON_LEAVE,
+  ],
 };
 
 /**
