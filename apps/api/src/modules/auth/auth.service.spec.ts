@@ -25,6 +25,7 @@ import type {
 describe('AuthService', () => {
   let service: AuthService;
   let userRepository: jest.Mocked<Repository<User>>;
+  let module: TestingModule;
 
   const mockUser: Partial<User> = {
     id: 'user-id-123',
@@ -64,7 +65,7 @@ describe('AuthService', () => {
   };
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       providers: [
         AuthService,
         {
@@ -92,6 +93,12 @@ describe('AuthService', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    if (module) {
+      await module.close();
+    }
   });
 
   describe('register', () => {
@@ -288,7 +295,7 @@ describe('AuthService', () => {
     };
 
     it('deve gerar novos tokens com refresh válido', async () => {
-      mockTokenService.validateToken.mockResolvedValue(decodedToken);
+      mockTokenService.validateToken.mockReturnValue(decodedToken);
       mockTokenBlacklistService.isBlacklisted.mockResolvedValue(false);
       userRepository.findOne.mockResolvedValue(mockUser as User);
       mockTokenBlacklistService.addToBlacklist.mockResolvedValue(true);
@@ -306,20 +313,23 @@ describe('AuthService', () => {
     });
 
     it('deve rejeitar refresh token inválido', async () => {
-      mockTokenService.validateToken.mockRejectedValue(new Error('Invalid token'));
+      const error = new UnauthorizedException('Invalid token');
+      mockTokenService.validateToken.mockImplementation(() => {
+        throw error;
+      });
 
       await expect(service.refreshTokens(refreshToken)).rejects.toThrow(UnauthorizedException);
     });
 
     it('deve rejeitar token na blacklist', async () => {
-      mockTokenService.validateToken.mockResolvedValue(decodedToken);
+      mockTokenService.validateToken.mockReturnValue(decodedToken);
       mockTokenBlacklistService.isBlacklisted.mockResolvedValue(true);
 
       await expect(service.refreshTokens(refreshToken)).rejects.toThrow(UnauthorizedException);
     });
 
     it('deve invalidar refresh token antigo', async () => {
-      mockTokenService.validateToken.mockResolvedValue(decodedToken);
+      mockTokenService.validateToken.mockReturnValue(decodedToken);
       mockTokenBlacklistService.isBlacklisted.mockResolvedValue(false);
       userRepository.findOne.mockResolvedValue(mockUser as User);
       mockTokenBlacklistService.addToBlacklist.mockResolvedValue(true);
@@ -336,7 +346,7 @@ describe('AuthService', () => {
 
     it('deve rejeitar token que não é refresh', async () => {
       const accessToken = { ...decodedToken, type: 'access' };
-      mockTokenService.validateToken.mockResolvedValue(accessToken);
+      mockTokenService.validateToken.mockReturnValue(accessToken);
 
       await expect(service.refreshTokens(refreshToken)).rejects.toThrow(UnauthorizedException);
     });
