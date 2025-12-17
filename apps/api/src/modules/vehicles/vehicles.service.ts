@@ -348,6 +348,13 @@ export class VehiclesService {
         throw new BadRequestException(`Tipo de arquivo não permitido: ${file.mimetype}`);
       }
 
+      // Upload file to storage
+      const uploadResult = await this.storageService.uploadFile(
+        file,
+        'vehicles/documents',
+        vehicleId,
+      );
+
       // Format file size
       const fileSizeFormatted = this.formatFileSize(file.size);
       const fileExtension = extname(file.originalname).toLowerCase().replace('.', '');
@@ -357,13 +364,13 @@ export class VehiclesService {
         vehicle_id: vehicleId,
         document_type: uploadDocumentDto.document_type,
         original_name: file.originalname,
-        file_path: file.path,
+        file_path: uploadResult.filePath,
         file_size: fileSizeFormatted,
         file_size_bytes: file.size,
         file_extension: fileExtension,
         mime_type: file.mimetype,
         is_active: true,
-        file_hash: uuidv4(), // TODO: Calculate actual file hash
+        file_hash: uploadResult.fileHash,
       };
 
       // Add optional fields only if they exist

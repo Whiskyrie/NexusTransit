@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
+import { StorageModule } from '@nexus/storage';
 import { VehiclesService } from './vehicles.service';
 import { VehiclesController } from './vehicles.controller';
 import { Vehicle } from './entities/vehicle.entity';
@@ -16,6 +17,7 @@ import { VehicleStatusChangeSubscriber } from './subscribers/status-change.subsc
   imports: [
     TypeOrmModule.forFeature([Vehicle, VehicleDocument, VehicleMaintenance, VehicleDriverHistory]),
     ScheduleModule.forRoot(),
+    StorageModule.forRoot(),
   ],
   controllers: [VehiclesController],
   providers: [
