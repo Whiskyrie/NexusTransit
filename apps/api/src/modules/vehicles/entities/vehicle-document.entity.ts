@@ -1,7 +1,7 @@
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from '@nexus/common';
 import { Vehicle } from './vehicle.entity';
-import { DocumentType } from '../dto/document.dto';
+import { DocumentType } from '../dto';
 import { Auditable } from '@nexus/audit';
 
 /**

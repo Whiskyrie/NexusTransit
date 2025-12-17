@@ -2,12 +2,7 @@ import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from '@nexus/common';
 import { Vehicle } from './vehicle.entity';
 import { Auditable } from '@nexus/audit';
-
-export enum DriverAssignmentStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  PENDING = 'pending',
-}
+import { DriverAssignmentStatus } from '../enums';
 
 /**
  * VehicleDriverHistory Entity - Histórico de associação de veículos a motoristas

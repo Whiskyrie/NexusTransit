@@ -3,6 +3,7 @@ import { BaseEntity } from '@nexus/common';
 import { VehicleStatus } from '../enums/vehicle-status.enum';
 import { VehicleType } from '../enums/vehicle-type.enum';
 import { FuelType } from '../enums/fuel-type.enum';
+import { LicensePlateType } from '../enums/license-plate-type.enum';
 import { VehicleDocument } from './vehicle-document.entity';
 import { VehicleMaintenance } from './vehicle-maintenance.entity';
 import { VehicleDriverHistory } from './vehicle-driver-history.entity';
@@ -36,6 +37,14 @@ export class Vehicle extends BaseEntity {
     comment: 'Placa do veículo',
   })
   license_plate!: string;
+
+  @Column({
+    type: 'enum',
+    enum: LicensePlateType,
+    default: LicensePlateType.MERCOSUL,
+    comment: 'Tipo de formato da placa',
+  })
+  license_plate_type!: LicensePlateType;
 
   @Column({
     type: 'varchar',
@@ -134,6 +143,91 @@ export class Vehicle extends BaseEntity {
     comment: 'Data da próxima manutenção programada',
   })
   next_maintenance_at?: Date;
+
+  @Column({
+    type: 'integer',
+    nullable: true,
+    comment: 'Próxima manutenção em km',
+  })
+  next_maintenance_km?: number;
+
+  @Column({
+    type: 'varchar',
+    length: 50,
+    nullable: true,
+    comment: 'Número do chassi',
+  })
+  chassis_number?: string;
+
+  @Column({
+    type: 'varchar',
+    length: 50,
+    nullable: true,
+    comment: 'Número do RENAVAM',
+  })
+  renavam?: string;
+
+  @Column({
+    type: 'timestamp with time zone',
+    nullable: true,
+    comment: 'Data de aquisição do veículo',
+  })
+  acquisition_date?: Date;
+
+  @Column({
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    nullable: true,
+    comment: 'Valor de aquisição',
+  })
+  acquisition_value?: number;
+
+  @Column({
+    type: 'decimal',
+    precision: 10,
+    scale: 2,
+    nullable: true,
+    comment: 'Consumo médio em km/l',
+  })
+  average_consumption?: number;
+
+  @Column({
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+    comment: 'Seguradora',
+  })
+  insurance_company?: string;
+
+  @Column({
+    type: 'varchar',
+    length: 50,
+    nullable: true,
+    comment: 'Número da apólice de seguro',
+  })
+  insurance_policy_number?: string;
+
+  @Column({
+    type: 'timestamp with time zone',
+    nullable: true,
+    comment: 'Data de vencimento do seguro',
+  })
+  insurance_expiry_date?: Date;
+
+  @Column({
+    type: 'timestamp with time zone',
+    nullable: true,
+    comment: 'Data de vencimento do licenciamento',
+  })
+  license_expiry_date?: Date;
+
+  @Column({
+    type: 'text',
+    nullable: true,
+    comment: 'Observações gerais',
+  })
+  notes?: string;
 
   @Column({
     type: 'jsonb',
