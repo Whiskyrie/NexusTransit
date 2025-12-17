@@ -54,7 +54,7 @@ describe('TokenService', () => {
       const result = service.generateAccessToken(payload);
 
       expect(result).toBe(expectedToken);
-      expect(mockJwtService.sign).toHaveBeenCalledWith(payload, { expiresIn: '15m' });
+      expect(mockJwtService.sign).toHaveBeenCalledWith(payload, { expiresIn: 900 }); // 15m = 900s
       expect(mockConfigService.get).toHaveBeenCalledWith('JWT_ACCESS_TOKEN_EXPIRES_IN', '15m');
     });
 
@@ -70,7 +70,7 @@ describe('TokenService', () => {
 
       service.generateAccessToken(payload);
 
-      expect(mockJwtService.sign).toHaveBeenCalledWith(payload, { expiresIn: '30m' });
+      expect(mockJwtService.sign).toHaveBeenCalledWith(payload, { expiresIn: 1800 }); // 30m = 1800s
     });
   });
 
@@ -87,7 +87,7 @@ describe('TokenService', () => {
       expect(result).toBe(expectedToken);
       expect(mockJwtService.sign).toHaveBeenCalledWith(
         { sub: userId, type: 'refresh' },
-        { expiresIn: '7d' },
+        { expiresIn: 604800 }, // 7d = 604800s
       );
     });
 
@@ -101,7 +101,7 @@ describe('TokenService', () => {
 
       expect(mockJwtService.sign).toHaveBeenCalledWith(
         { sub: userId, type: 'refresh' },
-        { expiresIn: '14d' },
+        { expiresIn: 1209600 }, // 14d = 1209600s
       );
     });
   });

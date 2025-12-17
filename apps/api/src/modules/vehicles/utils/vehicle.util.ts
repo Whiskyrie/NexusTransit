@@ -2,7 +2,7 @@ import type { Vehicle } from '../entities/vehicle.entity';
 import { VehicleStatus } from '../enums/vehicle-status.enum';
 import type { Delivery } from '../../deliveries/entities/delivery.entity';
 import { DeliveryStatus } from '../../deliveries/enums/delivery-status.enum';
-import { DocumentType } from '../dto/document.dto';
+import { DocumentType } from '../dto';
 import type { VehicleDocumentValidationResult } from '../interfaces/vehicle-utilization.interface';
 
 // Type alias para manter compatibilidade com código existente

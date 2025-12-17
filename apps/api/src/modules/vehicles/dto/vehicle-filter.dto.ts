@@ -3,6 +3,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import { VehicleStatus } from '../enums/vehicle-status.enum';
 import { VehicleType } from '../enums/vehicle-type.enum';
+import { LicensePlateType } from '../enums/license-plate-type.enum';
 
 export class VehicleFilterDto {
   @ApiPropertyOptional({
@@ -48,6 +49,47 @@ export class VehicleFilterDto {
   @IsOptional()
   @IsEnum(VehicleType)
   vehicle_type?: VehicleType;
+
+  @ApiPropertyOptional({
+    description: 'Filtrar por tipo de placa',
+    enum: LicensePlateType,
+    example: LicensePlateType.MERCOSUL,
+  })
+  @IsOptional()
+  @IsEnum(LicensePlateType)
+  license_plate_type?: LicensePlateType;
+
+  @ApiPropertyOptional({
+    description: 'Filtrar por status de seguro (próximo a vencer)',
+    example: true,
+  })
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }): boolean | undefined => {
+    if (value === 'true') {
+      return true;
+    }
+    if (value === 'false') {
+      return false;
+    }
+    return undefined;
+  })
+  insurance_expiring?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Filtrar por status de licenciamento (próximo a vencer)',
+    example: true,
+  })
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }): boolean | undefined => {
+    if (value === 'true') {
+      return true;
+    }
+    if (value === 'false') {
+      return false;
+    }
+    return undefined;
+  })
+  license_expiring?: boolean;
 
   @ApiPropertyOptional({
     description: 'Buscar por placa, marca ou modelo',

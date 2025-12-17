@@ -2,22 +2,7 @@ import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from '@nexus/common';
 import { Vehicle } from './vehicle.entity';
 import { Auditable } from '@nexus/audit';
-
-export enum MaintenanceType {
-  PREVENTIVE = 'preventive',
-  CORRECTIVE = 'corrective',
-  REVIEW = 'review',
-  EMERGENCY = 'emergency',
-  INSPECTION = 'inspection',
-  OTHER = 'other',
-}
-
-export enum MaintenanceStatus {
-  SCHEDULED = 'scheduled',
-  IN_PROGRESS = 'in_progress',
-  COMPLETED = 'completed',
-  CANCELLED = 'cancelled',
-}
+import { MaintenanceType, MaintenanceStatus } from '../enums';
 
 /**
  * VehicleMaintenance Entity - Histórico de manutenções dos veículos

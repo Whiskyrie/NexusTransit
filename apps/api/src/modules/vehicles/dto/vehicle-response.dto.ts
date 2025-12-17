@@ -3,6 +3,7 @@ import { Expose, Transform } from 'class-transformer';
 import { VehicleType } from '../enums/vehicle-type.enum';
 import { VehicleStatus } from '../enums/vehicle-status.enum';
 import { FuelType } from '../enums/fuel-type.enum';
+import { LicensePlateType } from '../enums/license-plate-type.enum';
 
 export class VehicleResponseDto {
   @ApiProperty({
@@ -19,6 +20,14 @@ export class VehicleResponseDto {
   @Expose()
   @Transform(({ value }) => ((value as string) || '').replace(/([A-Z]{3})([0-9A-Z]{4})/, '$1-$2'))
   license_plate!: string;
+
+  @ApiProperty({
+    description: 'Tipo de formato da placa',
+    enum: LicensePlateType,
+    example: LicensePlateType.MERCOSUL,
+  })
+  @Expose()
+  license_plate_type!: LicensePlateType;
 
   @ApiProperty({
     description: 'Marca do veículo',
@@ -113,6 +122,83 @@ export class VehicleResponseDto {
   })
   @Expose()
   next_maintenance_at?: Date;
+
+  @ApiPropertyOptional({
+    description: 'Próxima manutenção em km',
+    example: 20000,
+  })
+  @Expose()
+  next_maintenance_km?: number;
+
+  @ApiPropertyOptional({
+    description: 'Número do chassi',
+    example: '9BWZZZ377VT000000',
+  })
+  @Expose()
+  chassis_number?: string;
+
+  @ApiPropertyOptional({
+    description: 'Número do RENAVAM',
+    example: '12345678901',
+  })
+  @Expose()
+  renavam?: string;
+
+  @ApiPropertyOptional({
+    description: 'Data de aquisição do veículo',
+    example: '2023-01-15T00:00:00.000Z',
+  })
+  @Expose()
+  acquisition_date?: Date;
+
+  @ApiPropertyOptional({
+    description: 'Valor de aquisição',
+    example: 100000.0,
+  })
+  @Expose()
+  acquisition_value?: number;
+
+  @ApiPropertyOptional({
+    description: 'Consumo médio em km/l',
+    example: 12.5,
+  })
+  @Expose()
+  average_consumption?: number;
+
+  @ApiPropertyOptional({
+    description: 'Seguradora',
+    example: 'Seguradora XYZ',
+  })
+  @Expose()
+  insurance_company?: string;
+
+  @ApiPropertyOptional({
+    description: 'Número da apólice de seguro',
+    example: '123456789',
+  })
+  @Expose()
+  insurance_policy_number?: string;
+
+  @ApiPropertyOptional({
+    description: 'Data de vencimento do seguro',
+    example: '2024-12-31T00:00:00.000Z',
+  })
+  @Expose()
+  insurance_expiry_date?: Date;
+
+  @ApiPropertyOptional({
+    description: 'Data de vencimento do licenciamento',
+    example: '2024-12-31T00:00:00.000Z',
+  })
+  @Expose()
+  license_expiry_date?: Date;
+
+  @ApiPropertyOptional({
+    description: 'Observações gerais',
+    example: 'Veículo com ar condicionado e direção hidráulica',
+  })
+  @Expose()
+  notes?: string;
 
   @ApiProperty({
     description: 'Possui rastreamento GPS',
