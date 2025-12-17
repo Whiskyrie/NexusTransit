@@ -56,18 +56,82 @@ export class VehiclesController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'Criar novo veículo',
-    description: 'Cria um novo veículo na frota com validações completas de placa brasileira',
+    description: `Cria um novo veículo na frota com validações completas.
+    
+**Validações realizadas:**
+- Placa brasileira (formato antigo ou Mercosul)
+- Campos obrigatórios preenchidos
+- Verificação de duplicidade de placa
+- Validações de ano, capacidade e odômetro
+    
+**Exemplo de request:**
+\`\`\`json
+{
+  "license_plate": "ABC1D23",
+  "license_plate_type": "MERCOSUL",
+  "brand": "Volvo",
+  "model": "FH 540",
+  "year": 2023,
+  "vehicle_type": "TRUCK",
+  "fuel_type": "DIESEL",
+  "color": "Branco",
+  "capacity_kg": 30000,
+  "capacity_m3": 90,
+  "odometer_reading": 0,
+  "renavam": "12345678901",
+  "chassis": "9BWZZZ377VT004251",
+  "engine_number": "FH540123456",
+  "license_expiry_date": "2024-12-31",
+  "insurance_expiry_date": "2024-12-31",
+  "insurance_policy_number": "POL-2023-001",
+  "insurance_company": "Porto Seguro",
+  "status": "ACTIVE"
+}
+\`\`\``,
   })
   @ApiResponse({
     status: HttpStatus.CREATED,
     description: 'Veículo criado com sucesso',
     type: VehicleResponseDto,
+    schema: {
+      example: {
+        id: '123e4567-e89b-12d3-a456-426614174000',
+        license_plate: 'ABC1D23',
+        license_plate_type: 'MERCOSUL',
+        brand: 'Volvo',
+        model: 'FH 540',
+        year: 2023,
+        vehicle_type: 'TRUCK',
+        fuel_type: 'DIESEL',
+        color: 'Branco',
+        capacity_kg: 30000,
+        capacity_m3: 90,
+        odometer_reading: 0,
+        status: 'ACTIVE',
+        created_at: '2024-01-15T10:30:00Z',
+        updated_at: '2024-01-15T10:30:00Z',
+      },
+    },
   })
   @ApiBadRequestResponse({
     description: 'Dados inválidos fornecidos',
+    schema: {
+      example: {
+        statusCode: 400,
+        message: ['license_plate deve ser uma placa válida no formato brasileiro'],
+        error: 'Bad Request',
+      },
+    },
   })
   @ApiConflictResponse({
     description: 'Placa já existe no sistema',
+    schema: {
+      example: {
+        statusCode: 409,
+        message: 'Veículo com placa ABC1D23 já existe',
+        error: 'Conflict',
+      },
+    },
   })
   @ApiUnauthorizedResponse({
     description: 'Token de autenticação inválido ou ausente',
@@ -82,7 +146,24 @@ export class VehiclesController {
   @Get()
   @ApiOperation({
     summary: 'Listar veículos',
-    description: 'Lista veículos com filtros avançados, paginação e busca',
+    description: `Lista veículos com filtros avançados, paginação e busca.
+    
+**Recursos disponíveis:**
+- Paginação com limite configurável (máx 100 itens/página)
+- Filtros por status, tipo, marca, placa
+- Busca textual em placa, marca e modelo
+- Ordenação por diversos campos
+- Filtros de alertas (seguro, licenciamento, manutenção)
+    
+**Exemplo de uso:**
+\`GET /vehicles?page=1&limit=10&status=ACTIVE&vehicle_type=TRUCK&search=volvo\`
+    
+**Resposta paginada com metadados:**
+- total: total de registros
+- page: página atual
+- limit: itens por página
+- totalPages: total de páginas
+- data: array de veículos`,
   })
   @ApiQuery({
     name: 'page',
@@ -331,7 +412,29 @@ export class VehiclesController {
   @ApiConsumes('multipart/form-data')
   @ApiOperation({
     summary: 'Upload de documentos do veículo',
-    description: 'Faz upload de documentos relacionados ao veículo (CRLV, seguro, etc.)',
+    description: `Faz upload de múltiplos documentos relacionados ao veículo.
+    
+**Tipos de documentos aceitos:**
+- CRLV (Certificado de Registro e Licenciamento)
+- INSURANCE (Apólice de Seguro)
+- INSPECTION (Laudo de Inspeção)
+- DRIVER_LICENSE (CNH do motorista designado)
+- IPVA (Comprovante de IPVA)
+- OTHER (Outros documentos)
+    
+**Formatos aceitos:**
+- PDF, JPG, JPEG, PNG, DOC, DOCX
+    
+**Limites:**
+- Tamanho máximo por arquivo: 10MB
+- Máximo de arquivos por upload: 10
+    
+**Como usar:**
+Envie uma requisição multipart/form-data com:
+- Campo \`documents\`: array de arquivos
+- Campo \`document_type\`: tipo do documento
+- Campo \`expiry_date\`: data de validade (opcional)
+- Campo \`description\`: descrição (opcional)`,
   })
   @ApiParam({
     name: 'id',
@@ -511,7 +614,37 @@ export class VehiclesController {
   @Post(':id/maintenances')
   @ApiOperation({
     summary: 'Agendar manutenção para veículo',
-    description: 'Cria um novo registro de manutenção para um veículo',
+    description: `Cria um novo registro de manutenção para um veículo.
+    
+**Tipos de manutenção:**
+- PREVENTIVE: Manutenção preventiva programada
+- CORRECTIVE: Correção de problemas identificados
+- REVIEW: Revisão periódica
+- EMERGENCY: Manutenção de emergência
+- INSPECTION: Inspeção veicular
+- OTHER: Outros tipos
+    
+**Campos principais:**
+- title: Título da manutenção
+- description: Descrição detalhada
+- maintenance_type: Tipo da manutenção
+- maintenance_date: Data agendada
+- estimated_cost: Custo estimado
+- workshop_name: Nome da oficina
+- mileage_at_maintenance: Km no momento da manutenção
+    
+**Exemplo:**
+\`\`\`json
+{
+  "title": "Troca de óleo e filtros",
+  "description": "Manutenção preventiva - 10.000km",
+  "maintenance_type": "PREVENTIVE",
+  "maintenance_date": "2024-02-01",
+  "estimated_cost": 850.00,
+  "workshop_name": "Oficina Volvo Premium",
+  "mileage_at_maintenance": 10000
+}
+\`\`\``,
   })
   @ApiParam({
     name: 'id',
@@ -769,12 +902,41 @@ export class VehiclesController {
   @Get('alerts/summary')
   @ApiOperation({
     summary: 'Resumo de alertas',
-    description: 'Retorna um resumo consolidado de todos os alertas ativos',
+    description: `Retorna um resumo consolidado de todos os alertas ativos na frota.
+    
+**Informações incluídas:**
+- Total de veículos com alertas
+- Manutenções urgentes (próximos 7 dias)
+- Manutenções programadas (próximos 30 dias)
+- Documentos próximos ao vencimento
+- Documentos vencidos
+- Seguros expirando
+- Licenciamentos expirando
+- Nível de severidade (low, medium, high, critical)
+    
+**Níveis de severidade:**
+- critical: Manutenções urgentes > 3 ou documentos vencidos > 5
+- high: Manutenções urgentes ou documentos vencidos
+- medium: Manutenções programadas ou documentos expirando
+- low: Nenhum alerta crítico`,
   })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Resumo de alertas',
-    type: Object,
+    type: AlertSummaryDto,
+    schema: {
+      example: {
+        totalVehiclesWithAlerts: 15,
+        urgentMaintenances: 3,
+        upcomingMaintenances: 8,
+        expiringDocuments: 12,
+        expiredDocuments: 2,
+        expiringInsurance: 5,
+        expiringLicenses: 4,
+        severityLevel: 'high',
+        lastChecked: '2024-01-15T14:30:00Z',
+      },
+    },
   })
   @ApiUnauthorizedResponse({
     description: 'Token de autenticação inválido ou ausente',
