@@ -10,42 +10,7 @@ import {
   MaxLength,
 } from "class-validator";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-
-/**
- * Tipo de relatório
- */
-export enum ReportType {
-  DELIVERIES = "DELIVERIES",
-  ROUTES = "ROUTES",
-  DRIVERS = "DRIVERS",
-  VEHICLES = "VEHICLES",
-  INCIDENTS = "INCIDENTS",
-  PERFORMANCE = "PERFORMANCE",
-  FINANCIAL = "FINANCIAL",
-  CUSTOM = "CUSTOM",
-}
-
-/**
- * Formato de exportação do relatório
- */
-export enum ReportFormat {
-  PDF = "PDF",
-  EXCEL = "EXCEL",
-  CSV = "CSV",
-  JSON = "JSON",
-}
-
-/**
- * Período do relatório
- */
-export enum ReportPeriod {
-  DAILY = "DAILY",
-  WEEKLY = "WEEKLY",
-  MONTHLY = "MONTHLY",
-  QUARTERLY = "QUARTERLY",
-  YEARLY = "YEARLY",
-  CUSTOM = "CUSTOM",
-}
+import { ReportType, ReportFormat, ReportPeriod } from "../enums/report-type.enum";
 
 /**
  * DTO para criação de relatório
@@ -84,7 +49,7 @@ export class CreateReportDto {
   @ApiProperty({
     description: "Período do relatório",
     enum: ReportPeriod,
-    example: ReportPeriod.MONTHLY,
+    example: ReportPeriod.THIS_MONTH,
   })
   @IsEnum(ReportPeriod)
   @IsNotEmpty()
