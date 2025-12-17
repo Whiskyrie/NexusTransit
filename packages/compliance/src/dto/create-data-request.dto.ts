@@ -9,7 +9,7 @@ export class CreateDataRequestDto {
   @ApiProperty({
     description: "Tipo de solicitação de dados",
     enum: DataRequestType,
-    example: DataRequestType.ACCESS,
+    example: DataRequestType.DATA_ACCESS,
   })
   @IsEnum(DataRequestType)
   declare requestType: DataRequestType;

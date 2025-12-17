@@ -9,7 +9,7 @@ export class UpdateDataRequestDto {
   @ApiPropertyOptional({
     description: "Novo status da solicitação",
     enum: DataRequestStatus,
-    example: DataRequestStatus.IN_PROGRESS,
+    example: DataRequestStatus.PROCESSING,
   })
   @IsOptional()
   @IsEnum(DataRequestStatus)

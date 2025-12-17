@@ -9,7 +9,7 @@ export class RevokeConsentDto {
   @ApiProperty({
     description: "Tipo de consentimento a ser revogado",
     enum: ConsentType,
-    example: ConsentType.DATA_PROCESSING,
+    example: ConsentType.BASIC_DATA_PROCESSING,
   })
   @IsEnum(ConsentType)
   declare consentType: ConsentType;
