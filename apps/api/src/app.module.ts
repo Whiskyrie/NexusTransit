@@ -18,6 +18,7 @@ import { TrackingModule } from './modules/tracking/tracking.module';
 import { IncidentsModule } from './modules/incidents/incidents.module';
 import { CustomersModule } from './modules/customers/customers.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { AddressModule } from './modules/address/address.module';
 import { RedisModule } from '@nexus/redis';
 import { AuditModule } from '@nexus/audit';
 import { ComplianceModule } from '@nexus/compliance';
@@ -59,6 +60,7 @@ import configurations from './config/configurations';
     IncidentsModule,
     CustomersModule,
     AuthModule,
+    AddressModule, // Sistema de endereços e geolocalização
     RedisModule.forRootAsync(),
     AuditModule, // Sistema de auditoria e logs
     ComplianceModule, // Conformidade LGPD/GDPR

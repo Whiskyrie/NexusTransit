@@ -27,6 +27,7 @@ export * from "./validators/cpf.validator";
 export * from "./validators/cnh.validator";
 export * from "./validators/mopp.validator";
 export * from "./validators/license-plate.validator";
+export * from "./validators/cep.validator";
 
 // Utils
 export * from "./utils/distance-calculator.util";

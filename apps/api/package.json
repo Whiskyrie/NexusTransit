@@ -66,6 +66,7 @@
     "@nexus/common": "workspace:*",
     "@nexus/compliance": "workspace:^",
     "@nexus/database": "workspace:^",
+    "@nexus/geo-services": "workspace:*",
     "@nexus/logger": "workspace:^",
     "@nexus/rate-limit": "workspace:^",
     "@nexus/redis": "workspace:^",
