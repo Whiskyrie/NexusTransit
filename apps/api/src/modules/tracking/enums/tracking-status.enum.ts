@@ -146,9 +146,9 @@ export function isValidTrackingStatus(status: string): status is TrackingStatus 
 }
 
 /**
- * Valida se um tipo de evento é válido
+ * Valida se um tipo de evento de rastreamento é válido
  */
-export function isValidEventType(eventType: string): eventType is TrackingEventType {
+export function isValidTrackingEventType(eventType: string): eventType is TrackingEventType {
   return Object.values(TrackingEventType).includes(eventType as TrackingEventType);
 }
 
@@ -160,8 +160,8 @@ export function getAvailableStatuses(): TrackingStatus[] {
 }
 
 /**
- * Obtém todos os tipos de eventos disponíveis
+ * Obtém todos os tipos de eventos de rastreamento disponíveis
  */
-export function getAvailableEventTypes(): TrackingEventType[] {
+export function getAvailableTrackingEventTypes(): TrackingEventType[] {
   return Object.values(TrackingEventType);
 }
