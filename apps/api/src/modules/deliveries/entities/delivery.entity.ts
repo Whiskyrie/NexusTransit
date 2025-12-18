@@ -9,6 +9,7 @@ import { Route } from '../../routes/entities/route.entity';
 import { DeliveryAttempt } from './delivery-attempt.entity';
 import { DeliveryProof } from './delivery-proof.entity';
 import { DeliveryStatusHistory } from './delivery-status-history.entity';
+import { TrackingEvent } from '../../tracking/entities/tracking-event.entity';
 
 /**
  * Delivery Entity - Sistema de gerenciamento de entregas
@@ -350,6 +351,9 @@ export class Delivery extends BaseEntity {
 
   @OneToMany(() => DeliveryStatusHistory, history => history.delivery, { cascade: true })
   statusHistory!: DeliveryStatusHistory[];
+
+  @OneToMany(() => TrackingEvent, event => event.delivery, { cascade: true })
+  tracking_events!: TrackingEvent[];
 
   // Relacionamento com Rota
   @ManyToOne(() => Route, route => route.delivery, { nullable: true })
