@@ -12,6 +12,7 @@ import { Auditable } from '@nexus/audit';
 import { Route } from '../../routes/entities/route.entity';
 import { type ServiceOrder } from '../../service-orders/entities/service-order.entity';
 import { type Vehicle } from '../../vehicles/entities/vehicle.entity';
+import { TrackingEvent } from '../../tracking/entities/tracking-event.entity';
 
 /**
  * Driver Entity - Sistema de gerenciamento de motoristas
@@ -240,5 +241,7 @@ export class Driver extends BaseEntity {
   routes?: Route[];
 
   @OneToMany('ServiceOrder', 'driver')
+  @OneToMany(() => TrackingEvent, event => event.driver)
+  tracking_events?: TrackingEvent[];
   service_orders?: Relation<ServiceOrder[]>;
 }

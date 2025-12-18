@@ -109,6 +109,15 @@ export interface RouteStep {
 export interface GoogleMapsServiceInterface {
   geocode(address: string): Promise<GeocodeResponse>;
   reverseGeocode(lat: number, lng: number): Promise<GeocodeResponse>;
-  getDistanceMatrix(origins: string[], destinations: string[]): Promise<DistanceMatrixResponse>;
-  getRoutes(origin: string, destination: string, waypoints?: string[]): Promise<RouteResponse>;
+  getDistanceMatrix(
+    origins: string[],
+    destinations: string[],
+    mode?: string,
+  ): Promise<DistanceMatrixResponse>;
+  getRoutes(
+    origin: string,
+    destination: string,
+    mode?: string,
+    waypoints?: string[],
+  ): Promise<RouteResponse>;
 }

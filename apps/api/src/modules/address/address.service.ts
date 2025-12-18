@@ -112,11 +112,17 @@ export class AddressService {
   /**
    * Calcula distância entre dois endereços
    */
-  async calculateDistance(origin: string, destination: string): Promise<DistanceMatrixResponse> {
-    this.logger.log(`Calculando distância de ${origin} para ${destination}`);
+  async calculateDistance(
+    origin: string,
+    destination: string,
+    mode?: string,
+  ): Promise<DistanceMatrixResponse> {
+    this.logger.log(
+      `Calculando distância de ${origin} para ${destination} (modo: ${mode ?? 'driving'})`,
+    );
 
     try {
-      return await this.googleMapsService.getDistanceMatrix([origin], [destination]);
+      return await this.googleMapsService.getDistanceMatrix([origin], [destination], mode);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
       this.logger.error(`Erro ao calcular distância: ${errorMessage}`);
@@ -127,11 +133,13 @@ export class AddressService {
   /**
    * Calcula rota entre dois endereços
    */
-  async calculateRoute(origin: string, destination: string): Promise<RouteResponse> {
-    this.logger.log(`Calculando rota de ${origin} para ${destination}`);
+  async calculateRoute(origin: string, destination: string, mode?: string): Promise<RouteResponse> {
+    this.logger.log(
+      `Calculando rota de ${origin} para ${destination} (modo: ${mode ?? 'driving'})`,
+    );
 
     try {
-      return await this.googleMapsService.getRoutes(origin, destination);
+      return await this.googleMapsService.getRoutes(origin, destination, mode);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
       this.logger.error(`Erro ao calcular rota: ${errorMessage}`);

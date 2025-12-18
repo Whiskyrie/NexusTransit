@@ -8,6 +8,7 @@ import { Driver } from '../../drivers/entities/driver.entity';
 import { Delivery } from '../../deliveries/entities/delivery.entity';
 import { RouteStop } from './route_stop.entity';
 import { RouteHistory } from './route_history.entity';
+import { TrackingEvent } from '../../tracking/entities/tracking-event.entity';
 /**
  * Route Entity - Sistema de gerenciamento de rotas
  *
@@ -415,6 +416,9 @@ export class Route extends BaseEntity {
     cascade: true,
   })
   history?: RouteHistory[];
+
+  @OneToMany(() => TrackingEvent, event => event.route)
+  tracking_events?: TrackingEvent[];
 
   @ManyToOne(() => Delivery, delivery => delivery.route, {
     nullable: true,

@@ -7,29 +7,14 @@ import type {
   ViaCepServiceInterface,
 } from "../interfaces/viacep.interface";
 import { cleanCEP, formatCEP } from "../validators/cep.validator";
-import type { GeoServicesConfig } from "../config/geo-services.config";
 
 @Injectable()
 export class ViaCepService implements ViaCepServiceInterface {
   private readonly logger = new Logger(ViaCepService.name);
-  private readonly config: Required<GeoServicesConfig>;
+  private readonly baseUrl = "https://viacep.com.br/ws";
+  private readonly timeout = 3000;
 
-  constructor(
-    private readonly httpService: HttpService,
-    config?: GeoServicesConfig,
-  ) {
-    this.config = {
-      viaCep: {
-        timeout: config?.viaCep?.timeout ?? 3000,
-        baseUrl: config?.viaCep?.baseUrl ?? "https://viacep.com.br/ws",
-      },
-      googleMaps: {
-        apiKey: config?.googleMaps?.apiKey ?? "",
-        timeout: config?.googleMaps?.timeout ?? 5000,
-        baseUrl: config?.googleMaps?.baseUrl ?? "https://maps.googleapis.com/maps/api",
-      },
-    };
-  }
+  constructor(private readonly httpService: HttpService) {}
 
   async getAddressByZipCode(zipCode: string): Promise<ViaCepAddress> {
     // Valida o CEP
@@ -38,14 +23,14 @@ export class ViaCepService implements ViaCepServiceInterface {
     }
 
     const cleanedZipCode = cleanCEP(zipCode);
-    const url = `${this.config.viaCep.baseUrl}/${cleanedZipCode}/json/`;
+    const url = `${this.baseUrl}/${cleanedZipCode}/json/`;
 
     try {
       this.logger.log(`Consultando ViaCEP para o CEP: ${formatCEP(cleanedZipCode)}`);
 
       const response = await firstValueFrom(
         this.httpService.get<ViaCepResponse>(url, {
-          timeout: this.config.viaCep.timeout,
+          timeout: this.timeout,
         }),
       );
 
