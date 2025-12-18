@@ -31,6 +31,7 @@ import { SearchCepDto } from './dto/search-cep.dto';
 import { GeocodeDto } from './dto/geocode.dto';
 import { CalculateDistanceDto } from './dto/calculate-distance.dto';
 import { PaginatedResponseDto } from '@nexus/common';
+import type { DistanceMatrixResponse, RouteResponse } from '@nexus/geo-services';
 
 /**
  * Controller de gerenciamento de endereços
@@ -75,7 +76,12 @@ export class AddressController {
   @ApiBadRequestResponse({
     description: 'Endereço inválido ou não encontrado',
   })
-  async geocode(@Body() geocodeDto: GeocodeDto): Promise<any> {
+  async geocode(@Body() geocodeDto: GeocodeDto): Promise<{
+    latitude: number;
+    longitude: number;
+    formatted_address: string;
+    place_id: string;
+  }> {
     return this.addressService.geocodeAddress(geocodeDto.address);
   }
 
@@ -92,7 +98,9 @@ export class AddressController {
   @ApiBadRequestResponse({
     description: 'Endereços inválidos',
   })
-  async calculateDistance(@Body() calculateDistanceDto: CalculateDistanceDto): Promise<any> {
+  async calculateDistance(
+    @Body() calculateDistanceDto: CalculateDistanceDto,
+  ): Promise<DistanceMatrixResponse> {
     return this.addressService.calculateDistance(
       calculateDistanceDto.origin,
       calculateDistanceDto.destination,
@@ -113,7 +121,7 @@ export class AddressController {
   @ApiBadRequestResponse({
     description: 'Endereços inválidos',
   })
-  async calculateRoute(@Body() calculateDistanceDto: CalculateDistanceDto): Promise<any> {
+  async calculateRoute(@Body() calculateDistanceDto: CalculateDistanceDto): Promise<RouteResponse> {
     return this.addressService.calculateRoute(
       calculateDistanceDto.origin,
       calculateDistanceDto.destination,
