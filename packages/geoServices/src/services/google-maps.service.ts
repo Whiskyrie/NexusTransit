@@ -1,6 +1,5 @@
 import { Injectable, Logger, BadRequestException, NotFoundException } from "@nestjs/common";
-import { Client } from "@googlemaps/google-maps-services-js";
-import type { GeoServicesConfig } from "../config/geo-services.config";
+import { Client, TravelMode } from "@googlemaps/google-maps-services-js";
 import type {
   GoogleMapsServiceInterface,
   GeocodeResponse,
@@ -12,23 +11,18 @@ import type {
 export class GoogleMapsService implements GoogleMapsServiceInterface {
   private readonly logger = new Logger(GoogleMapsService.name);
   private readonly client: Client;
-  private readonly config: Required<Pick<GeoServicesConfig, "googleMaps">>;
+  private readonly apiKey: string;
+  private readonly timeout = 5000;
+  private readonly baseUrl = "https://maps.googleapis.com/maps/api";
 
-  constructor(config?: GeoServicesConfig) {
-    const apiKey = config?.googleMaps?.apiKey ?? process.env.GOOGLE_MAPS_API_KEY;
+  constructor() {
+    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
 
     if (!apiKey) {
       throw new Error("Google Maps API key is required");
     }
 
-    this.config = {
-      googleMaps: {
-        apiKey: apiKey,
-        timeout: config?.googleMaps?.timeout ?? 5000,
-        baseUrl: config?.googleMaps?.baseUrl ?? "https://maps.googleapis.com/maps/api",
-      },
-    };
-
+    this.apiKey = apiKey;
     this.client = new Client({});
   }
 
@@ -43,9 +37,9 @@ export class GoogleMapsService implements GoogleMapsServiceInterface {
       const response = await this.client.geocode({
         params: {
           address: address,
-          key: this.config.googleMaps.apiKey,
+          key: this.apiKey,
         },
-        timeout: this.config.googleMaps.timeout,
+        timeout: this.timeout,
       });
 
       if (response.data.status !== "OK") {
@@ -82,9 +76,9 @@ export class GoogleMapsService implements GoogleMapsServiceInterface {
       const response = await this.client.reverseGeocode({
         params: {
           latlng: `${lat},${lng}`,
-          key: this.config.googleMaps.apiKey,
+          key: this.apiKey,
         },
-        timeout: this.config.googleMaps.timeout,
+        timeout: this.timeout,
       });
 
       if (response.data.status !== "OK") {
@@ -113,6 +107,7 @@ export class GoogleMapsService implements GoogleMapsServiceInterface {
   async getDistanceMatrix(
     origins: string[],
     destinations: string[],
+    mode?: string,
   ): Promise<DistanceMatrixResponse> {
     if (!origins.length || !destinations.length) {
       throw new BadRequestException("Origens e destinos são obrigatórios");
@@ -120,16 +115,17 @@ export class GoogleMapsService implements GoogleMapsServiceInterface {
 
     try {
       this.logger.log(
-        `Calculating distance matrix for ${origins.length} origins and ${destinations.length} destinations`,
+        `Calculating distance matrix for ${origins.length} origins and ${destinations.length} destinations (mode: ${mode ?? "driving"})`,
       );
 
       const response = await this.client.distancematrix({
         params: {
           origins: origins,
           destinations: destinations,
-          key: this.config.googleMaps.apiKey,
+          key: this.apiKey,
+          ...(mode ? { mode: mode as TravelMode } : {}),
         },
-        timeout: this.config.googleMaps.timeout,
+        timeout: this.timeout,
       });
 
       if (response.data.status !== "OK") {
@@ -158,6 +154,7 @@ export class GoogleMapsService implements GoogleMapsServiceInterface {
   async getRoutes(
     origin: string,
     destination: string,
+    mode?: string,
     waypoints?: string[],
   ): Promise<RouteResponse> {
     if (!origin || !destination) {
@@ -167,6 +164,7 @@ export class GoogleMapsService implements GoogleMapsServiceInterface {
     try {
       this.logger.log(
         `Calculating route from ${origin} to ${destination}` +
+          (mode ? ` (mode: ${mode})` : "") +
           (waypoints?.length ? ` with ${waypoints.length} waypoints` : ""),
       );
 
@@ -175,9 +173,10 @@ export class GoogleMapsService implements GoogleMapsServiceInterface {
           origin: origin,
           destination: destination,
           ...(waypoints && waypoints.length > 0 ? { waypoints: waypoints } : {}),
-          key: this.config.googleMaps.apiKey,
+          ...(mode ? { mode: mode as TravelMode } : {}),
+          key: this.apiKey,
         },
-        timeout: this.config.googleMaps.timeout,
+        timeout: this.timeout,
       });
 
       if (response.data.status !== "OK") {
@@ -227,9 +226,9 @@ export class GoogleMapsService implements GoogleMapsServiceInterface {
           destination: destination,
           waypoints: waypoints,
           optimize: optimizeWaypoints,
-          key: this.config.googleMaps.apiKey,
+          key: this.apiKey,
         },
-        timeout: this.config.googleMaps.timeout,
+        timeout: this.timeout,
       });
 
       if (response.data.status !== "OK") {
