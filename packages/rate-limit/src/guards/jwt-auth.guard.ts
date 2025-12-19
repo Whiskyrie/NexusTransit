@@ -12,7 +12,7 @@ export class JwtAuthGuard extends AuthGuard("jwt") {
     return super.canActivate(context);
   }
 
-  handleRequest<TUser = any>(err: any, user: any, _info: any): TUser {
+  handleRequest<TUser = unknown>(err: Error | null, user: TUser | null, _info: unknown): TUser {
     if (err || !user) {
       throw err ?? new UnauthorizedException("Token de autenticação inválido");
     }
