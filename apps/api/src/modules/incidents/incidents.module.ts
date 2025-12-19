@@ -11,6 +11,10 @@ import { StorageModule } from '../../../../../packages/storage/src/storage.modul
 // Services
 import { IncidentStateMachineService } from './services/incident-state-machine.service';
 import { IncidentGeoService } from './services/incident-geo.service';
+import { IncidentStatsService } from './services/incident-stats.service';
+
+// Controllers
+import { IncidentStatsController } from './controllers/incident-stats.controller';
 
 // Subscribers
 import { IncidentStatusSubscriber } from './subscribers/incident-status.subscriber';
@@ -25,13 +29,20 @@ import { IncidentStatusSubscriber } from './subscribers/incident-status.subscrib
     ]),
     StorageModule.forRoot(),
   ],
-  controllers: [IncidentsController],
+  controllers: [IncidentsController, IncidentStatsController],
   providers: [
     IncidentsService,
     IncidentStateMachineService,
     IncidentGeoService,
+    IncidentStatsService,
     IncidentStatusSubscriber,
   ],
-  exports: [IncidentsService, IncidentStateMachineService, IncidentGeoService, TypeOrmModule],
+  exports: [
+    IncidentsService,
+    IncidentStateMachineService,
+    IncidentGeoService,
+    IncidentStatsService,
+    TypeOrmModule,
+  ],
 })
 export class IncidentsModule {}
