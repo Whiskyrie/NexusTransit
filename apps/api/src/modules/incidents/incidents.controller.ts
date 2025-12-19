@@ -30,18 +30,26 @@ import {
   ApiForbiddenResponse,
 } from '@nestjs/swagger';
 import { IncidentsService } from './incidents.service';
+import { IncidentGeoService } from './services/incident-geo.service';
 import { CreateIncidentDto } from './dto/create-incident.dto';
 import { UpdateIncidentDto } from './dto/update-incident.dto';
 import { IncidentFilterDto } from './dto/incident-filter.dto';
 import { IncidentResponseDto } from './dto/incident-response.dto';
+import { NearbyIncidentsDto } from './dto/nearby-incidents.dto';
+import { WithinAreaDto } from './dto/within-area.dto';
+import { IncidentWithDistanceDto } from './dto/incident-with-distance.dto';
 import { PaginatedResponseDto } from '../../../../../packages/common/src/dto/paginated-response.dto';
 import { IncidentStatus } from './enums/incident.enums';
+import { IncidentStatusHistory } from './entities/incident-status-history.entity';
 
 @ApiTags('Incidents')
 @Controller('incidents')
 @ApiBearerAuth()
 export class IncidentsController {
-  constructor(private readonly incidentsService: IncidentsService) {}
+  constructor(
+    private readonly incidentsService: IncidentsService,
+    private readonly incidentGeoService: IncidentGeoService,
+  ) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -303,5 +311,131 @@ export class IncidentsController {
   @ApiNotFoundResponse({ description: 'Incidente não encontrado' })
   async assignIncident(@Param('id', ParseUUIDPipe) id: string, @Body('user_id') userId: string) {
     return this.incidentsService.assignIncident(id, userId);
+  }
+
+  @Get(':id/status-history')
+  @ApiOperation({
+    summary: 'Obter histórico de status',
+    description: 'Retorna o histórico completo de mudanças de status do incidente',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID único do incidente',
+    type: String,
+    format: 'uuid',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Histórico de status do incidente',
+    type: [IncidentStatusHistory],
+  })
+  @ApiNotFoundResponse({ description: 'Incidente não encontrado' })
+  async getStatusHistory(@Param('id', ParseUUIDPipe) id: string) {
+    return this.incidentsService.getStatusHistory(id);
+  }
+
+  @Get(':id/possible-transitions')
+  @ApiOperation({
+    summary: 'Obter transições possíveis',
+    description: 'Retorna os próximos status possíveis a partir do status atual',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID único do incidente',
+    type: String,
+    format: 'uuid',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Transições de status disponíveis',
+  })
+  @ApiNotFoundResponse({ description: 'Incidente não encontrado' })
+  async getPossibleTransitions(@Param('id', ParseUUIDPipe) id: string) {
+    return this.incidentsService.getPossibleTransitions(id);
+  }
+
+  @Get('nearby')
+  @ApiOperation({
+    summary: 'Buscar incidentes próximos',
+    description:
+      'Busca incidentes dentro de um raio de distância de uma localização usando PostGIS ST_DWithin',
+  })
+  @ApiQuery({
+    name: 'latitude',
+    required: true,
+    type: Number,
+    example: -23.5505,
+    description: 'Latitude da localização de referência',
+  })
+  @ApiQuery({
+    name: 'longitude',
+    required: true,
+    type: Number,
+    example: -46.6333,
+    description: 'Longitude da localização de referência',
+  })
+  @ApiQuery({
+    name: 'radius_meters',
+    required: false,
+    type: Number,
+    example: 5000,
+    description: 'Raio de busca em metros (padrão: 5000)',
+  })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: IncidentStatus,
+    description: 'Filtrar por status do incidente',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    example: 50,
+    description: 'Limite de resultados (padrão: 50)',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Lista de incidentes próximos ordenados por distância',
+    type: [IncidentWithDistanceDto],
+  })
+  @ApiBadRequestResponse({ description: 'Parâmetros inválidos' })
+  async findNearby(@Query() dto: NearbyIncidentsDto): Promise<IncidentWithDistanceDto[]> {
+    return this.incidentGeoService.findNearby(dto);
+  }
+
+  @Post('within-area')
+  @ApiOperation({
+    summary: 'Buscar incidentes dentro de área',
+    description: 'Busca incidentes dentro de um polígono usando PostGIS ST_Within',
+  })
+  @ApiBody({
+    type: WithinAreaDto,
+    description: 'Coordenadas do polígono e filtros opcionais',
+    examples: {
+      'area-sao-paulo': {
+        summary: 'Área em São Paulo',
+        value: {
+          coordinates: [
+            { latitude: -23.5505, longitude: -46.6333 },
+            { latitude: -23.5605, longitude: -46.6333 },
+            { latitude: -23.5605, longitude: -46.6233 },
+            { latitude: -23.5505, longitude: -46.6233 },
+            { latitude: -23.5505, longitude: -46.6333 },
+          ],
+          status: 'REPORTED',
+          limit: 100,
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Lista de incidentes dentro da área especificada',
+    type: [IncidentResponseDto],
+  })
+  @ApiBadRequestResponse({ description: 'Polígono inválido ou parâmetros incorretos' })
+  async findWithinArea(@Body() dto: WithinAreaDto): Promise<IncidentResponseDto[]> {
+    return this.incidentGeoService.findWithinArea(dto);
   }
 }
