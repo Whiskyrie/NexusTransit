@@ -11,8 +11,6 @@ import { IncidentComment } from './entities/incident-comment.entity';
 import { IncidentStatusHistory } from './entities/incident-status-history.entity';
 import {
   IncidentStatus,
-  IncidentType,
-  IncidentSeverity,
   translateIncidentSeverity,
   translateIncidentStatus,
   translateIncidentType,
@@ -389,7 +387,7 @@ export class IncidentsService {
     reason?: string,
   ): Promise<IncidentResponseDto> {
     const incident = await this.findIncidentOrFail(id);
-    const currentStatus = incident.status as IncidentStatus;
+    const currentStatus = incident.status;
 
     // Se o status não mudou, não fazer nada
     if (currentStatus === status) {
@@ -404,7 +402,7 @@ export class IncidentsService {
     }
 
     // Executar a transição através da máquina de estados
-    const transitionResult = await this.stateMachineService.transition(
+    const transitionResult = this.stateMachineService.transition(
       id,
       currentStatus,
       status,
@@ -461,7 +459,7 @@ export class IncidentsService {
     }[];
   }> {
     const incident = await this.findIncidentOrFail(id);
-    return this.stateMachineService.getTransitionInfo(incident.status as IncidentStatus);
+    return this.stateMachineService.getTransitionInfo(incident.status);
   }
 
   /**
@@ -507,13 +505,13 @@ export class IncidentsService {
 
     // Adicionar traduções
     if (incident.incident_type) {
-      dto.incident_type_translated = translateIncidentType(incident.incident_type as IncidentType);
+      dto.incident_type_translated = translateIncidentType(incident.incident_type);
     }
     if (incident.severity) {
-      dto.severity_translated = translateIncidentSeverity(incident.severity as IncidentSeverity);
+      dto.severity_translated = translateIncidentSeverity(incident.severity);
     }
     if (incident.status) {
-      dto.status_translated = translateIncidentStatus(incident.status as IncidentStatus);
+      dto.status_translated = translateIncidentStatus(incident.status);
     }
 
     return dto;

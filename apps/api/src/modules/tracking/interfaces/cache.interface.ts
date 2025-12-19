@@ -1,4 +1,4 @@
-import { TrackingEventResponseDto } from '../dto/tracking-event-response.dto';
+import type { TrackingEventResponseDto } from '../dto/tracking-event-response.dto';
 
 /**
  * Interface para dados de rastreamento em cache
