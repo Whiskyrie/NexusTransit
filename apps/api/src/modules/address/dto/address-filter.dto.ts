@@ -29,7 +29,7 @@ export class AddressFilterDto extends BaseFilterDto {
   })
   @IsOptional()
   @IsString()
-  @Transform(({ value }) => value?.toUpperCase())
+  @Transform(({ value }: { value: string }) => value?.toUpperCase())
   state?: string;
 
   @ApiPropertyOptional({
@@ -55,9 +55,13 @@ export class AddressFilterDto extends BaseFilterDto {
   @IsOptional()
   @IsBoolean()
   @Transform(({ value }) => {
-    if (value === 'true') return true;
-    if (value === 'false') return false;
-    return value;
+    if (value === 'true') {
+      return true;
+    }
+    if (value === 'false') {
+      return false;
+    }
+    return Boolean(value);
   })
   is_active?: boolean;
 }
