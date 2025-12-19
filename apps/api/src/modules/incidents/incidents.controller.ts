@@ -41,6 +41,21 @@ import { IncidentWithDistanceDto } from './dto/incident-with-distance.dto';
 import { PaginatedResponseDto } from '../../../../../packages/common/src/dto/paginated-response.dto';
 import { IncidentStatus } from './enums/incident.enums';
 import { IncidentStatusHistory } from './entities/incident-status-history.entity';
+import { IncidentAttachment } from './entities/incident-attachment.entity';
+import { IncidentComment } from './entities/incident-comment.entity';
+
+/**
+ * Interface para o retorno de transições possíveis
+ */
+interface PossibleTransitionsResult {
+  current: IncidentStatus;
+  nextStatuses: IncidentStatus[];
+  transitions: {
+    to: IncidentStatus;
+    event: string | null;
+    description: string;
+  }[];
+}
 
 @ApiTags('Incidents')
 @Controller('incidents')
@@ -66,7 +81,7 @@ export class IncidentsController {
   @ApiConflictResponse({ description: 'Conflito ao criar incidente' })
   @ApiUnauthorizedResponse({ description: 'Token de autenticação inválido ou ausente' })
   @ApiForbiddenResponse({ description: 'Usuário não possui permissão' })
-  async create(@Body() createIncidentDto: CreateIncidentDto) {
+  async create(@Body() createIncidentDto: CreateIncidentDto): Promise<IncidentResponseDto> {
     return this.incidentsService.create(createIncidentDto);
   }
 
@@ -92,7 +107,7 @@ export class IncidentsController {
   async createWithAttachments(
     @Body() createIncidentDto: CreateIncidentDto,
     @UploadedFiles() files: Express.Multer.File[],
-  ) {
+  ): Promise<IncidentResponseDto> {
     return this.incidentsService.create(createIncidentDto, files);
   }
 
@@ -120,7 +135,9 @@ export class IncidentsController {
     description: 'Lista de incidentes',
     type: PaginatedResponseDto<IncidentResponseDto>,
   })
-  async findAll(@Query() filterDto: IncidentFilterDto) {
+  async findAll(
+    @Query() filterDto: IncidentFilterDto,
+  ): Promise<PaginatedResponseDto<IncidentResponseDto>> {
     return this.incidentsService.findAll(filterDto);
   }
 
@@ -141,7 +158,7 @@ export class IncidentsController {
     type: IncidentResponseDto,
   })
   @ApiNotFoundResponse({ description: 'Incidente não encontrado' })
-  async findOne(@Param('id', ParseUUIDPipe) id: string) {
+  async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<IncidentResponseDto> {
     return this.incidentsService.findOne(id);
   }
 
@@ -165,7 +182,7 @@ export class IncidentsController {
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateIncidentDto: UpdateIncidentDto,
-  ) {
+  ): Promise<IncidentResponseDto> {
     return this.incidentsService.update(id, updateIncidentDto);
   }
 
@@ -192,7 +209,7 @@ export class IncidentsController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateIncidentDto: UpdateIncidentDto,
     @UploadedFiles() files: Express.Multer.File[],
-  ) {
+  ): Promise<IncidentResponseDto> {
     return this.incidentsService.update(id, updateIncidentDto, files);
   }
 
@@ -213,7 +230,7 @@ export class IncidentsController {
     description: 'Incidente removido com sucesso',
   })
   @ApiNotFoundResponse({ description: 'Incidente não encontrado' })
-  async remove(@Param('id', ParseUUIDPipe) id: string) {
+  async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     return this.incidentsService.remove(id);
   }
 
@@ -239,7 +256,7 @@ export class IncidentsController {
     @Param('id', ParseUUIDPipe) id: string,
     @UploadedFiles() file: Express.Multer.File,
     @Body('description') description?: string,
-  ) {
+  ): Promise<IncidentAttachment> {
     return this.incidentsService.addAttachment(id, file, description);
   }
 
@@ -262,8 +279,8 @@ export class IncidentsController {
   async addComment(
     @Param('id', ParseUUIDPipe) id: string,
     @Body('comment_text') commentText: string,
-    @Body('is_internal') isInternal: boolean = false,
-  ) {
+    @Body('is_internal') isInternal = false,
+  ): Promise<IncidentComment> {
     return this.incidentsService.addComment(id, commentText, isInternal);
   }
 
@@ -288,7 +305,7 @@ export class IncidentsController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body('status') status: IncidentStatus,
     @Body('resolution_notes') resolutionNotes?: string,
-  ) {
+  ): Promise<IncidentResponseDto> {
     return this.incidentsService.updateStatus(id, status, resolutionNotes);
   }
 
@@ -309,7 +326,10 @@ export class IncidentsController {
     type: IncidentResponseDto,
   })
   @ApiNotFoundResponse({ description: 'Incidente não encontrado' })
-  async assignIncident(@Param('id', ParseUUIDPipe) id: string, @Body('user_id') userId: string) {
+  async assignIncident(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body('user_id') userId: string,
+  ): Promise<IncidentResponseDto> {
     return this.incidentsService.assignIncident(id, userId);
   }
 
@@ -330,7 +350,7 @@ export class IncidentsController {
     type: [IncidentStatusHistory],
   })
   @ApiNotFoundResponse({ description: 'Incidente não encontrado' })
-  async getStatusHistory(@Param('id', ParseUUIDPipe) id: string) {
+  async getStatusHistory(@Param('id', ParseUUIDPipe) id: string): Promise<IncidentStatusHistory[]> {
     return this.incidentsService.getStatusHistory(id);
   }
 
@@ -350,7 +370,9 @@ export class IncidentsController {
     description: 'Transições de status disponíveis',
   })
   @ApiNotFoundResponse({ description: 'Incidente não encontrado' })
-  async getPossibleTransitions(@Param('id', ParseUUIDPipe) id: string) {
+  async getPossibleTransitions(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<PossibleTransitionsResult> {
     return this.incidentsService.getPossibleTransitions(id);
   }
 
