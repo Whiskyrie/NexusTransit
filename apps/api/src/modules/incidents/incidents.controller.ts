@@ -1,34 +1,307 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+  UseInterceptors,
+  UploadedFiles,
+  ParseUUIDPipe,
+  HttpStatus,
+  HttpCode,
+} from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiQuery,
+  ApiParam,
+  ApiBearerAuth,
+  ApiConsumes,
+  ApiBody,
+  ApiBadRequestResponse,
+  ApiNotFoundResponse,
+  ApiConflictResponse,
+  ApiUnauthorizedResponse,
+  ApiForbiddenResponse,
+} from '@nestjs/swagger';
 import { IncidentsService } from './incidents.service';
 import { CreateIncidentDto } from './dto/create-incident.dto';
 import { UpdateIncidentDto } from './dto/update-incident.dto';
+import { IncidentFilterDto } from './dto/incident-filter.dto';
+import { IncidentResponseDto } from './dto/incident-response.dto';
+import { PaginatedResponseDto } from '../../../../../packages/common/src/dto/paginated-response.dto';
+import { IncidentStatus } from './enums/incident.enums';
 
+@ApiTags('Incidents')
 @Controller('incidents')
+@ApiBearerAuth()
 export class IncidentsController {
   constructor(private readonly incidentsService: IncidentsService) {}
 
   @Post()
-  create(@Body() createIncidentDto: CreateIncidentDto) {
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'Criar novo incidente',
+    description: 'Cria um novo registro de incidente com anexos e comentários',
+  })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Incidente criado com sucesso',
+    type: IncidentResponseDto,
+  })
+  @ApiBadRequestResponse({ description: 'Dados inválidos fornecidos' })
+  @ApiConflictResponse({ description: 'Conflito ao criar incidente' })
+  @ApiUnauthorizedResponse({ description: 'Token de autenticação inválido ou ausente' })
+  @ApiForbiddenResponse({ description: 'Usuário não possui permissão' })
+  async create(@Body() createIncidentDto: CreateIncidentDto) {
     return this.incidentsService.create(createIncidentDto);
   }
 
+  @Post('with-attachments')
+  @HttpCode(HttpStatus.CREATED)
+  @UseInterceptors(FilesInterceptor('files'))
+  @ApiOperation({
+    summary: 'Criar incidente com anexos',
+    description: 'Cria um novo incidente com upload de arquivos',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: 'Dados do incidente e arquivos',
+    type: CreateIncidentDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Incidente com anexos criado com sucesso',
+    type: IncidentResponseDto,
+  })
+  @ApiBadRequestResponse({ description: 'Dados inválidos ou arquivos não fornecidos' })
+  @ApiUnauthorizedResponse({ description: 'Token de autenticação inválido ou ausente' })
+  async createWithAttachments(
+    @Body() createIncidentDto: CreateIncidentDto,
+    @UploadedFiles() files: Express.Multer.File[],
+  ) {
+    return this.incidentsService.create(createIncidentDto, files);
+  }
+
   @Get()
-  findAll() {
-    return this.incidentsService.findAll();
+  @ApiOperation({
+    summary: 'Listar incidentes',
+    description: 'Lista incidentes com filtros, paginação e busca',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    example: 1,
+    description: 'Número da página',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    example: 10,
+    description: 'Itens por página (máximo 100)',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Lista de incidentes',
+    type: PaginatedResponseDto<IncidentResponseDto>,
+  })
+  async findAll(@Query() filterDto: IncidentFilterDto) {
+    return this.incidentsService.findAll(filterDto);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.incidentsService.findOne(+id);
+  @ApiOperation({
+    summary: 'Buscar incidente por ID',
+    description: 'Retorna detalhes completos do incidente',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID único do incidente',
+    type: String,
+    format: 'uuid',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Incidente encontrado',
+    type: IncidentResponseDto,
+  })
+  @ApiNotFoundResponse({ description: 'Incidente não encontrado' })
+  async findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.incidentsService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateIncidentDto: UpdateIncidentDto) {
-    return this.incidentsService.update(+id, updateIncidentDto);
+  @ApiOperation({
+    summary: 'Atualizar incidente',
+    description: 'Atualiza campos específicos do incidente',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID único do incidente',
+    type: String,
+    format: 'uuid',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Incidente atualizado com sucesso',
+    type: IncidentResponseDto,
+  })
+  @ApiNotFoundResponse({ description: 'Incidente não encontrado' })
+  async update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateIncidentDto: UpdateIncidentDto,
+  ) {
+    return this.incidentsService.update(id, updateIncidentDto);
+  }
+
+  @Patch(':id/with-attachments')
+  @UseInterceptors(FilesInterceptor('files'))
+  @ApiOperation({
+    summary: 'Atualizar incidente com novos anexos',
+    description: 'Atualiza incidente e adiciona novos arquivos',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiParam({
+    name: 'id',
+    description: 'ID único do incidente',
+    type: String,
+    format: 'uuid',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Incidente atualizado com anexos',
+    type: IncidentResponseDto,
+  })
+  @ApiNotFoundResponse({ description: 'Incidente não encontrado' })
+  async updateWithAttachments(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateIncidentDto: UpdateIncidentDto,
+    @UploadedFiles() files: Express.Multer.File[],
+  ) {
+    return this.incidentsService.update(id, updateIncidentDto, files);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.incidentsService.remove(+id);
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Remover incidente',
+    description: 'Soft delete do incidente',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID único do incidente',
+    type: String,
+    format: 'uuid',
+  })
+  @ApiResponse({
+    status: HttpStatus.NO_CONTENT,
+    description: 'Incidente removido com sucesso',
+  })
+  @ApiNotFoundResponse({ description: 'Incidente não encontrado' })
+  async remove(@Param('id', ParseUUIDPipe) id: string) {
+    return this.incidentsService.remove(id);
+  }
+
+  @Post(':id/attachments')
+  @UseInterceptors(FilesInterceptor('file'))
+  @ApiOperation({
+    summary: 'Adicionar anexo a incidente',
+    description: 'Faz upload de um arquivo e associa ao incidente',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiParam({
+    name: 'id',
+    description: 'ID único do incidente',
+    type: String,
+    format: 'uuid',
+  })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Anexo adicionado com sucesso',
+  })
+  @ApiNotFoundResponse({ description: 'Incidente não encontrado' })
+  async addAttachment(
+    @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFiles() file: Express.Multer.File,
+    @Body('description') description?: string,
+  ) {
+    return this.incidentsService.addAttachment(id, file, description);
+  }
+
+  @Post(':id/comments')
+  @ApiOperation({
+    summary: 'Adicionar comentário a incidente',
+    description: 'Adiciona um comentário ao incidente',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID único do incidente',
+    type: String,
+    format: 'uuid',
+  })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Comentário adicionado com sucesso',
+  })
+  @ApiNotFoundResponse({ description: 'Incidente não encontrado' })
+  async addComment(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body('comment_text') commentText: string,
+    @Body('is_internal') isInternal: boolean = false,
+  ) {
+    return this.incidentsService.addComment(id, commentText, isInternal);
+  }
+
+  @Patch(':id/status')
+  @ApiOperation({
+    summary: 'Atualizar status do incidente',
+    description: 'Altera o status do incidente e registra data de resolução se aplicável',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID único do incidente',
+    type: String,
+    format: 'uuid',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Status atualizado com sucesso',
+    type: IncidentResponseDto,
+  })
+  @ApiNotFoundResponse({ description: 'Incidente não encontrado' })
+  async updateStatus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body('status') status: IncidentStatus,
+    @Body('resolution_notes') resolutionNotes?: string,
+  ) {
+    return this.incidentsService.updateStatus(id, status, resolutionNotes);
+  }
+
+  @Patch(':id/assign')
+  @ApiOperation({
+    summary: 'Atribuir incidente a usuário',
+    description: 'Atribui um usuário responsável pelo incidente',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID único do incidente',
+    type: String,
+    format: 'uuid',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Incidente atribuído com sucesso',
+    type: IncidentResponseDto,
+  })
+  @ApiNotFoundResponse({ description: 'Incidente não encontrado' })
+  async assignIncident(@Param('id', ParseUUIDPipe) id: string, @Body('user_id') userId: string) {
+    return this.incidentsService.assignIncident(id, userId);
   }
 }
