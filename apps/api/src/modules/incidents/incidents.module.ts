@@ -15,6 +15,7 @@ import { StorageModule } from '../../../../../packages/storage/src/storage.modul
 import { IncidentStateMachineService } from './services/incident-state-machine.service';
 import { IncidentGeoService } from './services/incident-geo.service';
 import { IncidentStatsService } from './services/incident-stats.service';
+import { IncidentExportService } from './services/incident-export.service';
 import { WebhookService } from './services/webhook.service';
 import { WebhookTriggerService } from './services/webhook-trigger.service';
 
@@ -27,6 +28,12 @@ import { IncidentStatusSubscriber } from './subscribers/incident-status.subscrib
 import { IncidentWebhookSubscriber } from './subscribers/incident-webhook.subscriber';
 import { CommentWebhookSubscriber } from './subscribers/comment-webhook.subscriber';
 import { AttachmentWebhookSubscriber } from './subscribers/attachment-webhook.subscriber';
+
+// Gateways
+
+// Schedulers
+import { IncidentReportScheduler } from './schedulers/incident-report.scheduler';
+import { IncidentGateway } from './gateways/incident.gateway';
 
 @Module({
   imports: [
@@ -49,7 +56,10 @@ import { AttachmentWebhookSubscriber } from './subscribers/attachment-webhook.su
     IncidentsService,
     IncidentStateMachineService,
     IncidentGeoService,
+    IncidentExportService,
+    IncidentGateway,
     IncidentStatsService,
+    IncidentReportScheduler,
     WebhookService,
     WebhookTriggerService,
     IncidentStatusSubscriber,
