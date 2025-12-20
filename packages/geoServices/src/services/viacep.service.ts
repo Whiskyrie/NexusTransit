@@ -1,6 +1,12 @@
-import { Injectable, Logger, BadRequestException, NotFoundException } from "@nestjs/common";
+import {
+  Injectable,
+  Logger,
+  BadRequestException,
+  NotFoundException,
+  ServiceUnavailableException,
+} from "@nestjs/common";
 import { HttpService } from "@nestjs/axios";
-import { firstValueFrom } from "rxjs";
+import { firstValueFrom, TimeoutError } from "rxjs";
 import type {
   ViaCepResponse,
   ViaCepAddress,
@@ -63,11 +69,37 @@ export class ViaCepService implements ViaCepServiceInterface {
 
       const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
 
+      // Verifica se é erro de timeout
+      if (error instanceof TimeoutError) {
+        this.logger.error(`Timeout ao consultar ViaCEP para o CEP ${formatCEP(cleanedZipCode)}`);
+        throw new ServiceUnavailableException(
+          "O serviço de consulta de CEP está demorando para responder. Tente novamente.",
+        );
+      }
+
+      // Verifica se é erro HTTP (5xx = servidor, 4xx = cliente)
+      if (error && typeof error === "object" && "response" in error) {
+        const httpError = error as any;
+        const status = httpError.response?.status;
+
+        if (status >= 500) {
+          this.logger.error(
+            `ViaCEP indisponível (${status}) para o CEP ${formatCEP(cleanedZipCode)}: ${errorMessage}`,
+          );
+          throw new ServiceUnavailableException(
+            "O serviço de consulta de CEP está temporariamente indisponível. Tente novamente em alguns instantes.",
+          );
+        }
+      }
+
+      // Para outros erros não identificados
       this.logger.error(
         `Erro ao consultar ViaCEP para o CEP ${formatCEP(cleanedZipCode)}: ${errorMessage}`,
       );
 
-      throw new NotFoundException("Não foi possível consultar o CEP. Tente novamente mais tarde.");
+      throw new ServiceUnavailableException(
+        "Não foi possível consultar o CEP. Tente novamente mais tarde.",
+      );
     }
   }
 
