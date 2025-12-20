@@ -5,22 +5,27 @@ import {
   DataSource,
   Repository,
 } from 'typeorm';
-import { Logger } from '@nestjs/common';
+import { Logger, Inject, forwardRef } from '@nestjs/common';
 import { Incident } from '../entities/incident.entity';
 import { IncidentStatusHistory } from '../entities/incident-status-history.entity';
+import { IncidentGateway } from '../gateways/incident.gateway';
 
 /**
  * Subscriber para capturar automaticamente mudanças de status nos incidentes
  *
  * Sempre que o status de um incidente for alterado, este subscriber
- * registra a mudança no histórico automaticamente.
+ * registra a mudança no histórico automaticamente e emite evento WebSocket.
  */
 @EventSubscriber()
 export class IncidentStatusSubscriber implements EntitySubscriberInterface<Incident> {
   private readonly logger = new Logger(IncidentStatusSubscriber.name);
   private historyRepository!: Repository<IncidentStatusHistory>;
 
-  constructor(dataSource: DataSource) {
+  constructor(
+    dataSource: DataSource,
+    @Inject(forwardRef(() => IncidentGateway))
+    private readonly incidentGateway: IncidentGateway,
+  ) {
     dataSource.subscribers.push(this);
     this.historyRepository = dataSource.getRepository(IncidentStatusHistory);
   }
@@ -103,6 +108,24 @@ export class IncidentStatusSubscriber implements EntitySubscriberInterface<Incid
         },
       });
 
+      // Emitir evento WebSocket de mudança de status
+      try {
+        if (oldStatus && newStatus) {
+          this.incidentGateway.emitStatusUpdated(incident.id, oldStatus, newStatus, {
+            old_status: oldStatus,
+            new_status: newStatus,
+            changed_by_user_id: historyEntry.changed_by_user_id,
+            time_in_previous_status: timeInPreviousStatus,
+            severity: incident.severity,
+            incident_type: incident.incident_type,
+          });
+        }
+      } catch (wsError) {
+        this.logger.error(
+          `Erro ao emitir evento WebSocket para mudança de status do incidente ${incident.id}`,
+          wsError instanceof Error ? wsError.stack : wsError,
+        );
+      }
       await this.historyRepository.save(historyEntry);
 
       this.logger.log(
