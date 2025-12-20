@@ -393,4 +393,47 @@ export class IncidentGateway implements OnGatewayInit, OnGatewayConnection, OnGa
       rooms,
     };
   }
+
+  /**
+   * Emite atualização de métricas em tempo real
+   *
+   * Sala: metrics
+   */
+  emitMetricsUpdate(metrics: {
+    total_incidents: number;
+    active_incidents: number;
+    resolved_today: number;
+    critical_count: number;
+    average_resolution_time?: number;
+  }): void {
+    void this.server.to('metrics').emit('metrics:snapshot', {
+      metrics,
+      timestamp: new Date(),
+    });
+
+    this.logger.debug('Emitted metrics:snapshot');
+  }
+
+  /**
+   * Emite alerta de métrica crítica
+   *
+   * Salas: metrics, incidents_all
+   */
+  emitMetricsAlert(alert: {
+    type: 'high_volume' | 'long_resolution' | 'critical_surge';
+    message: string;
+    value: number;
+    threshold: number;
+  }): void {
+    const alertData = {
+      ...alert,
+      timestamp: new Date(),
+      severity: 'warning',
+    };
+
+    void this.server.to('metrics').emit('metrics:alert', alertData);
+    void this.server.to('incidents_all').emit('metrics:alert', alertData);
+
+    this.logger.warn(`Metrics alert: ${alert.type} - ${alert.message}`);
+  }
 }
