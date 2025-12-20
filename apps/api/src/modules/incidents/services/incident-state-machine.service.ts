@@ -1,5 +1,5 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
-import { createMachine, createActor } from 'xstate';
+import { createMachine, createActor, AnyStateMachine } from 'xstate';
 import { IncidentStatus } from '../enums/incident.enums';
 import {
   validateStatusTransition,
@@ -29,7 +29,10 @@ interface IncidentContext {
   timestamp: Date;
 }
 
-type IncidentMachine = ReturnType<typeof createMachine>;
+/**
+ * Tipo para a máquina de estados do incidente
+ */
+type IncidentMachine = AnyStateMachine;
 
 /**
  * Serviço para gerenciar a máquina de estados dos incidentes
@@ -93,7 +96,7 @@ export class IncidentStateMachineService {
           },
         },
       },
-    }) as IncidentMachine;
+    });
   }
 
   /**
