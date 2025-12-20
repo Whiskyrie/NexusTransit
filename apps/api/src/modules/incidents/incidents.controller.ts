@@ -12,6 +12,7 @@ import {
   ParseUUIDPipe,
   HttpStatus,
   HttpCode,
+  Res,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import {
@@ -28,9 +29,12 @@ import {
   ApiConflictResponse,
   ApiUnauthorizedResponse,
   ApiForbiddenResponse,
+  ApiProduces,
 } from '@nestjs/swagger';
+
 import { IncidentsService } from './incidents.service';
 import { IncidentGeoService } from './services/incident-geo.service';
+import { IncidentExportService } from './services/incident-export.service';
 import { CreateIncidentDto } from './dto/create-incident.dto';
 import { UpdateIncidentDto } from './dto/update-incident.dto';
 import { IncidentFilterDto } from './dto/incident-filter.dto';
@@ -47,6 +51,14 @@ import { IncidentComment } from './entities/incident-comment.entity';
 /**
  * Interface para o retorno de transições possíveis
  */
+interface HttpResponse {
+  set(headers: Record<string, string | number>): HttpResponse;
+  send(body: Buffer | string): void;
+  writable: boolean;
+  write(chunk: unknown): boolean;
+  end(): void;
+}
+
 interface PossibleTransitionsResult {
   current: IncidentStatus;
   nextStatuses: IncidentStatus[];
@@ -64,6 +76,7 @@ export class IncidentsController {
   constructor(
     private readonly incidentsService: IncidentsService,
     private readonly incidentGeoService: IncidentGeoService,
+    private readonly exportService: IncidentExportService,
   ) {}
 
   @Post()
@@ -459,5 +472,128 @@ export class IncidentsController {
   @ApiBadRequestResponse({ description: 'Polígono inválido ou parâmetros incorretos' })
   async findWithinArea(@Body() dto: WithinAreaDto): Promise<IncidentResponseDto[]> {
     return this.incidentGeoService.findWithinArea(dto);
+  }
+
+  @Get('export/csv')
+  @ApiOperation({
+    summary: 'Exportar incidentes em CSV',
+    description: 'Exporta dados de incidentes em formato CSV com filtros opcionais',
+  })
+  @ApiProduces('text/csv')
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: IncidentStatus,
+    description: 'Filtrar por status',
+  })
+  @ApiQuery({
+    name: 'start_date',
+    required: false,
+    type: String,
+    description: 'Data inicial (ISO 8601)',
+  })
+  @ApiQuery({
+    name: 'end_date',
+    required: false,
+    type: String,
+    description: 'Data final (ISO 8601)',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Arquivo CSV gerado com sucesso',
+  })
+  @ApiNotFoundResponse({ description: 'Nenhum incidente encontrado' })
+  async exportCSV(@Query() filterDto: IncidentFilterDto, @Res() res: HttpResponse): Promise<void> {
+    const buffer = await this.exportService.exportToCSV(filterDto);
+
+    const filename = `incidents_${new Date().toISOString().split('T')[0]}.csv`;
+
+    res.set({
+      'Content-Type': 'text/csv',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+      'Content-Length': buffer.length,
+    });
+
+    res.send(buffer);
+  }
+
+  @Get('export/pdf/:id')
+  @ApiOperation({
+    summary: 'Exportar incidente específico em PDF',
+    description: 'Gera relatório PDF detalhado de um incidente específico',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID do incidente',
+    type: String,
+    format: 'uuid',
+  })
+  @ApiProduces('application/pdf')
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'PDF gerado com sucesso',
+  })
+  @ApiNotFoundResponse({ description: 'Incidente não encontrado' })
+  async exportIncidentPDF(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Res() res: HttpResponse,
+  ): Promise<void> {
+    const pdfStream = await this.exportService.exportIncidentToPDF(id);
+
+    const filename = `incident_${id}.pdf`;
+
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+    });
+
+    pdfStream.on('data', (chunk: Buffer) => res.write(chunk));
+    pdfStream.on('end', () => res.end());
+  }
+
+  @Get('export/pdf')
+  @ApiOperation({
+    summary: 'Exportar incidentes consolidados em PDF',
+    description: 'Gera relatório PDF consolidado com múltiplos incidentes',
+  })
+  @ApiProduces('application/pdf')
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: IncidentStatus,
+    description: 'Filtrar por status',
+  })
+  @ApiQuery({
+    name: 'start_date',
+    required: false,
+    type: String,
+    description: 'Data inicial (ISO 8601)',
+  })
+  @ApiQuery({
+    name: 'end_date',
+    required: false,
+    type: String,
+    description: 'Data final (ISO 8601)',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'PDF consolidado gerado com sucesso',
+  })
+  @ApiNotFoundResponse({ description: 'Nenhum incidente encontrado' })
+  async exportConsolidatedPDF(
+    @Query() filterDto: IncidentFilterDto,
+    @Res() res: HttpResponse,
+  ): Promise<void> {
+    const pdfStream = await this.exportService.exportIncidentsToPDF(filterDto);
+
+    const filename = `incidents_report_${new Date().toISOString().split('T')[0]}.pdf`;
+
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+    });
+
+    pdfStream.on('data', (chunk: Buffer) => res.write(chunk));
+    pdfStream.on('end', () => res.end());
   }
 }
