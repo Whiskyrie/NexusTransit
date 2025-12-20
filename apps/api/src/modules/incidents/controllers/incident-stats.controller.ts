@@ -1,4 +1,4 @@
-import { Controller, Get, Query, HttpStatus, HttpCode } from '@nestjs/common';
+import { Controller, Get, Query, HttpStatus, HttpCode, Sse } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -8,7 +8,10 @@ import {
   ApiBadRequestResponse,
   ApiUnauthorizedResponse,
   ApiForbiddenResponse,
+  ApiExcludeEndpoint,
 } from '@nestjs/swagger';
+import { Observable, interval } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
 import { IncidentStatsService } from '../services/incident-stats.service';
 import {
   IncidentStatsFilterDto,
@@ -164,5 +167,65 @@ export class IncidentStatsController {
   })
   async getDashboardMetrics(): Promise<IncidentDashboardDto> {
     return this.statsService.getDashboardMetrics();
+  }
+
+  @Sse('stream')
+  @ApiExcludeEndpoint()
+  @ApiOperation({
+    summary: 'Stream de métricas em tempo real (SSE)',
+    description:
+      'Endpoint Server-Sent Events que envia atualizações de métricas a cada 5 segundos. Alternativa ao WebSocket para dashboards.',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Stream de métricas iniciado',
+  })
+  metricsStream(): Observable<MessageEvent> {
+    return interval(5000).pipe(
+      switchMap(() => this.statsService.getDashboardMetrics()),
+      map(
+        data =>
+          ({
+            data,
+            type: 'metrics',
+          }) as MessageEvent,
+      ),
+    );
+  }
+
+  @Sse('stream/incremental')
+  @ApiExcludeEndpoint()
+  @ApiOperation({
+    summary: 'Stream de métricas incrementais (SSE)',
+    description:
+      'Endpoint SSE que envia métricas incrementais em cache a cada 3 segundos. Mais leve que métricas completas.',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Stream de métricas incrementais iniciado',
+  })
+  incrementalMetricsStream(@Query('interval') intervalMs = 3000): Observable<MessageEvent> {
+    const safeInterval = Math.max(1000, Math.min(intervalMs, 30000)); // Entre 1s e 30s
+
+    return interval(safeInterval).pipe(
+      switchMap(async () => {
+        // Aqui usaríamos o IncidentStatsCacheService quando integrado
+        const dashboard = await this.statsService.getDashboardMetrics();
+        return {
+          active: dashboard.active_incidents,
+          new_today: dashboard.new_today,
+          resolved_today: dashboard.resolved_today,
+          critical: dashboard.critical_incidents,
+          timestamp: new Date(),
+        };
+      }),
+      map(
+        data =>
+          ({
+            data,
+            type: 'incremental_metrics',
+          }) as MessageEvent,
+      ),
+    );
   }
 }

@@ -3,7 +3,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, MoreThanOrEqual, In, SelectQueryBuilder } from 'typeorm';
 import { Incident } from '../entities/incident.entity';
 import { IncidentStatusHistory } from '../entities/incident-status-history.entity';
-import { IncidentStatus, IncidentSeverity } from '../enums/incident.enums';
+import { IncidentStatus, IncidentSeverity, IncidentType } from '../enums/incident.enums';
+import { IncidentStatsCacheService } from './incident-stats-cache.service';
+import { Cacheable } from '../decorators/cacheable.decorator';
 import {
   IncidentStatsFilterDto,
   IncidentStatsResponseDto,
@@ -26,12 +28,17 @@ export class IncidentStatsService {
     private readonly incidentRepository: Repository<Incident>,
     @InjectRepository(IncidentStatusHistory)
     private readonly statusHistoryRepository: Repository<IncidentStatusHistory>,
+    private readonly cacheService: IncidentStatsCacheService,
   ) {}
 
   /**
    * Gera estatísticas gerais de incidentes
+   * Cache: 120s para queries de stats gerais
    */
+  @Cacheable({ ttl: 120, keyPrefix: 'general_stats', useArgs: true })
   async getGeneralStats(filterDto: IncidentStatsFilterDto): Promise<IncidentStatsResponseDto> {
+    this.logger.debug(`Calculating general stats with filters: ${JSON.stringify(filterDto)}`);
+
     const { start_date, end_date, status, severity, type, customer_id, team_id } = filterDto;
 
     // Construir query base
@@ -110,8 +117,12 @@ export class IncidentStatsService {
 
   /**
    * Gera análise de tendências
+   * Cache: 300s para análises de período (menos volátil)
    */
+  @Cacheable({ ttl: 300, keyPrefix: 'trends', useArgs: true })
   async getTrends(filterDto: IncidentStatsFilterDto): Promise<IncidentTrendsResponseDto> {
+    this.logger.debug(`Calculating trends with filters: ${JSON.stringify(filterDto)}`);
+
     const { start_date, end_date, group_by = 'day' } = filterDto;
 
     if (!start_date || !end_date) {
@@ -169,9 +180,47 @@ export class IncidentStatsService {
   }
 
   /**
-   * Gera métricas para dashboard
+   * Métricas para dashboard principal
+   * Cache: 60s para dashboard (atualização rápida)
+   * Strategy: Cache-first com fallback para DB
    */
+  @Cacheable({ ttl: 60, keyPrefix: 'dashboard' })
   async getDashboardMetrics(): Promise<IncidentDashboardDto> {
+    this.logger.debug('Fetching dashboard metrics');
+
+    // Tentar obter métricas incrementais do cache
+    const cachedMetrics = await this.cacheService.getIncrementalMetrics();
+    if (cachedMetrics !== null && cachedMetrics !== undefined) {
+      this.logger.debug('Returning cached incremental metrics');
+
+      // Converter métricas incrementais para formato dashboard
+      // Nota: Valores de tempo necessitam cálculo do DB
+      const responseMetrics = await this.getResponseTimeMetrics({});
+      const resolutionMetrics = await this.getResolutionTimeMetrics({});
+
+      // Garantir tipos corretos através de conversão explícita
+      const totalActive = Number(cachedMetrics.total_active ?? 0);
+      const newToday = Number(cachedMetrics.by_status[IncidentStatus.REPORTED] ?? 0);
+      const resolvedCount =
+        Number(cachedMetrics.by_status[IncidentStatus.RESOLVED] ?? 0) +
+        Number(cachedMetrics.by_status[IncidentStatus.CLOSED] ?? 0);
+      const criticalCount = Number(cachedMetrics.by_severity[IncidentSeverity.CRITICAL] ?? 0);
+
+      return {
+        active_incidents: totalActive,
+        new_today: newToday,
+        resolved_today: resolvedCount,
+        critical_incidents: criticalCount,
+        avg_response_time_minutes: responseMetrics.avg_response_time_minutes,
+        resolution_rate_7d: 0, // Calculado apenas no fallback completo
+        response_metrics: responseMetrics,
+        resolution_metrics: resolutionMetrics,
+      };
+    }
+
+    // Fallback: calcular do banco de dados
+    this.logger.debug('Cache miss, calculating dashboard metrics from DB');
+
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const sevenDaysAgo = new Date(today);
@@ -222,18 +271,65 @@ export class IncidentStatsService {
     // Taxa de resolução (7 dias)
     const resolutionRate7d = await this.getResolutionRate7Days(sevenDaysAgo, now);
 
-    this.logger.log('Métricas do dashboard calculadas');
+    // Agregações por categoria
+    const bySeverity = await this.getIncidentsBySeverity(
+      this.incidentRepository.createQueryBuilder('incident'),
+    );
+    const byStatus = await this.getIncidentsByStatus(
+      this.incidentRepository.createQueryBuilder('incident'),
+    );
+    const byType = await this.getIncidentsByType(
+      this.incidentRepository.createQueryBuilder('incident'),
+    );
 
-    return {
+    this.logger.log('Métricas do dashboard calculadas do banco de dados');
+
+    const dashboardMetrics: IncidentDashboardDto = {
       active_incidents: activeIncidents,
       new_today: newToday,
       resolved_today: resolvedToday,
-      avg_response_time_minutes: responseMetrics.avg_response_time_minutes,
       critical_incidents: criticalIncidents,
+      avg_response_time_minutes: responseMetrics.avg_response_time_minutes,
       resolution_rate_7d: Math.round(resolutionRate7d * 100) / 100,
       response_metrics: responseMetrics,
       resolution_metrics: resolutionMetrics,
     };
+
+    // Atualizar cache com métricas calculadas
+    // Incrementar contadores totais
+    const totalIncidents = activeIncidents + resolvedToday;
+    for (let i = 0; i < totalIncidents; i++) {
+      await this.cacheService.updateIncrementalMetrics({});
+    }
+
+    // Atualizar métricas de status
+    for (const [status, count] of Object.entries(byStatus)) {
+      for (let i = 0; i < count; i++) {
+        await this.cacheService.updateIncrementalMetrics({
+          status: status as IncidentStatus,
+        });
+      }
+    }
+
+    // Atualizar métricas de severidade
+    for (const [severity, count] of Object.entries(bySeverity)) {
+      for (let i = 0; i < count; i++) {
+        await this.cacheService.updateIncrementalMetrics({
+          severity: severity as IncidentSeverity,
+        });
+      }
+    }
+
+    // Atualizar métricas de tipo
+    for (const [type, count] of Object.entries(byType)) {
+      for (let i = 0; i < count; i++) {
+        await this.cacheService.updateIncrementalMetrics({
+          type: type as IncidentType,
+        });
+      }
+    }
+
+    return dashboardMetrics;
   }
 
   // Métodos privados auxiliares
