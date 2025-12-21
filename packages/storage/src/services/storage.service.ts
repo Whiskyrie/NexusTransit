@@ -10,13 +10,24 @@ import { Upload } from "@aws-sdk/lib-storage";
 import sharp from "sharp";
 import { v4 as uuidv4 } from "uuid";
 import type { StorageConfig } from "../config/storage.config";
-import type { UploadResult } from "../interfaces/upload.interface";
+import type {
+  UploadResult,
+  FileUploadResult,
+  FileMetadata,
+  FileList,
+  FileFilter,
+} from "../interfaces/upload.interface";
+import { LocalStorageProvider } from "../providers/local-storage.provider";
+import { S3StorageProvider } from "../providers/s3-storage.provider";
+import { FileUtil } from "../utils/file.util";
+import { StorageType } from "../enums/storage-type.enum";
 
 @Injectable()
 export class StorageService {
   private readonly logger = new Logger(StorageService.name);
   private readonly s3Client: S3Client;
   private readonly storageConfig: StorageConfig;
+  private storageProvider: LocalStorageProvider | S3StorageProvider;
 
   constructor(private readonly configService: ConfigService) {
     this.storageConfig = this.configService.getOrThrow<StorageConfig>("storage");
@@ -32,7 +43,28 @@ export class StorageService {
       forcePathStyle: true, // Necessário para compatibilidade com Backblaze B2
     });
 
+    // Inicializar provedor de storage com base na configuração
+    this.initializeStorageProvider();
+
     this.logger.log("Storage service initialized with Backblaze B2 configuration");
+  }
+
+  /**
+   * Inicializar provedor de storage com base na configuração
+   */
+  private initializeStorageProvider(): void {
+    const storageType = this.storageConfig.provider.type;
+
+    if (storageType === StorageType.LOCAL) {
+      this.storageProvider = new LocalStorageProvider(this.configService);
+      this.logger.log("Using local storage provider");
+    } else if (storageType === StorageType.S3) {
+      this.storageProvider = new S3StorageProvider(this.configService);
+      this.logger.log("Using S3 storage provider");
+    } else {
+      this.storageProvider = new LocalStorageProvider(this.configService);
+      this.logger.log("Defaulting to local storage provider");
+    }
   }
 
   /**
@@ -117,9 +149,9 @@ export class StorageService {
    */
   async uploadFile(
     file: Express.Multer.File,
-    folder = "documents",
+    options: { fileType?: "documents" | "images" | "proofs" | "temp" } = {},
     userId?: string,
-  ): Promise<{ filePath: string; fileHash: string; url: string }> {
+  ): Promise<FileUploadResult> {
     try {
       // Validar o arquivo
       if (!file) {
@@ -132,25 +164,39 @@ export class StorageService {
         );
       }
 
+      // Determinar tipo de arquivo
+      const fileType = options.fileType || "documents";
+
       // Gerar nome único para o arquivo
-      const fileExtension = this.getFileExtension(file.originalname);
-      const fileName = `${folder}/${uuidv4()}${fileExtension}`;
+      const fileName = FileUtil.generateUniqueFileName(file.originalname);
+      const fileKey = FileUtil.generateFilePath("", fileType, fileName);
       const fileHash = uuidv4();
 
       // Upload do arquivo
-      const url = await this.uploadToB2(file.buffer, fileName, file.mimetype);
+      const url = await this.storageProvider.upload(file.buffer, fileKey, file.mimetype);
+
+      // Criar metadados
+      const metadata: FileMetadata = {
+        originalName: file.originalname,
+        filename: fileName,
+        size: file.size,
+        mimeType: file.mimetype,
+        uploadedAt: new Date(),
+        storageType: this.storageConfig.provider.type,
+      };
 
       // Log da operação
-      this.logger.log(`File uploaded successfully: ${fileName}`, {
+      this.logger.log(`File uploaded successfully: ${fileKey}`, {
         originalName: file.originalname,
         size: file.size,
         userId,
       });
 
       return {
-        filePath: fileName,
+        filePath: fileKey,
         fileHash,
         url,
+        metadata,
       };
     } catch (error) {
       this.logger.error("Failed to upload file", error instanceof Error ? error.stack : undefined);
@@ -168,12 +214,28 @@ export class StorageService {
    */
   async uploadMultipleFiles(
     files: Express.Multer.File[],
-    folder = "documents",
+    options: { fileType?: "documents" | "images" | "proofs" | "temp" } = {},
     userId?: string,
-  ): Promise<Array<{ filePath: string; fileHash: string; url: string }>> {
-    const uploadPromises = files.map((file) => this.uploadFile(file, folder, userId));
+  ): Promise<FileUploadResult[]> {
+    const uploadPromises = files.map((file) => this.uploadFile(file, options, userId));
 
     return Promise.all(uploadPromises);
+  }
+
+  /**
+   * Deletar arquivo
+   */
+  async deleteFile(fileKey: string): Promise<void> {
+    try {
+      await this.storageProvider.delete(fileKey);
+      this.logger.log(`File deleted: ${fileKey}`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to delete file: ${fileKey}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+      throw new InternalServerErrorException("Failed to delete file");
+    }
   }
 
   /**
@@ -278,7 +340,11 @@ export class StorageService {
         .toBuffer();
 
       const thumbnailFileName = `${baseFileName}_${size}.webp`;
-      const url = await this.uploadToB2(thumbnailBuffer, thumbnailFileName, "image/webp");
+      const url = await this.storageProvider.upload(
+        thumbnailBuffer,
+        thumbnailFileName,
+        "image/webp",
+      );
 
       return [size, url];
     });
@@ -361,6 +427,88 @@ export class StorageService {
     } catch {
       throw new BadRequestException("Invalid image URL format");
     }
+  }
+
+  /**
+   * Obter metadados de arquivo
+   */
+  async getFileMetadata(fileKey: string): Promise<FileMetadata> {
+    // Implementação básica - em produção, poderia buscar do banco de dados
+    const exists = await this.storageProvider.exists(fileKey);
+
+    if (!exists) {
+      throw new BadRequestException("File not found");
+    }
+
+    return {
+      filename: fileKey.split("/").pop() || fileKey,
+      originalName: fileKey.split("/").pop() || fileKey,
+      size: 0, // Tamanho desconhecido sem banco de dados
+      mimeType: FileUtil.getMimeTypeFromExtension(FileUtil.getFileExtension(fileKey)),
+    };
+  }
+
+  /**
+   * Listar arquivos
+   */
+  async listFiles(
+    _filter: FileFilter = {},
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<FileList> {
+    // Implementação básica - em produção, usaria banco de dados
+    // Este é um exemplo simplificado
+
+    const files: FileMetadata[] = [];
+    const total = 0;
+
+    return {
+      files,
+      total,
+      page,
+      limit,
+    };
+  }
+
+  /**
+   * Mover arquivo
+   */
+  async moveFile(fileKey: string, newPath: string): Promise<void> {
+    // Implementação básica - em produção, moveria no storage
+    const exists = await this.storageProvider.exists(fileKey);
+
+    if (!exists) {
+      throw new BadRequestException("File not found");
+    }
+
+    // Copiar para novo local
+    const fileData = await this.downloadFile(fileKey);
+    await this.storageProvider.upload(fileData, newPath, "application/octet-stream");
+
+    // Deletar original
+    await this.storageProvider.delete(fileKey);
+  }
+
+  /**
+   * Copiar arquivo
+   */
+  async copyFile(fileKey: string, newPath: string): Promise<void> {
+    const exists = await this.storageProvider.exists(fileKey);
+
+    if (!exists) {
+      throw new BadRequestException("File not found");
+    }
+
+    const fileData = await this.downloadFile(fileKey);
+    await this.storageProvider.upload(fileData, newPath, "application/octet-stream");
+  }
+
+  /**
+   * Baixar arquivo
+   */
+  private async downloadFile(_fileKey: string): Promise<Buffer> {
+    // Implementação básica - em produção, baixaria do storage
+    throw new Error("Download not implemented for this storage provider");
   }
 
   /**
