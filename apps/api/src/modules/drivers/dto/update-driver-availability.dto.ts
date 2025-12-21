@@ -1,6 +1,5 @@
-import { PartialType } from '@nestjs/swagger';
+import { PartialType, OmitType } from '@nestjs/swagger';
 import { CreateDriverAvailabilityDto } from './create-driver-availability.dto';
-import { OmitType } from '@nestjs/swagger';
 
 /**
  * DTO para atualização de registro de disponibilidade/ausência de motorista

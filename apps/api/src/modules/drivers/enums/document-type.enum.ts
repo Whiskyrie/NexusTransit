@@ -107,5 +107,5 @@ export const REQUIRED_DOCUMENTS = [
  * Verifica se o documento é obrigatório
  */
 export function isRequiredDocument(type: DocumentType): boolean {
-  return REQUIRED_DOCUMENTS.includes(type as any);
+  return (REQUIRED_DOCUMENTS as readonly DocumentType[]).includes(type);
 }

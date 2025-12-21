@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ServiceUnavailableException,
+  Logger,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere, ILike } from 'typeorm';
 import { Address } from './entities/address.entity';
@@ -37,6 +43,10 @@ export class AddressService {
     try {
       const viaCepData = await this.viaCepService.getAddressByZipCode(cep);
 
+      this.logger.log(
+        `Endereço encontrado para CEP ${cep}: ${viaCepData.street}, ${viaCepData.city}/${viaCepData.state}`,
+      );
+
       // Criar objeto de resposta
       const response: AddressResponseDto = {
         id: '', // Não tem ID pois não está salvo no banco
@@ -63,17 +73,33 @@ export class AddressService {
           response.latitude = result.geometry.location.lat;
           response.longitude = result.geometry.location.lng;
           response.formatted_address = result.formatted_address;
+          this.logger.log(
+            `Coordenadas obtidas para CEP ${cep}: ${response.latitude}, ${response.longitude}`,
+          );
         }
       } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-        this.logger.warn(`Falha ao geocodificar endereço: ${errorMessage}`);
+        this.logger.warn(`Falha ao geocodificar endereço para CEP ${cep}: ${errorMessage}`);
       }
 
       return response;
     } catch (error: unknown) {
+      // Se for exceção específica do ViaCEP, repassa a exceção original
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException ||
+        error instanceof ServiceUnavailableException
+      ) {
+        this.logger.error(`Erro ao buscar CEP ${cep}: ${error.message}`);
+        throw error;
+      }
+
+      // Para outros erros, loga e retorna erro genérico
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-      this.logger.error(`Erro ao buscar CEP: ${errorMessage}`);
-      throw new BadRequestException('CEP não encontrado ou inválido');
+      this.logger.error(`Erro inesperado ao buscar CEP ${cep}: ${errorMessage}`);
+      throw new BadRequestException(
+        'Não foi possível consultar o CEP. Tente novamente mais tarde.',
+      );
     }
   }
 

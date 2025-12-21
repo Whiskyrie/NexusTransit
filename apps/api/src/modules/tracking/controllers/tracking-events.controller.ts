@@ -33,6 +33,27 @@ import {
   PaginatedResponseDto,
   BatchTrackingEventsDto,
 } from '../dto';
+import {
+  DistanceResult,
+  ETAResult,
+  DelayResult,
+  UnscheduledStopResult,
+} from '../interfaces/calculation-results.interface';
+
+/**
+ * Interfaces para tipos de retorno simples dos endpoints
+ */
+interface AverageSpeedResult {
+  average_speed_kmh: number;
+}
+
+interface NearDestinationResult {
+  is_near_destination: boolean;
+}
+
+interface ArrivalResult {
+  has_arrived: boolean;
+}
 
 /**
  * Controller para gerenciamento de eventos de rastreamento
@@ -342,7 +363,7 @@ export class TrackingEventsController {
   async calculateDistance(
     @Param('eventId1', ParseUUIDPipe) eventId1: string,
     @Param('eventId2', ParseUUIDPipe) eventId2: string,
-  ) {
+  ): Promise<DistanceResult> {
     return this.trackingCalculationService.calculateDistanceBetweenEvents(eventId1, eventId2);
   }
 
@@ -368,7 +389,9 @@ export class TrackingEventsController {
       },
     },
   })
-  async calculateTotalDistance(@Param('deliveryId', ParseUUIDPipe) deliveryId: string) {
+  async calculateTotalDistance(
+    @Param('deliveryId', ParseUUIDPipe) deliveryId: string,
+  ): Promise<DistanceResult> {
     return this.trackingCalculationService.calculateTotalDistance(deliveryId);
   }
 
@@ -414,7 +437,7 @@ export class TrackingEventsController {
     @Param('deliveryId', ParseUUIDPipe) deliveryId: string,
     @Query('destinationLat') destinationLat: number,
     @Query('destinationLon') destinationLon: number,
-  ) {
+  ): Promise<ETAResult> {
     return this.trackingCalculationService.calculateETA(
       deliveryId,
       Number(destinationLat),
@@ -443,7 +466,9 @@ export class TrackingEventsController {
       },
     },
   })
-  async calculateAverageSpeed(@Param('deliveryId', ParseUUIDPipe) deliveryId: string) {
+  async calculateAverageSpeed(
+    @Param('deliveryId', ParseUUIDPipe) deliveryId: string,
+  ): Promise<AverageSpeedResult> {
     const speed = await this.trackingCalculationService.calculateAverageSpeed(deliveryId);
     return { average_speed_kmh: speed };
   }
@@ -475,7 +500,7 @@ export class TrackingEventsController {
   async detectDelay(
     @Param('deliveryId', ParseUUIDPipe) deliveryId: string,
     @Body() body: { expected_arrival: string; destination_lat: number; destination_lon: number },
-  ) {
+  ): Promise<DelayResult> {
     return this.trackingCalculationService.detectDelay(
       deliveryId,
       new Date(body.expected_arrival),
@@ -517,7 +542,9 @@ export class TrackingEventsController {
       },
     },
   })
-  async detectUnscheduledStops(@Param('deliveryId', ParseUUIDPipe) deliveryId: string) {
+  async detectUnscheduledStops(
+    @Param('deliveryId', ParseUUIDPipe) deliveryId: string,
+  ): Promise<UnscheduledStopResult[]> {
     return this.trackingCalculationService.detectUnscheduledStops(deliveryId);
   }
 
@@ -560,7 +587,7 @@ export class TrackingEventsController {
     @Param('deliveryId', ParseUUIDPipe) deliveryId: string,
     @Query('destinationLat') destinationLat: number,
     @Query('destinationLon') destinationLon: number,
-  ) {
+  ): Promise<NearDestinationResult> {
     const isNear = await this.trackingCalculationService.isNearDestination(
       deliveryId,
       Number(destinationLat),
@@ -608,7 +635,7 @@ export class TrackingEventsController {
     @Param('deliveryId', ParseUUIDPipe) deliveryId: string,
     @Query('destinationLat') destinationLat: number,
     @Query('destinationLon') destinationLon: number,
-  ) {
+  ): Promise<ArrivalResult> {
     const hasArrived = await this.trackingCalculationService.hasArrived(
       deliveryId,
       Number(destinationLat),

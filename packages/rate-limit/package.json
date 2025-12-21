@@ -13,8 +13,8 @@
         }
     },
     "scripts": {
-        "build": "tsc",
-        "dev": "tsc --watch",
+        "build": "tsc -p tsconfig.build.json",
+        "dev": "tsc -p tsconfig.build.json --watch",
         "clean": "rm -rf dist tsconfig.tsbuildinfo",
         "lint": "eslint . --ext .ts",
         "test": "jest"
@@ -32,13 +32,16 @@
     "peerDependencies": {
         "@nestjs/common": "^11.0.0",
         "@nestjs/core": "^11.0.0",
-        "@nestjs/throttler": "^6.0.0"
+        "@nestjs/throttler": "^6.0.0",
+        "rxjs": "^7.8.0"
     },
     "dependencies": {
+        "@nestjs/testing": "^11.1.9",
         "@nexus/audit": "workspace:^",
         "@nexus/auth": "workspace:^",
         "@nexus/common": "workspace:^",
-        "@nexus/redis": "workspace:^"
+        "@nexus/redis": "workspace:^",
+        "jest": "^30.2.0"
     },
     "devDependencies": {
         "@nestjs/config": "^3.3.0",
@@ -47,6 +50,7 @@
         "@nestjs/swagger": "^11.2.3",
         "@nestjs/typeorm": "^11.0.0",
         "@types/express": "^5.0.6",
+        "@types/jest": "^30.0.0",
         "@types/node": "^22.0.0",
         "class-transformer": "^0.5.1",
         "class-validator": "^0.14.3",

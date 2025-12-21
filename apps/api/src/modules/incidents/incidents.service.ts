@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere, ILike, MoreThanOrEqual, LessThanOrEqual } from 'typeorm';
 import { CreateIncidentDto } from './dto/create-incident.dto';
@@ -8,16 +8,16 @@ import { IncidentResponseDto } from './dto/incident-response.dto';
 import { Incident } from './entities/incident.entity';
 import { IncidentAttachment, IncidentAttachmentType } from './entities/incident-attachment.entity';
 import { IncidentComment } from './entities/incident-comment.entity';
+import { IncidentStatusHistory } from './entities/incident-status-history.entity';
 import {
   IncidentStatus,
-  IncidentType,
-  IncidentSeverity,
   translateIncidentSeverity,
   translateIncidentStatus,
   translateIncidentType,
 } from './enums/incident.enums';
 import { PaginatedResponseDto } from '@nexus/common';
 import { StorageService } from '@nexus/storage';
+import { IncidentStateMachineService } from './services/incident-state-machine.service';
 
 @Injectable()
 export class IncidentsService {
@@ -30,7 +30,10 @@ export class IncidentsService {
     private readonly attachmentRepository: Repository<IncidentAttachment>,
     @InjectRepository(IncidentComment)
     private readonly commentRepository: Repository<IncidentComment>,
+    @InjectRepository(IncidentStatusHistory)
+    private readonly statusHistoryRepository: Repository<IncidentStatusHistory>,
     private readonly storageService: StorageService,
+    private readonly stateMachineService: IncidentStateMachineService,
   ) {}
 
   /**
@@ -374,16 +377,41 @@ export class IncidentsService {
   }
 
   /**
-   * Atualizar status do incidente
+   * Atualizar status do incidente com validação de máquina de estados
    */
   async updateStatus(
     id: string,
     status: IncidentStatus,
     resolutionNotes?: string,
+    userId?: string,
+    reason?: string,
   ): Promise<IncidentResponseDto> {
     const incident = await this.findIncidentOrFail(id);
+    const currentStatus = incident.status;
 
-    incident.status = status;
+    // Se o status não mudou, não fazer nada
+    if (currentStatus === status) {
+      return this.mapToResponseDto(incident);
+    }
+
+    // Validar a transição usando a máquina de estados
+    const validation = this.stateMachineService.validateTransition(currentStatus, status);
+
+    if (!validation.valid) {
+      throw new BadRequestException(validation.message ?? 'Transição de status inválida');
+    }
+
+    // Executar a transição através da máquina de estados
+    const transitionResult = this.stateMachineService.transition(
+      id,
+      currentStatus,
+      status,
+      userId ?? incident.reported_by_user_id,
+      reason ?? resolutionNotes,
+    );
+
+    // Atualizar o incidente
+    incident.status = transitionResult.status;
 
     if (status === IncidentStatus.RESOLVED) {
       incident.resolved_at = new Date();
@@ -391,14 +419,47 @@ export class IncidentsService {
     }
 
     if (status === IncidentStatus.CLOSED) {
-      incident.resolved_at = new Date();
+      incident.resolved_at = incident.resolved_at ?? new Date();
     }
 
     const updated = await this.incidentRepository.save(incident);
 
-    this.logger.log(`Status do incidente atualizado: ${id} -> ${status}`);
+    this.logger.log(
+      `Status do incidente atualizado: ${id} (${currentStatus} -> ${status}) por ${userId ?? 'sistema'}`,
+    );
 
     return this.mapToResponseDto(updated);
+  }
+
+  /**
+   * Obter histórico de mudanças de status
+   */
+  async getStatusHistory(id: string): Promise<IncidentStatusHistory[]> {
+    const incident = await this.findIncidentOrFail(id);
+
+    const history = await this.statusHistoryRepository.find({
+      where: { incident_id: incident.id },
+      order: { created_at: 'DESC' },
+      relations: ['changed_by_user'],
+    });
+
+    return history;
+  }
+
+  /**
+   * Obter transições possíveis a partir do status atual
+   */
+  async getPossibleTransitions(id: string): Promise<{
+    current: IncidentStatus;
+    nextStatuses: IncidentStatus[];
+    transitions: {
+      to: IncidentStatus;
+      event: string | null;
+      description: string;
+    }[];
+  }> {
+    const incident = await this.findIncidentOrFail(id);
+    return this.stateMachineService.getTransitionInfo(incident.status);
   }
 
   /**
@@ -444,13 +505,13 @@ export class IncidentsService {
 
     // Adicionar traduções
     if (incident.incident_type) {
-      dto.incident_type_translated = translateIncidentType(incident.incident_type as IncidentType);
+      dto.incident_type_translated = translateIncidentType(incident.incident_type);
     }
     if (incident.severity) {
-      dto.severity_translated = translateIncidentSeverity(incident.severity as IncidentSeverity);
+      dto.severity_translated = translateIncidentSeverity(incident.severity);
     }
     if (incident.status) {
-      dto.status_translated = translateIncidentStatus(incident.status as IncidentStatus);
+      dto.status_translated = translateIncidentStatus(incident.status);
     }
 
     return dto;
