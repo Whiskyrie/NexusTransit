@@ -5,7 +5,6 @@ import {
   Query,
   ParseUUIDPipe,
   HttpStatus,
-  HttpCode,
   UseGuards,
   Res,
   StreamableFile,

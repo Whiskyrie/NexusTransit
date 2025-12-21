@@ -1,9 +1,9 @@
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository, Between, ILike, In, LessThan } from "typeorm";
+import { Repository, Between, In } from "typeorm";
 import { AuditLogEntity } from "./entities/audit-log.entity";
 import { AuditAction, AuditCategory } from "./enums";
-import { AuditFilterDto, AuditResponseDto, AuditStatisticsDto, ExportFormat } from "./dto";
+import { AuditFilterDto, AuditResponseDto, AuditStatisticsDto } from "./dto";
 import { PaginatedResponseDto } from "@nexus/common";
 import { subDays, format, startOfDay, endOfDay } from "date-fns";
 
