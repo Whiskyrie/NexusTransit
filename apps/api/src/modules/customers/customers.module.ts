@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { HttpModule } from '@nestjs/axios';
 import { AuditModule } from '@nexus/audit';
+import { GeoServicesModule } from '@nexus/geo-services';
 import { CustomersService } from './customers.service';
 import { CustomersController } from './customers.controller';
 import { CustomerAddressesController } from './customer-addresses.controller';
@@ -9,7 +10,6 @@ import { Customer } from './entities/customer.entity';
 import { CustomerAddress } from './entities/customer-address.entity';
 import { CustomerContact } from './entities/customer-contact.entity';
 import { CustomerPreferences } from './entities/customer-preferences.entity';
-import { ViaCepService } from './services/viacep.service';
 import { GeocodingService } from './services/geocoding.service';
 
 // Subscribers
@@ -28,12 +28,12 @@ import { CustomerAuditContextInterceptor, CustomerStatusInterceptor } from './in
     TypeOrmModule.forFeature([Customer, CustomerAddress, CustomerContact, CustomerPreferences]),
     HttpModule,
     AuditModule,
+    GeoServicesModule,
   ],
   controllers: [CustomersController, CustomerAddressesController],
   providers: [
     // Services
     CustomersService,
-    ViaCepService,
     GeocodingService,
 
     // Subscribers

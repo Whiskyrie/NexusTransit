@@ -17,7 +17,7 @@ import { UpdateCustomerDto } from './dto/update-customer.dto';
 import { CustomerFilterDto } from './dto/customer-filter.dto';
 import { CustomerStatus } from './enums/customer-status.enum';
 import { AddressType } from './enums/address-type.enum';
-import { ViaCepService } from './services/viacep.service';
+import { CepFallbackService } from '@nexus/geo-services';
 import { GeocodingService } from './services/geocoding.service';
 
 @Injectable()
@@ -33,7 +33,7 @@ export class CustomersService {
     private readonly contactRepository: Repository<CustomerContact>,
     @InjectRepository(CustomerPreferences)
     private readonly preferencesRepository: Repository<CustomerPreferences>,
-    private readonly viaCepService: ViaCepService,
+    private readonly cepFallbackService: CepFallbackService,
     private readonly geocodingService: GeocodingService,
     private readonly dataSource: DataSource,
   ) {}
@@ -76,16 +76,16 @@ export class CustomersService {
           // Validate CEP and fetch address data
           if (addressDto.zipCode) {
             try {
-              const addressData = await this.viaCepService.validateAndFetchAddress(
+              const addressData = await this.cepFallbackService.getAddressByZipCode(
                 addressDto.zipCode,
               );
 
               // Merge fetched data with provided data
               Object.assign(addressDto, {
-                street: addressDto.street ?? addressData.logradouro,
-                neighborhood: addressDto.neighborhood ?? addressData.bairro,
-                city: addressDto.city ?? addressData.localidade,
-                state: addressDto.state ?? addressData.uf,
+                street: addressDto.street ?? addressData.street,
+                neighborhood: addressDto.neighborhood ?? addressData.neighborhood,
+                city: addressDto.city ?? addressData.city,
+                state: addressDto.state ?? addressData.state,
               });
             } catch (error) {
               // Continue with provided data if CEP validation fails
@@ -451,16 +451,16 @@ export class CustomersService {
     // Validate CEP and fetch address data
     if (createAddressDto.zipCode) {
       try {
-        const addressData = await this.viaCepService.validateAndFetchAddress(
+        const addressData = await this.cepFallbackService.getAddressByZipCode(
           createAddressDto.zipCode,
         );
 
         // Merge fetched data with provided data
         Object.assign(createAddressDto, {
-          street: createAddressDto.street ?? addressData.logradouro,
-          neighborhood: createAddressDto.neighborhood ?? addressData.bairro,
-          city: createAddressDto.city ?? addressData.localidade,
-          state: createAddressDto.state ?? addressData.uf,
+          street: createAddressDto.street ?? addressData.street,
+          neighborhood: createAddressDto.neighborhood ?? addressData.neighborhood,
+          city: createAddressDto.city ?? addressData.city,
+          state: createAddressDto.state ?? addressData.state,
         });
       } catch (error) {
         // Continue with provided data if CEP validation fails
@@ -558,16 +558,16 @@ export class CustomersService {
     // Validate CEP and fetch address data if provided
     if (updateAddressDto.zipCode) {
       try {
-        const addressData = await this.viaCepService.validateAndFetchAddress(
+        const addressData = await this.cepFallbackService.getAddressByZipCode(
           updateAddressDto.zipCode,
         );
 
         // Merge fetched data with provided data
         Object.assign(updateAddressDto, {
-          street: updateAddressDto.street ?? addressData.logradouro,
-          neighborhood: updateAddressDto.neighborhood ?? addressData.bairro,
-          city: updateAddressDto.city ?? addressData.localidade,
-          state: updateAddressDto.state ?? addressData.uf,
+          street: updateAddressDto.street ?? addressData.street,
+          neighborhood: updateAddressDto.neighborhood ?? addressData.neighborhood,
+          city: updateAddressDto.city ?? addressData.city,
+          state: updateAddressDto.state ?? addressData.state,
         });
       } catch (error) {
         this.logger.warn(
