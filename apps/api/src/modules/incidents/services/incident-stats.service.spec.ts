@@ -14,7 +14,20 @@ describe('IncidentStatsService', () => {
   let _statusHistoryRepository: Repository<IncidentStatusHistory>;
   let _cacheService: IncidentStatsCacheService;
 
-  const mockQueryBuilder = {
+  interface MockQueryBuilder {
+    select: jest.Mock;
+    addSelect: jest.Mock;
+    where: jest.Mock;
+    andWhere: jest.Mock;
+    groupBy: jest.Mock;
+    orderBy: jest.Mock;
+    getRawMany: jest.Mock;
+    getRawOne: jest.Mock;
+    getCount: jest.Mock;
+    clone: jest.Mock;
+  }
+
+  const mockQueryBuilder: MockQueryBuilder = {
     select: jest.fn().mockReturnThis(),
     addSelect: jest.fn().mockReturnThis(),
     where: jest.fn().mockReturnThis(),
@@ -24,10 +37,10 @@ describe('IncidentStatsService', () => {
     getRawMany: jest.fn().mockResolvedValue([]),
     getRawOne: jest.fn().mockResolvedValue({}),
     getCount: jest.fn().mockResolvedValue(0),
-    clone: jest.fn(function () {
-      return this;
-    }),
+    clone: jest.fn(),
   };
+
+  mockQueryBuilder.clone.mockReturnValue(mockQueryBuilder);
 
   const mockIncidentRepository = {
     createQueryBuilder: jest.fn(() => mockQueryBuilder),
