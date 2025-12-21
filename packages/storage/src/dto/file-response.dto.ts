@@ -25,6 +25,7 @@ export class FileResponseDto {
   @ApiProperty({
     description: "Metadados do arquivo",
     type: "object",
+    additionalProperties: true,
   })
   metadata: {
     filename: string;

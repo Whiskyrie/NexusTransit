@@ -14,6 +14,7 @@ export class PaginatedFileResponseDto {
   @ApiProperty({
     description: "Metadados de paginação",
     type: "object",
+    additionalProperties: true,
   })
   meta: {
     page: number;
