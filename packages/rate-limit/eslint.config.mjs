@@ -10,6 +10,16 @@ const __dirname = dirname(__filename);
 
 /** @type {import('eslint').Linter.Config[]} */
 export default [
+  {
+    ignores: [
+      "**/dist/**",
+      "**/node_modules/**",
+      "**/*.config.mjs",
+      "**/*.config.js",
+      "**/*.spec.ts",
+      "**/*.test.ts",
+    ],
+  },
   { files: ["**/*.{js,mjs,cjs,ts}"] },
   { languageOptions: { globals: globals.node } },
   pluginJs.configs.recommended,

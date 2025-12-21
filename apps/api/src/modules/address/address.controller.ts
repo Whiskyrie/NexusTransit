@@ -21,6 +21,7 @@ import {
   ApiBadRequestResponse,
   ApiNotFoundResponse,
   ApiUnauthorizedResponse,
+  ApiServiceUnavailableResponse,
 } from '@nestjs/swagger';
 import { AddressService } from './address.service';
 import { CreateAddressDto } from './dto/create-address.dto';
@@ -50,11 +51,17 @@ export class AddressController {
   })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: 'Endereço encontrado',
+    description: 'Endereço encontrado com sucesso',
     type: AddressResponseDto,
   })
   @ApiBadRequestResponse({
-    description: 'CEP inválido ou não encontrado',
+    description: 'CEP inválido (formato incorreto ou fora do range válido)',
+  })
+  @ApiNotFoundResponse({
+    description: 'CEP não encontrado na base dos Correios',
+  })
+  @ApiServiceUnavailableResponse({
+    description: 'Serviço de consulta de CEP temporariamente indisponível',
   })
   @ApiUnauthorizedResponse({
     description: 'Token de autenticação inválido ou ausente',

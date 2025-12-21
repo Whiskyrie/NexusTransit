@@ -1,5 +1,6 @@
 import { Injectable, ExecutionContext, UnauthorizedException } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
+import { Observable } from "rxjs";
 
 /**
  * JWT Authentication Guard (Temporário)
@@ -8,11 +9,11 @@ import { AuthGuard } from "@nestjs/passport";
  */
 @Injectable()
 export class JwtAuthGuard extends AuthGuard("jwt") {
-  canActivate(context: ExecutionContext) {
+  canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
     return super.canActivate(context);
   }
 
-  handleRequest<TUser = any>(err: any, user: any, _info: any): TUser {
+  handleRequest<TUser = unknown>(err: Error | null, user: TUser | null, _info: unknown): TUser {
     if (err || !user) {
       throw err ?? new UnauthorizedException("Token de autenticação inválido");
     }

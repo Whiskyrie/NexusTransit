@@ -159,7 +159,7 @@ export class TrackingEvent extends BaseEntity {
       return null;
     }
 
-    const match = this.location.match(/POINT\(([^ ]+) ([^)]+)\)/);
+    const match = /POINT\(([^ ]+) ([^)]+)\)/.exec(this.location);
     if (!match) {
       return null;
     }

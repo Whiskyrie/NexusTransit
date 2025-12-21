@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ScheduleModule } from "@nestjs/schedule";
+import { Reflector } from "@nestjs/core";
 import { RedisModule } from "@nexus/redis";
 import { RateLimitService } from "./services/rate-limit.service";
 import { BlacklistService } from "./services/blacklist.service";
@@ -53,6 +54,9 @@ import { AbuseDetectionProcessor } from "./processors/abuse-detection.processor"
 
     // Guards
     RateLimitGuard,
+
+    // NestJS Core
+    Reflector,
   ],
   exports: [
     RateLimitService,
