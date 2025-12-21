@@ -20,7 +20,8 @@ import { CustomersModule } from './modules/customers/customers.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { AddressModule } from './modules/address/address.module';
 import { RedisModule } from '@nexus/redis';
-import { AuditModule } from '@nexus/audit';
+import { AuditModule as AuditPackageModule } from '@nexus/audit';
+import { AuditModule } from './modules/audit/audit.module';
 import { ComplianceModule } from '@nexus/compliance';
 import { ReportingModule } from '@nexus/reporting';
 import { RateLimitModule } from '@nexus/rate-limit';
@@ -62,7 +63,8 @@ import configurations from './config/configurations';
     AuthModule,
     AddressModule, // Sistema de endereços e geolocalização
     RedisModule.forRootAsync(),
-    AuditModule, // Sistema de auditoria e logs
+    AuditPackageModule, // Sistema de auditoria e logs (package)
+    AuditModule, // Endpoints REST de auditoria
     ComplianceModule, // Conformidade LGPD/GDPR
     ReportingModule, // Sistema de relatórios
     RateLimitModule, // Sistema de rate limiting e throttling

@@ -126,7 +126,9 @@ export class IncidentReportScheduler {
       this.logger.log(`Total de incidentes: ${count}`);
 
       // Consumir stream para evitar memory leak
-      pdfStream.on('data', () => {});
+      pdfStream.on('data', () => {
+        // Consumir dados do stream para evitar memory leak
+      });
       pdfStream.on('end', () => {
         this.logger.log('PDF stream consumido');
       });
@@ -183,7 +185,9 @@ export class IncidentReportScheduler {
       this.logger.log(`Total de incidentes: ${count}`);
 
       // Consumir stream
-      pdfStream.on('data', () => {});
+      pdfStream.on('data', () => {
+        // Consumir dados do stream para evitar memory leak
+      });
       pdfStream.on('end', () => {
         this.logger.log('PDF stream consumido');
       });

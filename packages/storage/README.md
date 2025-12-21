@@ -1,17 +1,17 @@
 # @nexus/storage
 
-Storage and file upload utilities for NexusTransit with support for S3-compatible storage (Backblaze B2).
+Package de gerenciamento de armazenamento e upload de arquivos para o NexusTransit.
 
-## 📦 Features
+## 📦 Características
 
-- ✅ Upload de imagens com otimização automática
-- ✅ Geração automática de thumbnails (small, medium, large)
-- ✅ Suporte a Backblaze B2 (S3-compatible)
-- ✅ Validação de arquivos (tipo, tamanho, extensão)
-- ✅ Processamento de imagens com Sharp
-- ✅ Compressão e otimização automática
-- ✅ Upload múltiplo de arquivos
-- ✅ Deleção de imagens e thumbnails
+- ✅ **Multi-Provider**: Suporta armazenamento local e S3-compatible (Backblaze B2, Amazon S3)
+- ✅ **Processamento de Imagens**: Redimensionamento automático e geração de thumbnails com Sharp
+- ✅ **Validações**: Validação de tipo MIME, tamanho e extensão de arquivo
+- ✅ **Segurança**: Sanitização de nomes, prevenção de path traversal, validação de conteúdo
+- ✅ **Organização**: Estrutura de diretórios baseada em data (ano/mês/dia)
+- ✅ **TypeScript**: Totalmente tipado com suporte completo a tipos
+- ✅ **Upload Múltiplo**: Suporte para upload de múltiplos arquivos
+- ✅ **Deleção Inteligente**: Remove imagens e todos os thumbnails associados
 
 ## 🚀 Instalação
 
@@ -38,6 +38,13 @@ export class AppModule {}
 ### 2. Variáveis de Ambiente
 
 ```env
+# Tipo de storage (local, s3, backblaze)
+STORAGE_PROVIDER=backblaze
+
+# Local Storage
+STORAGE_LOCAL_PATH=./uploads
+STORAGE_PUBLIC_URL=http://localhost:3000/uploads
+
 # Backblaze B2 Configuration
 BACKBLAZE_ENDPOINT=https://s3.us-east-005.backblazeb2.com
 BACKBLAZE_REGION=us-east-005
@@ -45,6 +52,12 @@ BACKBLAZE_ACCESS_KEY_ID=your_key_id
 BACKBLAZE_SECRET_ACCESS_KEY=your_secret_key
 BACKBLAZE_BUCKET=your_bucket_name
 BACKBLAZE_BUCKET_REGION=us-east-005
+
+# Amazon S3 (alternativo)
+AWS_S3_REGION=us-east-1
+AWS_ACCESS_KEY_ID=your_key
+AWS_SECRET_ACCESS_KEY=your_secret
+AWS_S3_BUCKET=your_bucket
 
 # Upload Settings
 MAX_FILE_SIZE=5242880  # 5MB em bytes
@@ -54,9 +67,14 @@ IMAGE_QUALITY=85       # Qualidade JPEG (0-100)
 ### 3. Usar no Controller
 
 ```typescript
-import { Controller, Post, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Post, UseInterceptors, UploadedFile, UsePipes } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { StorageService, ImageValidationPipe, UploadResult } from '@nexus/storage';
+import { 
+  StorageService, 
+  FileValidationPipe,
+  ImageProcessingPipe,
+  UploadResult 
+} from '@nexus/storage';
 
 @Controller('upload')
 export class UploadController {
@@ -64,10 +82,20 @@ export class UploadController {
 
   @Post('image')
   @UseInterceptors(FileInterceptor('file'))
+  @UsePipes(FileValidationPipe, ImageProcessingPipe)
   async uploadImage(
-    @UploadedFile(ImageValidationPipe) file: Express.Multer.File,
+    @UploadedFile() file: Express.Multer.File,
   ): Promise<UploadResult> {
     return this.storageService.uploadImage(file, 'products');
+  }
+
+  @Post('document')
+  @UseInterceptors(FileInterceptor('file'))
+  @UsePipes(FileValidationPipe)
+  async uploadDocument(
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.storageService.uploadFile(file, { fileType: 'documents' });
   }
 }
 ```
@@ -105,32 +133,75 @@ Upload de uma imagem com geração automática de thumbnails.
 }
 ```
 
+#### `uploadFile(file, options?, userId?): Promise<FileUploadResult>`
+
+Upload de arquivo genérico (documentos, PDFs, etc).
+
+**Parâmetros:**
+- `file`: Arquivo Multer
+- `options.fileType`: Tipo de arquivo ('documents' | 'images' | 'proofs' | 'temp')
+- `userId`: ID do usuário (opcional)
+
+**Retorno:**
+```typescript
+{
+  filePath: string;
+  fileHash: string;
+  url: string;
+  metadata: FileMetadata;
+}
+```
+
 #### `uploadMultipleImages(files, folder?, userId?): Promise<UploadResult[]>`
 
 Upload múltiplo de imagens.
+
+#### `uploadMultipleFiles(files, options?, userId?): Promise<FileUploadResult[]>`
+
+Upload múltiplo de arquivos.
+
+#### `deleteFile(fileKey): Promise<void>`
+
+Deleta um arquivo.
 
 #### `deleteImage(imageUrl): Promise<void>`
 
 Deleta uma imagem e todos os seus thumbnails.
 
+#### `getFileMetadata(fileKey): Promise<FileMetadata>`
+
+Obtém metadados de um arquivo.
+
+#### `moveFile(fileKey, newPath): Promise<void>`
+
+Move um arquivo para novo local.
+
+#### `copyFile(fileKey, newPath): Promise<void>`
+
+Copia um arquivo para novo local.
+
 ### Pipes de Validação
 
-#### `ImageValidationPipe`
+#### `FileValidationPipe`
 
-Valida imagens gerais (até 10MB).
+Valida arquivos gerais (tamanho, tipo MIME, extensão).
 
 **Validações:**
 - Tamanho máximo configurável
 - Tipos MIME permitidos
 - Extensões permitidas
+- Prevenção de path traversal
 - Nome do arquivo sem caracteres especiais
 
-#### `AvatarValidationPipe`
+#### `ImageProcessingPipe`
 
-Valida imagens de avatar (até 2MB).
+Processa e otimiza imagens automaticamente.
 
-**Validações:**
-- Tamanho máximo: 2MB
+**Operações:**
+- Compressão automática
+- Otimização de qualidade
+- Validação de dimensões mínimas
+- Remoção de metadados EXIF
 - Formatos: JPEG, PNG, WebP
 
 #### `MultipleImagesValidationPipe`

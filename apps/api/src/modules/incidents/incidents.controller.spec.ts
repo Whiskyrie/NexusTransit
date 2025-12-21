@@ -312,8 +312,13 @@ describe('IncidentsController', () => {
 
     it('deve exportar incidente para PDF', async () => {
       const incidentId = '123e4567-e89b-12d3-a456-426614174000';
-      const mockStream = {
-        on: jest.fn((event, handler) => {
+
+      interface MockStream {
+        on: jest.Mock;
+      }
+
+      const mockStream: MockStream = {
+        on: jest.fn((event: string, handler: (chunk?: Buffer) => void) => {
           if (event === 'data') {
             handler(Buffer.from('PDF chunk'));
           }
