@@ -226,7 +226,7 @@ export class IncidentStateMachineService {
    */
   canTransition(currentStatus: IncidentStatus, targetStatus: IncidentStatus): boolean {
     if (currentStatus === targetStatus) {
-      return true;
+      return false;
     }
 
     const allowedTransitions = STATUS_TRANSITIONS[currentStatus] || [];
