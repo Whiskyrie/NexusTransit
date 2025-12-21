@@ -121,7 +121,9 @@ export class IncidentsService {
     incidentId: string,
     attachmentDtos?: { description?: string }[],
   ): Promise<IncidentAttachment[]> {
-    const uploadResults = await this.storageService.uploadMultipleFiles(files, 'incidents');
+    const uploadResults = await this.storageService.uploadMultipleFiles(files, {
+      fileType: 'proofs',
+    });
 
     return uploadResults.map((result, index) => {
       const attachment = new IncidentAttachment();
@@ -336,7 +338,7 @@ export class IncidentsService {
     file: Express.Multer.File,
     description?: string,
   ): Promise<IncidentAttachment> {
-    const uploadResult = await this.storageService.uploadFile(file, 'incidents');
+    const uploadResult = await this.storageService.uploadFile(file, { fileType: 'proofs' });
 
     const attachment = new IncidentAttachment();
     attachment.incident_id = incidentId;
