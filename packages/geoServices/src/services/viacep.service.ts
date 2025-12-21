@@ -12,13 +12,17 @@ import type {
   ViaCepAddress,
   ViaCepServiceInterface,
 } from "../interfaces/viacep.interface";
+import type { CepProvider } from "../interfaces/cep-provider.interface";
 import { cleanCEP, formatCEP } from "../validators/cep.validator";
 
 @Injectable()
-export class ViaCepService implements ViaCepServiceInterface {
+export class ViaCepService implements ViaCepServiceInterface, CepProvider {
+  readonly name = "ViaCEP";
+  readonly priority = 1;
+  readonly timeout = 3000;
+
   private readonly logger = new Logger(ViaCepService.name);
   private readonly baseUrl = "https://viacep.com.br/ws";
-  private readonly timeout = 3000;
 
   constructor(private readonly httpService: HttpService) {}
 
@@ -32,7 +36,7 @@ export class ViaCepService implements ViaCepServiceInterface {
     const url = `${this.baseUrl}/${cleanedZipCode}/json/`;
 
     try {
-      this.logger.log(`Consultando ViaCEP para o CEP: ${formatCEP(cleanedZipCode)}`);
+      this.logger.log(`[ViaCEP] Consultando CEP: ${formatCEP(cleanedZipCode)}`);
 
       const response = await firstValueFrom(
         this.httpService.get<ViaCepResponse>(url, {
@@ -59,7 +63,7 @@ export class ViaCepService implements ViaCepServiceInterface {
         ddd: data.ddd || undefined,
       };
 
-      this.logger.log(`Endereço encontrado para o CEP ${formatCEP(cleanedZipCode)}`);
+      this.logger.log(`[ViaCEP] Endereço encontrado: ${formatCEP(cleanedZipCode)}`);
 
       return address;
     } catch (error) {
@@ -71,7 +75,7 @@ export class ViaCepService implements ViaCepServiceInterface {
 
       // Verifica se é erro de timeout
       if (error instanceof TimeoutError) {
-        this.logger.error(`Timeout ao consultar ViaCEP para o CEP ${formatCEP(cleanedZipCode)}`);
+        this.logger.error(`[ViaCEP] Timeout ao consultar CEP ${formatCEP(cleanedZipCode)}`);
         throw new ServiceUnavailableException(
           "O serviço de consulta de CEP está demorando para responder. Tente novamente.",
         );
@@ -84,7 +88,7 @@ export class ViaCepService implements ViaCepServiceInterface {
 
         if (status >= 500) {
           this.logger.error(
-            `ViaCEP indisponível (${status}) para o CEP ${formatCEP(cleanedZipCode)}: ${errorMessage}`,
+            `[ViaCEP] Indisponível (${status}) para o CEP ${formatCEP(cleanedZipCode)}: ${errorMessage}`,
           );
           throw new ServiceUnavailableException(
             "O serviço de consulta de CEP está temporariamente indisponível. Tente novamente em alguns instantes.",
@@ -94,7 +98,7 @@ export class ViaCepService implements ViaCepServiceInterface {
 
       // Para outros erros não identificados
       this.logger.error(
-        `Erro ao consultar ViaCEP para o CEP ${formatCEP(cleanedZipCode)}: ${errorMessage}`,
+        `[ViaCEP] Erro ao consultar CEP ${formatCEP(cleanedZipCode)}: ${errorMessage}`,
       );
 
       throw new ServiceUnavailableException(
@@ -110,6 +114,10 @@ export class ViaCepService implements ViaCepServiceInterface {
 
     const cleanedCep = cleanCEP(zipCode);
     return cleanedCep.length === 8 && /^\d{8}$/.test(cleanedCep);
+  }
+
+  isEnabled(): boolean {
+    return process.env.CEP_VIACEP_ENABLED !== "false";
   }
 
   async getAddressByZipCodeWithFallback(

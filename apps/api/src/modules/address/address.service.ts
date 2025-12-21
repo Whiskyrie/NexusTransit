@@ -14,7 +14,7 @@ import { AddressFilterDto } from './dto/address-filter.dto';
 import { AddressResponseDto } from './dto/address-response.dto';
 import { PaginatedResponseDto } from '@nexus/common';
 import {
-  ViaCepService,
+  CepFallbackService,
   GoogleMapsService,
   DistanceMatrixResponse,
   RouteResponse,
@@ -30,7 +30,7 @@ export class AddressService {
   constructor(
     @InjectRepository(Address)
     private readonly addressRepository: Repository<Address>,
-    private readonly viaCepService: ViaCepService,
+    private readonly cepFallbackService: CepFallbackService,
     private readonly googleMapsService: GoogleMapsService,
   ) {}
 
@@ -41,7 +41,7 @@ export class AddressService {
     this.logger.log(`Buscando endereço por CEP: ${cep}`);
 
     try {
-      const viaCepData = await this.viaCepService.getAddressByZipCode(cep);
+      const viaCepData = await this.cepFallbackService.getAddressByZipCode(cep);
 
       this.logger.log(
         `Endereço encontrado para CEP ${cep}: ${viaCepData.street}, ${viaCepData.city}/${viaCepData.state}`,
@@ -182,7 +182,7 @@ export class AddressService {
     // Se tem CEP mas faltam dados, buscar no ViaCEP
     if (createDto.cep && (!createDto.street || !createDto.city)) {
       try {
-        const viaCepData = await this.viaCepService.getAddressByZipCode(createDto.cep);
+        const viaCepData = await this.cepFallbackService.getAddressByZipCode(createDto.cep);
         createDto.street = createDto.street || viaCepData.street;
         createDto.neighborhood = createDto.neighborhood || viaCepData.neighborhood;
         createDto.city = createDto.city || viaCepData.city;
