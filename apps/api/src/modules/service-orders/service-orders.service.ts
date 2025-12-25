@@ -12,6 +12,10 @@ import {
   isValidStatusTransition,
   FinalOrderStatuses,
 } from './enums/service_order-status';
+import { DeliveriesService } from '../deliveries/deliveries.service';
+import { CreateDeliveryDto } from '../deliveries/dto/create-delivery.dto';
+import { DeliveryResponseDto } from '../deliveries/dto/delivery-response.dto';
+import { GenerateDeliveryFromServiceOrderDto } from './dto/generate-delivery-from-service-order.dto';
 
 @Injectable()
 export class ServiceOrdersService {
@@ -20,6 +24,7 @@ export class ServiceOrdersService {
   constructor(
     @InjectRepository(ServiceOrder)
     private readonly serviceOrderRepository: Repository<ServiceOrder>,
+    private readonly deliveriesService: DeliveriesService,
   ) {}
 
   /**
@@ -285,6 +290,105 @@ export class ServiceOrdersService {
     await this.serviceOrderRepository.softRemove(serviceOrder);
 
     this.logger.log(`Ordem ${serviceOrder.order_number} removida`);
+  }
+
+  /**
+   * Gera uma entrega automática a partir de uma ordem de serviço
+   *
+   * Utilizado quando uma OS do tipo PICKUP ou DELIVERY precisa gerar
+   * uma entrega automaticamente no sistema de logística
+   */
+  async generateDeliveryFromServiceOrder(
+    serviceOrderId: string,
+    deliveryData: GenerateDeliveryFromServiceOrderDto,
+  ): Promise<DeliveryResponseDto> {
+    const serviceOrder = await this.findServiceOrderOrFail(serviceOrderId);
+
+    // Valida se a ordem está em status válido para gerar entrega
+    const validStatusesForDelivery = [
+      OrderStatus.PENDING,
+      OrderStatus.SCHEDULED,
+      OrderStatus.IN_PROGRESS,
+    ];
+
+    if (!validStatusesForDelivery.includes(serviceOrder.status)) {
+      throw new BadRequestException(
+        `Ordem ${serviceOrder.order_number} está em status ${serviceOrder.status} e não pode gerar entrega`,
+      );
+    }
+
+    // Verifica se já existe entrega gerada
+    if (serviceOrder.metadata?.generated_delivery_id) {
+      throw new BadRequestException(
+        `Ordem ${serviceOrder.order_number} já possui entrega gerada: ${serviceOrder.metadata.generated_delivery_id}`,
+      );
+    }
+
+    // Constrói o DTO de criação de entrega
+    const createDeliveryDto: CreateDeliveryDto = {
+      customer_id: deliveryData.customer_id,
+      priority: deliveryData.priority,
+      description: deliveryData.description,
+      weight: deliveryData.weight,
+      declared_value: deliveryData.declared_value,
+      pickup_address: {
+        street:
+          deliveryData.pickup_address?.street || serviceOrder.service_location || 'Endereço da OS',
+        number: deliveryData.pickup_address?.number || 'S/N',
+        complement: deliveryData.pickup_address?.complement,
+        neighborhood: deliveryData.pickup_address?.neighborhood || '',
+        city: deliveryData.pickup_address?.city || 'Cidade',
+        state: deliveryData.pickup_address?.state || 'UF',
+        postal_code: deliveryData.pickup_address?.postal_code || '00000-000',
+        country: deliveryData.pickup_address?.country ?? 'Brasil',
+        latitude: deliveryData.pickup_address?.latitude,
+        longitude: deliveryData.pickup_address?.longitude,
+      },
+      delivery_address: {
+        street: deliveryData.delivery_address.street,
+        number: deliveryData.delivery_address.number,
+        complement: deliveryData.delivery_address.complement,
+        neighborhood: deliveryData.delivery_address.neighborhood,
+        city: deliveryData.delivery_address.city,
+        state: deliveryData.delivery_address.state,
+        postal_code: deliveryData.delivery_address.postal_code,
+        country: deliveryData.delivery_address.country ?? 'Brasil',
+        latitude: deliveryData.delivery_address.latitude,
+        longitude: deliveryData.delivery_address.longitude,
+      },
+      sender_contact: {
+        name: deliveryData.pickup_contact.name,
+        phone: deliveryData.pickup_contact.phone,
+        email: deliveryData.pickup_contact.email,
+      },
+      recipient_contact: {
+        name: deliveryData.delivery_contact.name,
+        phone: deliveryData.delivery_contact.phone,
+        email: deliveryData.delivery_contact.email,
+      },
+      scheduled_pickup_at: deliveryData.scheduled_pickup_at,
+      scheduled_delivery_at: deliveryData.scheduled_delivery_at,
+      notes: deliveryData.notes,
+    };
+
+    // Cria a entrega
+    const delivery = await this.deliveriesService.create(createDeliveryDto);
+
+    // Atualiza a OS com referência à entrega gerada
+    serviceOrder.metadata = {
+      ...serviceOrder.metadata,
+      generated_delivery_id: delivery.id,
+      generated_delivery_tracking_code: delivery.tracking_code,
+      delivery_generated_at: new Date().toISOString(),
+    };
+
+    await this.serviceOrderRepository.save(serviceOrder);
+
+    this.logger.log(
+      `Entrega gerada para OS ${serviceOrder.order_number}: ${delivery.tracking_code}`,
+    );
+
+    return delivery;
   }
 
   // Métodos privados auxiliares
