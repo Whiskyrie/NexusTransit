@@ -28,6 +28,8 @@ import { UpdateServiceOrderDto } from './dto/update-service-order.dto';
 import { ServiceOrderFilterDto } from './dto/service-order-filter.dto';
 import { ServiceOrderResponseDto } from './dto/service-order-response.dto';
 import { PaginatedResponseDto } from '@nexus/common';
+import { DeliveryResponseDto } from '../deliveries/dto/delivery-response.dto';
+import { GenerateDeliveryFromServiceOrderDto } from './dto/generate-delivery-from-service-order.dto';
 
 @ApiTags('Service Orders')
 @Controller('service-orders')
@@ -247,6 +249,37 @@ export class ServiceOrdersController {
       throw new Error('Motivo do cancelamento é obrigatório');
     }
     return this.serviceOrdersService.cancelOrder(id, body.reason);
+  }
+
+  @Post(':id/generate-delivery')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'Gerar entrega a partir da ordem de serviço',
+    description:
+      'Cria automaticamente uma entrega no sistema de logística a partir de uma ordem de serviço',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID único da ordem de serviço',
+    type: String,
+    format: 'uuid',
+  })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Entrega gerada com sucesso',
+    type: DeliveryResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Ordem não está em status válido ou já possui entrega gerada',
+  })
+  @ApiNotFoundResponse({
+    description: 'Ordem de serviço não encontrada',
+  })
+  async generateDelivery(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() deliveryData: GenerateDeliveryFromServiceOrderDto,
+  ): Promise<DeliveryResponseDto> {
+    return this.serviceOrdersService.generateDeliveryFromServiceOrder(id, deliveryData);
   }
 
   @Delete(':id')
