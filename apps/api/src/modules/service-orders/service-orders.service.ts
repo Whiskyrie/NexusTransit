@@ -1,21 +1,28 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere, Between, ILike } from 'typeorm';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ServiceOrder } from './entities/service-order.entity';
 import { CreateServiceOrderDto } from './dto/create-service-order.dto';
 import { UpdateServiceOrderDto } from './dto/update-service-order.dto';
 import { ServiceOrderFilterDto } from './dto/service-order-filter.dto';
 import { ServiceOrderResponseDto } from './dto/service-order-response.dto';
 import { PaginatedResponseDto } from '@nexus/common';
-import {
-  OrderStatus,
-  isValidStatusTransition,
-  FinalOrderStatuses,
-} from './enums/service_order-status';
+import { OrderStatus, FinalOrderStatuses } from './enums/service_order-status';
 import { DeliveriesService } from '../deliveries/deliveries.service';
-import { CreateDeliveryDto } from '../deliveries/dto/create-delivery.dto';
 import { DeliveryResponseDto } from '../deliveries/dto/delivery-response.dto';
 import { GenerateDeliveryFromServiceOrderDto } from './dto/generate-delivery-from-service-order.dto';
+import {
+  ServiceOrderCreatedEvent,
+  ServiceOrderScheduledEvent,
+  ServiceOrderStartedEvent,
+  ServiceOrderCompletedEvent,
+  ServiceOrderCancelledEvent,
+  DeliveryGeneratedEvent,
+  ServiceOrderStatusChangedEvent,
+} from './events';
+import { ServiceOrderWorkflowService } from './services/service-order-workflow.service';
+import { ServiceOrderToDeliveryMapper } from './mappers/service-order-to-delivery.mapper';
 
 @Injectable()
 export class ServiceOrdersService {
@@ -25,6 +32,9 @@ export class ServiceOrdersService {
     @InjectRepository(ServiceOrder)
     private readonly serviceOrderRepository: Repository<ServiceOrder>,
     private readonly deliveriesService: DeliveriesService,
+    private readonly eventEmitter: EventEmitter2,
+    private readonly workflowService: ServiceOrderWorkflowService,
+    private readonly deliveryMapper: ServiceOrderToDeliveryMapper,
   ) {}
 
   /**
@@ -53,6 +63,19 @@ export class ServiceOrdersService {
     const saved = await this.serviceOrderRepository.save(serviceOrder);
 
     this.logger.log(`Ordem de serviço criada: ${saved.order_number}`);
+
+    // Emitir evento de criação
+    this.eventEmitter.emit(
+      'service-order.created',
+      new ServiceOrderCreatedEvent(
+        saved.id,
+        saved.order_number,
+        saved.created_by,
+        saved.service_type,
+        saved.priority,
+        saved.created_by,
+      ),
+    );
 
     return this.mapToResponseDto(saved);
   }
@@ -168,7 +191,11 @@ export class ServiceOrdersService {
 
     // Valida transição de status se fornecida
     if (updateDto.status && updateDto.status !== serviceOrder.status) {
-      this.validateStatusTransition(serviceOrder.status, updateDto.status);
+      await this.validateStatusTransition(
+        serviceOrder.status,
+        updateDto.status,
+        updateDto as unknown as Record<string, unknown>,
+      );
     }
 
     // Impede alterações em ordens finalizadas
@@ -178,12 +205,36 @@ export class ServiceOrdersService {
       );
     }
 
+    // Captura status anterior para evento
+    const previousStatus = serviceOrder.status;
+
     // Atualiza campos
     Object.assign(serviceOrder, updateDto);
 
     const updated = await this.serviceOrderRepository.save(serviceOrder);
 
     this.logger.log(`Ordem ${updated.order_number} atualizada`);
+
+    // Emitir evento se houve mudança de status
+    if (updateDto.status && updateDto.status !== previousStatus) {
+      // Evento genérico de mudança de status
+      this.eventEmitter.emit(
+        'service-order.status-changed',
+        new ServiceOrderStatusChangedEvent(
+          updated.id,
+          updated.order_number,
+          previousStatus,
+          updated.status,
+          new Date(),
+          updated.updated_by,
+        ),
+      );
+
+      // Eventos específicos para cada tipo de transição
+      this.emitStatusSpecificEvents(updated, previousStatus);
+
+      this.logger.debug(`Eventos de transição emitidos: ${previousStatus} -> ${updated.status}`);
+    }
 
     return this.mapToResponseDto(updated);
   }
@@ -209,6 +260,18 @@ export class ServiceOrdersService {
     const updated = await this.serviceOrderRepository.save(serviceOrder);
 
     this.logger.log(`Ordem ${updated.order_number} iniciada`);
+
+    // Emitir evento de início
+    this.eventEmitter.emit(
+      'service-order.started',
+      new ServiceOrderStartedEvent(
+        updated.id,
+        updated.order_number,
+        updated.started_at ?? new Date(),
+        updated.driver_id,
+        updated.vehicle_id,
+      ),
+    );
 
     return this.mapToResponseDto(updated);
   }
@@ -253,6 +316,19 @@ export class ServiceOrdersService {
 
     this.logger.log(`Ordem ${updated.order_number} concluída`);
 
+    // Emitir evento de conclusão
+    this.eventEmitter.emit(
+      'service-order.completed',
+      new ServiceOrderCompletedEvent(
+        updated.id,
+        updated.order_number,
+        updated.completed_at ?? new Date(),
+        updated.actual_cost,
+        updated.actual_duration_minutes,
+        updated.completion_report,
+      ),
+    );
+
     return this.mapToResponseDto(updated);
   }
 
@@ -277,6 +353,113 @@ export class ServiceOrdersService {
     const updated = await this.serviceOrderRepository.save(serviceOrder);
 
     this.logger.log(`Ordem ${updated.order_number} cancelada: ${reason}`);
+
+    // Emitir evento de cancelamento
+    this.eventEmitter.emit(
+      'service-order.cancelled',
+      new ServiceOrderCancelledEvent(
+        updated.id,
+        updated.order_number,
+        updated.cancelled_at ?? new Date(),
+        reason,
+        userId,
+      ),
+    );
+
+    return this.mapToResponseDto(updated);
+  }
+
+  /**
+   * Pausa uma ordem de serviço em execução
+   */
+  async pauseOrder(id: string, reason?: string, userId?: string): Promise<ServiceOrderResponseDto> {
+    const serviceOrder = await this.findServiceOrderOrFail(id);
+
+    if (serviceOrder.status !== OrderStatus.IN_PROGRESS) {
+      throw new BadRequestException(
+        `Ordem deve estar em execução para ser pausada. Status atual: ${serviceOrder.status}`,
+      );
+    }
+
+    const previousStatus = serviceOrder.status;
+    serviceOrder.status = OrderStatus.ON_HOLD;
+
+    if (userId) {
+      serviceOrder.updated_by = userId;
+    }
+
+    // Armazenar motivo da pausa nos metadados
+    serviceOrder.metadata = {
+      ...serviceOrder.metadata,
+      pause_reason: reason,
+      paused_at: new Date().toISOString(),
+      paused_by: userId,
+    };
+
+    const updated = await this.serviceOrderRepository.save(serviceOrder);
+
+    this.logger.log(
+      `Ordem ${updated.order_number} pausada: ${reason ?? 'Sem motivo especificado'}`,
+    );
+
+    // Emitir evento de mudança de status
+    this.eventEmitter.emit(
+      'service-order.status-changed',
+      new ServiceOrderStatusChangedEvent(
+        updated.id,
+        updated.order_number,
+        previousStatus,
+        updated.status,
+        new Date(),
+        userId,
+      ),
+    );
+
+    return this.mapToResponseDto(updated);
+  }
+
+  /**
+   * Retoma uma ordem de serviço pausada
+   */
+  async resumeOrder(id: string, userId?: string): Promise<ServiceOrderResponseDto> {
+    const serviceOrder = await this.findServiceOrderOrFail(id);
+
+    if (serviceOrder.status !== OrderStatus.ON_HOLD) {
+      throw new BadRequestException(
+        `Ordem deve estar pausada para ser retomada. Status atual: ${serviceOrder.status}`,
+      );
+    }
+
+    const previousStatus = serviceOrder.status;
+    serviceOrder.status = OrderStatus.IN_PROGRESS;
+
+    if (userId) {
+      serviceOrder.updated_by = userId;
+    }
+
+    // Registrar retomada nos metadados
+    serviceOrder.metadata = {
+      ...serviceOrder.metadata,
+      resumed_at: new Date().toISOString(),
+      resumed_by: userId,
+    };
+
+    const updated = await this.serviceOrderRepository.save(serviceOrder);
+
+    this.logger.log(`Ordem ${updated.order_number} retomada`);
+
+    // Emitir evento de mudança de status
+    this.eventEmitter.emit(
+      'service-order.status-changed',
+      new ServiceOrderStatusChangedEvent(
+        updated.id,
+        updated.order_number,
+        previousStatus,
+        updated.status,
+        new Date(),
+        userId,
+      ),
+    );
 
     return this.mapToResponseDto(updated);
   }
@@ -318,58 +501,23 @@ export class ServiceOrdersService {
     }
 
     // Verifica se já existe entrega gerada
-    if (serviceOrder.metadata?.generated_delivery_id) {
+    const existingDeliveryId = serviceOrder.metadata?.generated_delivery_id;
+    if (existingDeliveryId) {
       throw new BadRequestException(
-        `Ordem ${serviceOrder.order_number} já possui entrega gerada: ${serviceOrder.metadata.generated_delivery_id}`,
+        `Ordem ${serviceOrder.order_number} já possui entrega gerada (ID: ${existingDeliveryId})`,
       );
     }
 
-    // Constrói o DTO de criação de entrega
-    const createDeliveryDto: CreateDeliveryDto = {
-      customer_id: deliveryData.customer_id,
-      priority: deliveryData.priority,
-      description: deliveryData.description,
-      weight: deliveryData.weight,
-      declared_value: deliveryData.declared_value,
-      pickup_address: {
-        street:
-          deliveryData.pickup_address?.street || serviceOrder.service_location || 'Endereço da OS',
-        number: deliveryData.pickup_address?.number || 'S/N',
-        complement: deliveryData.pickup_address?.complement,
-        neighborhood: deliveryData.pickup_address?.neighborhood || '',
-        city: deliveryData.pickup_address?.city || 'Cidade',
-        state: deliveryData.pickup_address?.state || 'UF',
-        postal_code: deliveryData.pickup_address?.postal_code || '00000-000',
-        country: deliveryData.pickup_address?.country ?? 'Brasil',
-        latitude: deliveryData.pickup_address?.latitude,
-        longitude: deliveryData.pickup_address?.longitude,
-      },
-      delivery_address: {
-        street: deliveryData.delivery_address.street,
-        number: deliveryData.delivery_address.number,
-        complement: deliveryData.delivery_address.complement,
-        neighborhood: deliveryData.delivery_address.neighborhood,
-        city: deliveryData.delivery_address.city,
-        state: deliveryData.delivery_address.state,
-        postal_code: deliveryData.delivery_address.postal_code,
-        country: deliveryData.delivery_address.country ?? 'Brasil',
-        latitude: deliveryData.delivery_address.latitude,
-        longitude: deliveryData.delivery_address.longitude,
-      },
-      sender_contact: {
-        name: deliveryData.pickup_contact.name,
-        phone: deliveryData.pickup_contact.phone,
-        email: deliveryData.pickup_contact.email,
-      },
-      recipient_contact: {
-        name: deliveryData.delivery_contact.name,
-        phone: deliveryData.delivery_contact.phone,
-        email: deliveryData.delivery_contact.email,
-      },
-      scheduled_pickup_at: deliveryData.scheduled_pickup_at,
-      scheduled_delivery_at: deliveryData.scheduled_delivery_at,
-      notes: deliveryData.notes,
-    };
+    // Valida dados obrigatórios
+    this.deliveryMapper.validateDeliveryData(deliveryData);
+
+    // Usa o mapper para converter OS em DTO de delivery
+    const createDeliveryDto = this.deliveryMapper.mapToCreateDeliveryDto(
+      serviceOrder,
+      deliveryData,
+    );
+
+    this.logger.log(`Gerando entrega para OS ${serviceOrder.order_number} usando mapper`);
 
     // Cria a entrega
     const delivery = await this.deliveriesService.create(createDeliveryDto);
@@ -386,6 +534,18 @@ export class ServiceOrdersService {
 
     this.logger.log(
       `Entrega gerada para OS ${serviceOrder.order_number}: ${delivery.tracking_code}`,
+    );
+
+    // Emitir evento de entrega gerada
+    this.eventEmitter.emit(
+      'delivery.generated',
+      new DeliveryGeneratedEvent(
+        serviceOrder.id,
+        serviceOrder.order_number,
+        delivery.id,
+        delivery.tracking_code,
+        new Date(),
+      ),
     );
 
     return delivery;
@@ -405,8 +565,18 @@ export class ServiceOrdersService {
     return serviceOrder;
   }
 
-  private validateStatusTransition(currentStatus: OrderStatus, newStatus: OrderStatus): void {
-    if (!isValidStatusTransition(currentStatus, newStatus)) {
+  private async validateStatusTransition(
+    currentStatus: OrderStatus,
+    newStatus: OrderStatus,
+    context?: Record<string, unknown>,
+  ): Promise<void> {
+    const canTransition = await this.workflowService.canTransition(
+      currentStatus,
+      newStatus,
+      context,
+    );
+
+    if (!canTransition) {
       throw new BadRequestException(
         `Transição de status inválida: ${currentStatus} -> ${newStatus}`,
       );
@@ -424,5 +594,81 @@ export class ServiceOrdersService {
     const dto = new ServiceOrderResponseDto();
     Object.assign(dto, serviceOrder);
     return dto;
+  }
+
+  /**
+   * Emite eventos específicos baseados na transição de status
+   */
+  private emitStatusSpecificEvents(serviceOrder: ServiceOrder, _previousStatus: OrderStatus): void {
+    switch (serviceOrder.status) {
+      case OrderStatus.SCHEDULED:
+        if (serviceOrder.scheduled_date) {
+          this.eventEmitter.emit(
+            'service-order.scheduled',
+            new ServiceOrderScheduledEvent(
+              serviceOrder.id,
+              serviceOrder.order_number,
+              serviceOrder.scheduled_date,
+              serviceOrder.driver_id,
+              serviceOrder.vehicle_id,
+            ),
+          );
+          this.logger.debug(
+            `Evento service-order.scheduled emitido para OS ${serviceOrder.order_number}`,
+          );
+        }
+        break;
+
+      case OrderStatus.IN_PROGRESS:
+        this.eventEmitter.emit(
+          'service-order.started',
+          new ServiceOrderStartedEvent(
+            serviceOrder.id,
+            serviceOrder.order_number,
+            new Date(),
+            serviceOrder.driver_id,
+            serviceOrder.vehicle_id,
+          ),
+        );
+        this.logger.debug(
+          `Evento service-order.started emitido para OS ${serviceOrder.order_number}`,
+        );
+        break;
+
+      case OrderStatus.DELIVERED:
+        this.eventEmitter.emit(
+          'service-order.completed',
+          new ServiceOrderCompletedEvent(
+            serviceOrder.id,
+            serviceOrder.order_number,
+            new Date(),
+            serviceOrder.actual_cost ?? serviceOrder.estimated_cost,
+          ),
+        );
+        this.logger.log(
+          `Evento service-order.completed emitido para OS ${serviceOrder.order_number}`,
+        );
+        break;
+
+      case OrderStatus.CANCELLED:
+        this.eventEmitter.emit(
+          'service-order.cancelled',
+          new ServiceOrderCancelledEvent(
+            serviceOrder.id,
+            serviceOrder.order_number,
+            new Date(),
+            serviceOrder.cancellation_reason ?? 'Não informado',
+            serviceOrder.updated_by,
+          ),
+        );
+        this.logger.log(
+          `Evento service-order.cancelled emitido para OS ${serviceOrder.order_number}`,
+        );
+        break;
+
+      default:
+        // Outros status não têm eventos específicos
+        this.logger.debug(`Status ${serviceOrder.status} não possui evento específico`);
+    }
   }
 }
