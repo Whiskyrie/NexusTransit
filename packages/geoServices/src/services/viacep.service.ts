@@ -7,6 +7,7 @@ import {
 } from "@nestjs/common";
 import { HttpService } from "@nestjs/axios";
 import { firstValueFrom, TimeoutError } from "rxjs";
+import { AxiosError } from "axios";
 import type {
   ViaCepResponse,
   ViaCepAddress,
@@ -82,11 +83,10 @@ export class ViaCepService implements ViaCepServiceInterface, CepProvider {
       }
 
       // Verifica se é erro HTTP (5xx = servidor, 4xx = cliente)
-      if (error && typeof error === "object" && "response" in error) {
-        const httpError = error as any;
-        const status = httpError.response?.status;
+      if (error instanceof AxiosError) {
+        const status = error.response?.status;
 
-        if (status >= 500) {
+        if (status && status >= 500) {
           this.logger.error(
             `[ViaCEP] Indisponível (${status}) para o CEP ${formatCEP(cleanedZipCode)}: ${errorMessage}`,
           );
