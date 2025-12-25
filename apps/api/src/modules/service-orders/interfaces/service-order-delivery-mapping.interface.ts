@@ -1,4 +1,4 @@
-import { DeliveryPriority } from '../../deliveries/enums/delivery-priority.enum';
+import type { DeliveryPriority } from '../../deliveries/enums/delivery-priority.enum';
 
 /**
  * Interface para dados de endereço formatados para entrega
