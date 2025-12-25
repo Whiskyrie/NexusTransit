@@ -28,14 +28,21 @@ import { UpdateServiceOrderDto } from './dto/update-service-order.dto';
 import { ServiceOrderFilterDto } from './dto/service-order-filter.dto';
 import { ServiceOrderResponseDto } from './dto/service-order-response.dto';
 import { PaginatedResponseDto } from '@nexus/common';
+import { OrderStatus } from './enums/service_order-status';
 import { DeliveryResponseDto } from '../deliveries/dto/delivery-response.dto';
 import { GenerateDeliveryFromServiceOrderDto } from './dto/generate-delivery-from-service-order.dto';
+import { PauseServiceOrderDto } from './dto/pause-service-order.dto';
+import { ResumeServiceOrderDto } from './dto/resume-service-order.dto';
+import { ServiceOrderWorkflowService } from './services/service-order-workflow.service';
 
 @ApiTags('Service Orders')
 @Controller('service-orders')
 @ApiBearerAuth()
 export class ServiceOrdersController {
-  constructor(private readonly serviceOrdersService: ServiceOrdersService) {}
+  constructor(
+    private readonly serviceOrdersService: ServiceOrdersService,
+    private readonly workflowService: ServiceOrderWorkflowService,
+  ) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -280,6 +287,91 @@ export class ServiceOrdersController {
     @Body() deliveryData: GenerateDeliveryFromServiceOrderDto,
   ): Promise<DeliveryResponseDto> {
     return this.serviceOrdersService.generateDeliveryFromServiceOrder(id, deliveryData);
+  }
+
+  @Get(':id/workflow')
+  @ApiOperation({
+    summary: 'Obter informações do workflow',
+    description: 'Retorna status atual e transições disponíveis para a ordem de serviço',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID único da ordem de serviço',
+    type: String,
+    format: 'uuid',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Informações do workflow',
+  })
+  @ApiNotFoundResponse({
+    description: 'Ordem de serviço não encontrada',
+  })
+  async getWorkflowInfo(@Param('id', ParseUUIDPipe) id: string): Promise<{
+    currentStatus: OrderStatus;
+    availableTransitions: OrderStatus[];
+    isFinal: boolean;
+  }> {
+    const serviceOrder = await this.serviceOrdersService.findOne(id);
+    return this.workflowService.getWorkflowInfo(serviceOrder.status);
+  }
+
+  @Post(':id/pause')
+  @ApiOperation({
+    summary: 'Pausar ordem de serviço',
+    description: 'Coloca uma ordem em execução no status ON_HOLD',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID único da ordem de serviço',
+    type: String,
+    format: 'uuid',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Ordem pausada com sucesso',
+    type: ServiceOrderResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Ordem não está em execução',
+  })
+  @ApiNotFoundResponse({
+    description: 'Ordem de serviço não encontrada',
+  })
+  async pauseOrder(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: PauseServiceOrderDto,
+  ): Promise<ServiceOrderResponseDto> {
+    return this.serviceOrdersService.pauseOrder(id, body.reason, body.userId);
+  }
+
+  @Post(':id/resume')
+  @ApiOperation({
+    summary: 'Retomar ordem de serviço',
+    description: 'Retoma uma ordem pausada voltando para IN_PROGRESS',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID único da ordem de serviço',
+    type: String,
+    format: 'uuid',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Ordem retomada com sucesso',
+    type: ServiceOrderResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Ordem não está pausada',
+  })
+  @ApiNotFoundResponse({
+    description: 'Ordem de serviço não encontrada',
+  })
+  async resumeOrder(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: ResumeServiceOrderDto,
+  ): Promise<ServiceOrderResponseDto> {
+    return this.serviceOrdersService.resumeOrder(id, body.userId);
   }
 
   @Delete(':id')
