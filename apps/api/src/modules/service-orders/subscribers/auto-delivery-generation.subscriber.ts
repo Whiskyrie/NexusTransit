@@ -3,6 +3,7 @@ import { OnEvent } from '@nestjs/event-emitter';
 import { ConfigService } from '@nestjs/config';
 import { ServiceOrderCreatedEvent, ServiceOrderScheduledEvent } from '../events';
 import { ServiceOrdersService } from '../service-orders.service';
+import { OrderType } from '../enums/order-type.enum';
 
 /**
  * Subscriber para geração automática de entregas
@@ -15,6 +16,7 @@ export class AutoDeliveryGenerationSubscriber {
   private readonly logger = new Logger(AutoDeliveryGenerationSubscriber.name);
   private readonly autoGenerateEnabled: boolean;
   private readonly autoGenerateForTypes: string[];
+  private readonly generateOnSchedule: boolean;
 
   constructor(
     private readonly serviceOrdersService: ServiceOrdersService,
@@ -26,8 +28,16 @@ export class AutoDeliveryGenerationSubscriber {
       false,
     );
 
-    const types = this.configService.get<string>('SERVICE_ORDERS_AUTO_GENERATE_TYPES', 'DELIVERY');
-    this.autoGenerateForTypes = types.split(',');
+    const types = this.configService.get<string>(
+      'SERVICE_ORDERS_AUTO_GENERATE_TYPES',
+      'DELIVERY_ONLY,PICKUP_DELIVERY',
+    );
+    this.autoGenerateForTypes = types.split(',').map(t => t.trim());
+
+    this.generateOnSchedule = this.configService.get<boolean>(
+      'SERVICE_ORDERS_AUTO_GENERATE_ON_SCHEDULE',
+      true,
+    );
 
     if (this.autoGenerateEnabled) {
       this.logger.log(
@@ -45,19 +55,13 @@ export class AutoDeliveryGenerationSubscriber {
       return;
     }
 
-    this.logger.log(`Processando geração automática de entrega para OS ${event.orderNumber}`);
-
-    try {
-      // TODO: Implementar lógica de geração automática baseada em configuração
-      this.logger.log(`Entrega será gerada manualmente para OS ${event.orderNumber}`);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-      const errorStack = error instanceof Error ? error.stack : undefined;
-      this.logger.error(
-        `Erro ao gerar entrega automática para OS ${event.orderNumber}: ${errorMessage}`,
-        errorStack,
-      );
+    // Se configurado para gerar apenas no agendamento, ignorar criação
+    if (this.generateOnSchedule) {
+      this.logger.debug(`OS ${event.orderNumber} - entrega será gerada no agendamento`);
+      return;
     }
+
+    await this.generateDeliveryForOrder(event.serviceOrderId, event.orderNumber);
   }
 
   /**
@@ -70,11 +74,64 @@ export class AutoDeliveryGenerationSubscriber {
     }
 
     this.logger.debug(
-      `OS ${event.orderNumber} agendada - verificando necessidade de gerar entrega`,
+      `OS ${event.orderNumber} agendada para ${event.scheduledDate.toISOString()} - verificando necessidade de gerar entrega`,
     );
 
-    // Lógica similar ao handleServiceOrderCreated
-    // Pode ser configurado para gerar apenas quando agendada
+    await this.generateDeliveryForOrder(event.serviceOrderId, event.orderNumber);
+  }
+
+  /**
+   * Gera entrega para uma ordem de serviço
+   */
+  private async generateDeliveryForOrder(
+    serviceOrderId: string,
+    orderNumber: string,
+  ): Promise<void> {
+    try {
+      // Buscar a ordem de serviço completa
+      const serviceOrder = await this.serviceOrdersService.findOne(serviceOrderId);
+
+      // Verificar se o tipo da ordem deve gerar entrega
+      if (!this.shouldGenerateForType(serviceOrder.order_type as OrderType)) {
+        this.logger.debug(
+          `OS ${orderNumber} - tipo ${serviceOrder.order_type} não configurado para geração automática`,
+        );
+        return;
+      }
+
+      // Verificar se já existe entrega gerada
+      // O campo deliveries pode não existir no ResponseDto, então verificamos de forma segura
+      const deliveriesField = serviceOrder as unknown as { deliveries?: unknown[] };
+      const deliveriesCount = Array.isArray(deliveriesField.deliveries)
+        ? deliveriesField.deliveries.length
+        : 0;
+
+      if (deliveriesCount > 0) {
+        this.logger.debug(`OS ${orderNumber} já possui ${deliveriesCount} entregas`);
+        return;
+      }
+
+      // Gerar a entrega
+      this.logger.log(`Gerando entrega automática para OS ${orderNumber}`);
+
+      const delivery = await this.serviceOrdersService.generateDeliveryFromServiceOrder(
+        serviceOrderId,
+        {
+          notes: `Entrega gerada automaticamente a partir da OS ${orderNumber}`,
+        },
+      );
+
+      this.logger.log(
+        `Entrega ${delivery.tracking_code} gerada automaticamente para OS ${orderNumber}`,
+      );
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      this.logger.error(
+        `Erro ao gerar entrega automática para OS ${orderNumber}: ${errorMessage}`,
+        errorStack,
+      );
+    }
   }
 
   /**
@@ -82,5 +139,12 @@ export class AutoDeliveryGenerationSubscriber {
    */
   private shouldAutoGenerate(): boolean {
     return this.autoGenerateEnabled;
+  }
+
+  /**
+   * Verifica se o tipo de ordem deve gerar entrega
+   */
+  private shouldGenerateForType(orderType: OrderType): boolean {
+    return this.autoGenerateForTypes.includes(orderType);
   }
 }
