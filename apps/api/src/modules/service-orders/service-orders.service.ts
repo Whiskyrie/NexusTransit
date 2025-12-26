@@ -1014,4 +1014,159 @@ export class ServiceOrdersService {
       },
     };
   }
+
+  /**
+   * Retorna métricas consolidadas das ordens de serviço
+   */
+  async getMetrics(startDate?: string, endDate?: string): Promise<Record<string, unknown>> {
+    const queryBuilder = this.serviceOrderRepository.createQueryBuilder('so');
+
+    // Aplicar filtro de data se fornecido
+    if (startDate) {
+      queryBuilder.andWhere('so.created_at >= :startDate', { startDate: new Date(startDate) });
+    }
+    if (endDate) {
+      const endDateTime = new Date(endDate);
+      endDateTime.setHours(23, 59, 59, 999);
+      queryBuilder.andWhere('so.created_at <= :endDate', { endDate: endDateTime });
+    }
+
+    // Total de ordens
+    const totalOrders = await queryBuilder.getCount();
+
+    // Contagem por status
+    const statusCounts = await this.serviceOrderRepository
+      .createQueryBuilder('so')
+      .select('so.status', 'status')
+      .addSelect('COUNT(*)', 'count')
+      .where(startDate ? 'so.created_at >= :startDate' : '1=1', {
+        startDate: startDate ? new Date(startDate) : undefined,
+      })
+      .andWhere(endDate ? 'so.created_at <= :endDate' : '1=1', {
+        endDate: endDate ? new Date(endDate) : undefined,
+      })
+      .groupBy('so.status')
+      .getRawMany();
+
+    const byStatus: Record<string, number> = {};
+    for (const row of statusCounts) {
+      byStatus[row.status as string] = parseInt(row.count as string, 10);
+    }
+
+    // Contagem por prioridade
+    const priorityCounts = await this.serviceOrderRepository
+      .createQueryBuilder('so')
+      .select('so.priority', 'priority')
+      .addSelect('COUNT(*)', 'count')
+      .where(startDate ? 'so.created_at >= :startDate' : '1=1', {
+        startDate: startDate ? new Date(startDate) : undefined,
+      })
+      .andWhere(endDate ? 'so.created_at <= :endDate' : '1=1', {
+        endDate: endDate ? new Date(endDate) : undefined,
+      })
+      .groupBy('so.priority')
+      .getRawMany();
+
+    const byPriority: Record<string, number> = {};
+    for (const row of priorityCounts) {
+      byPriority[row.priority as string] = parseInt(row.count as string, 10);
+    }
+
+    // Métricas financeiras
+    const financialMetrics = await this.serviceOrderRepository
+      .createQueryBuilder('so')
+      .select('SUM(so.estimated_cost)', 'total_estimated')
+      .addSelect('SUM(so.actual_cost)', 'total_actual')
+      .addSelect(
+        `SUM(CASE WHEN so.payment_status = 'PENDING' THEN COALESCE(so.actual_cost, so.estimated_cost) ELSE 0 END)`,
+        'pending_payment',
+      )
+      .addSelect(
+        `SUM(CASE WHEN so.payment_status = 'PAID' THEN COALESCE(so.actual_cost, so.estimated_cost) ELSE 0 END)`,
+        'paid',
+      )
+      .where(startDate ? 'so.created_at >= :startDate' : '1=1', {
+        startDate: startDate ? new Date(startDate) : undefined,
+      })
+      .andWhere(endDate ? 'so.created_at <= :endDate' : '1=1', {
+        endDate: endDate ? new Date(endDate) : undefined,
+      })
+      .getRawOne();
+
+    const financial = {
+      total_estimated: parseFloat(String(financialMetrics?.total_estimated ?? '0')),
+      total_actual: parseFloat(String(financialMetrics?.total_actual ?? '0')),
+      pending_payment: parseFloat(String(financialMetrics?.pending_payment ?? '0')),
+      paid: parseFloat(String(financialMetrics?.paid ?? '0')),
+    };
+
+    // Métricas de performance
+    const _completedOrders = byStatus[OrderStatus.DELIVERED] ?? 0;
+    const cancelledOrders = byStatus[OrderStatus.CANCELLED] ?? 0;
+
+    // Taxa de cancelamento
+    const cancellationRate = totalOrders > 0 ? (cancelledOrders / totalOrders) * 100 : 0;
+
+    // Tempo médio de conclusão (ordens entregues)
+    const avgCompletionTime = await this.serviceOrderRepository
+      .createQueryBuilder('so')
+      .select('AVG(EXTRACT(EPOCH FROM (so.updated_at - so.created_at)) / 3600)', 'avg_hours')
+      .where('so.status = :status', { status: OrderStatus.DELIVERED })
+      .andWhere(startDate ? 'so.created_at >= :startDate' : '1=1', {
+        startDate: startDate ? new Date(startDate) : undefined,
+      })
+      .andWhere(endDate ? 'so.created_at <= :endDate' : '1=1', {
+        endDate: endDate ? new Date(endDate) : undefined,
+      })
+      .getRawOne();
+
+    // Taxa de cumprimento de SLA (ordens entregues dentro do prazo)
+    const slaCompliance = await this.serviceOrderRepository
+      .createQueryBuilder('so')
+      .select('COUNT(*)', 'on_time')
+      .where('so.status = :status', { status: OrderStatus.DELIVERED })
+      .andWhere('so.delivery_deadline IS NOT NULL')
+      .andWhere('so.updated_at <= so.delivery_deadline')
+      .andWhere(startDate ? 'so.created_at >= :startDate' : '1=1', {
+        startDate: startDate ? new Date(startDate) : undefined,
+      })
+      .andWhere(endDate ? 'so.created_at <= :endDate' : '1=1', {
+        endDate: endDate ? new Date(endDate) : undefined,
+      })
+      .getRawOne();
+
+    const ordersWithDeadline = await this.serviceOrderRepository
+      .createQueryBuilder('so')
+      .select('COUNT(*)', 'total')
+      .where('so.status = :status', { status: OrderStatus.DELIVERED })
+      .andWhere('so.delivery_deadline IS NOT NULL')
+      .andWhere(startDate ? 'so.created_at >= :startDate' : '1=1', {
+        startDate: startDate ? new Date(startDate) : undefined,
+      })
+      .andWhere(endDate ? 'so.created_at <= :endDate' : '1=1', {
+        endDate: endDate ? new Date(endDate) : undefined,
+      })
+      .getRawOne();
+
+    const onTimeCount = parseInt(String(slaCompliance?.on_time ?? '0'), 10);
+    const totalWithDeadline = parseInt(String(ordersWithDeadline?.total ?? '0'), 10);
+    const slaComplianceRate = totalWithDeadline > 0 ? (onTimeCount / totalWithDeadline) * 100 : 100;
+
+    const performance = {
+      sla_compliance_rate: Math.round(slaComplianceRate * 100) / 100,
+      average_completion_time_hours:
+        Math.round(parseFloat(String(avgCompletionTime?.avg_hours ?? '0')) * 100) / 100,
+      cancellation_rate: Math.round(cancellationRate * 100) / 100,
+    };
+
+    this.logger.log(`Métricas geradas: ${totalOrders} ordens no período`);
+
+    return {
+      total_orders: totalOrders,
+      by_status: byStatus,
+      by_priority: byPriority,
+      financial,
+      performance,
+    };
+  }
 }
