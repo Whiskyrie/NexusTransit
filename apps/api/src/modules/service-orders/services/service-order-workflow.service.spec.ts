@@ -1,4 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { ServiceOrderWorkflowService } from './service-order-workflow.service';
 import { OrderStatus } from '../enums/service_order-status';
 import { BadRequestException } from '@nestjs/common';

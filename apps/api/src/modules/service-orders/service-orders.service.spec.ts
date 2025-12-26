@@ -5,6 +5,9 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ServiceOrder } from './entities/service-order.entity';
 import { DeliveriesService } from '../deliveries/deliveries.service';
 import { ServiceOrderWorkflowService } from './services/service-order-workflow.service';
+import { ServiceOrderValidationService } from './services/service-order-validation.service';
+import { ServiceOrderPricingService } from './services/service-order-pricing.service';
+import { GoogleMapsService } from '@nexus/geo-services';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { OrderStatus } from './enums/service_order-status';
 import { DeliveryPriority } from '../deliveries/enums/delivery-priority.enum';
@@ -97,6 +100,33 @@ describe('ServiceOrdersService', () => {
     validateDeliveryData: jest.fn(),
   };
 
+  const mockValidationService = {
+    validateCreate: jest.fn().mockReturnValue({ valid: true, errors: [], warnings: [] }),
+    validateUpdate: jest.fn().mockReturnValue({ valid: true, errors: [], warnings: [] }),
+    canAutoApprove: jest.fn().mockResolvedValue(false),
+    validateCustomerCredit: jest.fn().mockResolvedValue({ valid: true, errors: [], warnings: [] }),
+  };
+
+  const mockPricingService = {
+    calculatePrice: jest.fn().mockReturnValue(100),
+    generateQuotation: jest.fn().mockReturnValue({
+      base_price: 100,
+      total: 100,
+      breakdown: {},
+      valid_until: new Date(),
+    }),
+    calculateSLA: jest.fn().mockReturnValue(24),
+  };
+
+  const mockGoogleMapsService = {
+    getDistanceMatrix: jest.fn().mockResolvedValue({
+      rows: [{ elements: [{ distance: { value: 10000 } }] }],
+    }),
+    geocode: jest.fn(),
+    reverseGeocode: jest.fn(),
+    getRoutes: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -118,8 +148,20 @@ describe('ServiceOrdersService', () => {
           useValue: mockWorkflowService,
         },
         {
+          provide: ServiceOrderValidationService,
+          useValue: mockValidationService,
+        },
+        {
+          provide: ServiceOrderPricingService,
+          useValue: mockPricingService,
+        },
+        {
           provide: ServiceOrderToDeliveryMapper,
           useValue: mockDeliveryMapper,
+        },
+        {
+          provide: GoogleMapsService,
+          useValue: mockGoogleMapsService,
         },
       ],
     }).compile();
@@ -185,7 +227,7 @@ describe('ServiceOrdersService', () => {
       expect(result).toBeDefined();
       expect(mockRepository.findOne).toHaveBeenCalledWith({
         where: { id: 'order-uuid' },
-        relations: ['vehicle', 'driver'],
+        relations: ['vehicle', 'driver', 'customer', 'pickup_address', 'delivery_address'],
       });
     });
 
