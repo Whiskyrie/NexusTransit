@@ -34,6 +34,11 @@ import { GenerateDeliveryFromServiceOrderDto } from './dto/generate-delivery-fro
 import { PauseServiceOrderDto } from './dto/pause-service-order.dto';
 import { ResumeServiceOrderDto } from './dto/resume-service-order.dto';
 import { ServiceOrderWorkflowService } from './services/service-order-workflow.service';
+import { ServiceOrderValidationService } from './services/service-order-validation.service';
+import { ServiceOrderPricingService } from './services/service-order-pricing.service';
+import { InvoiceDto } from './dto/invoice.dto';
+import { QuotationDto } from './dto/quotation.dto';
+import { UpdatePaymentDto } from './dto/update-payment.dto';
 
 @ApiTags('Service Orders')
 @Controller('service-orders')
@@ -42,6 +47,8 @@ export class ServiceOrdersController {
   constructor(
     private readonly serviceOrdersService: ServiceOrdersService,
     private readonly workflowService: ServiceOrderWorkflowService,
+    private readonly validationService: ServiceOrderValidationService,
+    private readonly pricingService: ServiceOrderPricingService,
   ) {}
 
   @Post()
@@ -395,5 +402,286 @@ export class ServiceOrdersController {
   })
   async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     return this.serviceOrdersService.remove(id);
+  }
+
+  // Endpoints de Aprovação
+
+  @Post(':id/approve')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Aprovar ordem de serviço',
+    description: 'Aprova uma ordem pendente e move para o status apropriado',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID único da ordem',
+    type: String,
+    format: 'uuid',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Ordem aprovada com sucesso',
+    type: ServiceOrderResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Ordem não está em status PENDING ou aprovação não permitida',
+  })
+  @ApiNotFoundResponse({
+    description: 'Ordem não encontrada',
+  })
+  async approveOrder(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { approved_by_user_id?: string },
+  ): Promise<ServiceOrderResponseDto> {
+    return this.serviceOrdersService.approveOrder(id, body.approved_by_user_id);
+  }
+
+  @Post(':id/reject')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Rejeitar ordem de serviço',
+    description: 'Rejeita uma ordem pendente com motivo obrigatório',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID único da ordem',
+    type: String,
+    format: 'uuid',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Ordem rejeitada com sucesso',
+    type: ServiceOrderResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Ordem não está em status PENDING ou motivo não fornecido',
+  })
+  @ApiNotFoundResponse({
+    description: 'Ordem não encontrada',
+  })
+  async rejectOrder(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { reason: string },
+  ): Promise<ServiceOrderResponseDto> {
+    if (!body.reason) {
+      throw new Error('Motivo da rejeição é obrigatório');
+    }
+    return this.serviceOrdersService.rejectOrder(id, body.reason);
+  }
+
+  // Endpoints Financeiros
+
+  @Get(':id/quotation')
+  @ApiOperation({
+    summary: 'Gerar cotação da ordem',
+    description: 'Calcula o valor estimado da ordem baseado nos parâmetros fornecidos',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID único da ordem',
+    type: String,
+    format: 'uuid',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Cotação gerada com sucesso',
+    type: QuotationDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Ordem não encontrada',
+  })
+  async getQuotation(@Param('id', ParseUUIDPipe) id: string): Promise<QuotationDto> {
+    return this.serviceOrdersService.getQuotation(id);
+  }
+
+  @Get(':id/financial')
+  @ApiOperation({
+    summary: 'Obter detalhes financeiros da ordem',
+    description: 'Retorna informações financeiras completas da ordem',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID único da ordem',
+    type: String,
+    format: 'uuid',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Detalhes financeiros',
+  })
+  @ApiNotFoundResponse({
+    description: 'Ordem não encontrada',
+  })
+  async getFinancialDetails(@Param('id', ParseUUIDPipe) id: string): Promise<{
+    estimated_cost: number;
+    actual_cost?: number;
+    payment_status: string;
+    payment_method?: string;
+    invoice_number?: string;
+    insurance_value?: number;
+    total: number;
+  }> {
+    return this.serviceOrdersService.getFinancialDetails(id);
+  }
+
+  @Patch(':id/invoice')
+  @ApiOperation({
+    summary: 'Gerar nota fiscal',
+    description: 'Registra a nota fiscal da ordem de serviço',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID único da ordem',
+    type: String,
+    format: 'uuid',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Nota fiscal gerada com sucesso',
+    type: ServiceOrderResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Dados inválidos ou ordem não permite nota fiscal',
+  })
+  @ApiNotFoundResponse({
+    description: 'Ordem não encontrada',
+  })
+  async generateInvoice(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() invoiceDto: InvoiceDto,
+  ): Promise<ServiceOrderResponseDto> {
+    return this.serviceOrdersService.generateInvoice(id, invoiceDto);
+  }
+
+  @Patch(':id/payment')
+  @ApiOperation({
+    summary: 'Registrar pagamento',
+    description: 'Atualiza as informações de pagamento da ordem',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID único da ordem',
+    type: String,
+    format: 'uuid',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Pagamento registrado com sucesso',
+    type: ServiceOrderResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Dados inválidos ou ordem não permite atualização de pagamento',
+  })
+  @ApiNotFoundResponse({
+    description: 'Ordem não encontrada',
+  })
+  async updatePayment(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() paymentDto: UpdatePaymentDto,
+  ): Promise<ServiceOrderResponseDto> {
+    return this.serviceOrdersService.updatePayment(id, paymentDto);
+  }
+
+  @Get('unpaid')
+  @ApiOperation({
+    summary: 'Listar ordens não pagas',
+    description: 'Retorna todas as ordens com pagamento pendente ou em atraso',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    example: 1,
+    description: 'Número da página',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    example: 10,
+    description: 'Itens por página (máximo 100)',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Lista de ordens não pagas',
+    type: [ServiceOrderResponseDto],
+  })
+  async getUnpaidOrders(
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+  ): Promise<PaginatedResponseDto<ServiceOrderResponseDto>> {
+    return this.serviceOrdersService.getUnpaidOrders(page, limit);
+  }
+
+  @Get('pending-approval')
+  @ApiOperation({
+    summary: 'Listar ordens aguardando aprovação',
+    description: 'Retorna todas as ordens em status PENDING',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    example: 1,
+    description: 'Número da página',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    example: 10,
+    description: 'Itens por página (máximo 100)',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Lista de ordens aguardando aprovação',
+    type: [ServiceOrderResponseDto],
+  })
+  async getPendingApprovalOrders(
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+  ): Promise<PaginatedResponseDto<ServiceOrderResponseDto>> {
+    return this.serviceOrdersService.getPendingApprovalOrders(page, limit);
+  }
+
+  @Get('customer/:customerId')
+  @ApiOperation({
+    summary: 'Listar ordens por cliente',
+    description: 'Retorna todas as ordens de um cliente específico',
+  })
+  @ApiParam({
+    name: 'customerId',
+    description: 'ID do cliente',
+    type: String,
+    format: 'uuid',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    example: 1,
+    description: 'Número da página',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    example: 10,
+    description: 'Itens por página (máximo 100)',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Lista de ordens do cliente',
+    type: [ServiceOrderResponseDto],
+  })
+  @ApiNotFoundResponse({
+    description: 'Cliente não encontrado',
+  })
+  async getOrdersByCustomer(
+    @Param('customerId', ParseUUIDPipe) customerId: string,
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+  ): Promise<PaginatedResponseDto<ServiceOrderResponseDto>> {
+    return this.serviceOrdersService.getOrdersByCustomer(customerId, page, limit);
   }
 }
