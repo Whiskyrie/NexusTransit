@@ -684,4 +684,77 @@ export class ServiceOrdersController {
   ): Promise<PaginatedResponseDto<ServiceOrderResponseDto>> {
     return this.serviceOrdersService.getOrdersByCustomer(customerId, page, limit);
   }
+
+  @Get('metrics')
+  @ApiOperation({
+    summary: 'Obter métricas das ordens de serviço',
+    description: 'Retorna estatísticas consolidadas das ordens de serviço',
+  })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    type: String,
+    example: '2024-01-01',
+    description: 'Data de início do período (YYYY-MM-DD)',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    type: String,
+    example: '2024-12-31',
+    description: 'Data de fim do período (YYYY-MM-DD)',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Métricas das ordens de serviço',
+    schema: {
+      type: 'object',
+      properties: {
+        total_orders: { type: 'number', example: 150 },
+        by_status: {
+          type: 'object',
+          properties: {
+            PENDING: { type: 'number', example: 10 },
+            APPROVED: { type: 'number', example: 5 },
+            SCHEDULED: { type: 'number', example: 15 },
+            IN_PROGRESS: { type: 'number', example: 20 },
+            COMPLETED: { type: 'number', example: 90 },
+            CANCELLED: { type: 'number', example: 10 },
+          },
+        },
+        by_priority: {
+          type: 'object',
+          properties: {
+            LOW: { type: 'number', example: 30 },
+            NORMAL: { type: 'number', example: 80 },
+            HIGH: { type: 'number', example: 30 },
+            URGENT: { type: 'number', example: 10 },
+          },
+        },
+        financial: {
+          type: 'object',
+          properties: {
+            total_estimated: { type: 'number', example: 50000.0 },
+            total_actual: { type: 'number', example: 48500.0 },
+            pending_payment: { type: 'number', example: 5000.0 },
+            paid: { type: 'number', example: 43500.0 },
+          },
+        },
+        performance: {
+          type: 'object',
+          properties: {
+            sla_compliance_rate: { type: 'number', example: 95.5 },
+            average_completion_time_hours: { type: 'number', example: 36.2 },
+            cancellation_rate: { type: 'number', example: 6.7 },
+          },
+        },
+      },
+    },
+  })
+  async getMetrics(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ): Promise<Record<string, unknown>> {
+    return this.serviceOrdersService.getMetrics(startDate, endDate);
+  }
 }
