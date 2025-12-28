@@ -111,7 +111,7 @@ export class AuditDashboardService {
       eventsTrend,
       avgResponseTime,
       errorRate: Math.round(errorRate * 100) / 100,
-      period: filterDto.period || DashboardPeriod.WEEK,
+      period: filterDto.period ?? DashboardPeriod.WEEK,
       periodStart: startDate,
       periodEnd: endDate,
     };
@@ -187,7 +187,9 @@ export class AuditDashboardService {
         endDate,
       })
       .andWhere('log.userId IS NOT NULL')
-      .groupBy('log.userId, log.userEmail, log.userRole')
+      .groupBy('log.userId')
+      .addGroupBy('log.userEmail')
+      .addGroupBy('log.userRole')
       .orderBy('totalActions', 'DESC')
       .limit(AUDIT_DASHBOARD.TOP_USERS_LIMIT);
 
@@ -195,7 +197,13 @@ export class AuditDashboardService {
       queryBuilder.andWhere('log.category = :category', { category });
     }
 
-    const results = await queryBuilder.getRawMany();
+    const results = await queryBuilder.getRawMany<{
+      userId: string;
+      userEmail: string;
+      userRole: string;
+      totalActions: string;
+      lastActivity: string;
+    }>();
 
     // Buscar breakdown de ações para cada usuário
     const usersWithBreakdown = await Promise.all(
@@ -227,9 +235,9 @@ export class AuditDashboardService {
       .createQueryBuilder('log')
       .select('log.resourceType', 'entityType')
       .addSelect('COUNT(*)', 'totalModifications')
-      .addSelect("SUM(CASE WHEN log.action = 'CREATE' THEN 1 ELSE 0 END)", 'creates')
-      .addSelect("SUM(CASE WHEN log.action = 'UPDATE' THEN 1 ELSE 0 END)", 'updates')
-      .addSelect("SUM(CASE WHEN log.action = 'DELETE' THEN 1 ELSE 0 END)", 'deletes')
+      .addSelect(`SUM(CASE WHEN log.action = '${AuditAction.CREATE}' THEN 1 ELSE 0 END)`, 'creates')
+      .addSelect(`SUM(CASE WHEN log.action = '${AuditAction.UPDATE}' THEN 1 ELSE 0 END)`, 'updates')
+      .addSelect(`SUM(CASE WHEN log.action = '${AuditAction.DELETE}' THEN 1 ELSE 0 END)`, 'deletes')
       .where('log.created_at BETWEEN :startDate AND :endDate', {
         startDate,
         endDate,
@@ -243,7 +251,13 @@ export class AuditDashboardService {
       queryBuilder.andWhere('log.category = :category', { category });
     }
 
-    const results = await queryBuilder.getRawMany();
+    const results = await queryBuilder.getRawMany<{
+      entityType: string;
+      totalModifications: string;
+      creates: string;
+      updates: string;
+      deletes: string;
+    }>();
 
     // Calcular período anterior para comparação
     const { previousStart, previousEnd } = this.getPreviousPeriod(startDate, endDate);
@@ -265,9 +279,9 @@ export class AuditDashboardService {
         return {
           entityType: entity.entityType,
           totalModifications: parseInt(entity.totalModifications, 10),
-          creates: parseInt(entity.creates, 10),
-          updates: parseInt(entity.updates, 10),
-          deletes: parseInt(entity.deletes, 10),
+          creates: parseInt(entity.creates ?? '0', 10),
+          updates: parseInt(entity.updates ?? '0', 10),
+          deletes: parseInt(entity.deletes ?? '0', 10),
           changePercent,
         };
       }),
@@ -298,10 +312,12 @@ export class AuditDashboardService {
     alerts.push(...multipleIps);
 
     // Ordenar por severidade e data
+    const severityOrder: Record<string, number> = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
     return alerts.sort((a, b) => {
-      const severityOrder = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
       const severityDiff = severityOrder[a.severity] - severityOrder[b.severity];
-      if (severityDiff !== 0) return severityDiff;
+      if (severityDiff !== 0) {
+        return severityDiff;
+      }
       return b.detectedAt.getTime() - a.detectedAt.getTime();
     });
   }
@@ -364,7 +380,9 @@ export class AuditDashboardService {
    * Calcula variação percentual
    */
   private calculatePercentChange(previous: number, current: number): number {
-    if (previous === 0) return current > 0 ? 100 : 0;
+    if (previous === 0) {
+      return current > 0 ? 100 : 0;
+    }
     const change = ((current - previous) / previous) * 100;
     return Math.round(change * 100) / 100;
   }
@@ -381,9 +399,9 @@ export class AuditDashboardService {
         endDate,
       })
       .andWhere('log.userId IS NOT NULL')
-      .getRawOne();
+      .getRawOne<{ count: string }>();
 
-    return parseInt(result?.count || '0', 10);
+    return parseInt(result?.count ?? '0', 10);
   }
 
   /**
@@ -408,15 +426,12 @@ export class AuditDashboardService {
       queryBuilder.andWhere('log.category = :category', { category });
     }
 
-    const results = await queryBuilder.getRawMany();
+    const results = await queryBuilder.getRawMany<{ action: string; count: string }>();
 
-    return results.reduce(
-      (acc, item) => {
-        acc[item.action] = parseInt(item.count, 10);
-        return acc;
-      },
-      {} as Record<string, number>,
-    );
+    return results.reduce<Record<string, number>>((acc, item) => {
+      acc[item.action] = parseInt(item.count, 10);
+      return acc;
+    }, {});
   }
 
   /**
@@ -435,15 +450,12 @@ export class AuditDashboardService {
         endDate,
       })
       .groupBy('log.category')
-      .getRawMany();
+      .getRawMany<{ category: string; count: string }>();
 
-    return results.reduce(
-      (acc, item) => {
-        acc[item.category] = parseInt(item.count, 10);
-        return acc;
-      },
-      {} as Record<string, number>,
-    );
+    return results.reduce<Record<string, number>>((acc, item) => {
+      acc[item.category] = parseInt(item.count, 10);
+      return acc;
+    }, {});
   }
 
   /**
@@ -452,11 +464,11 @@ export class AuditDashboardService {
   private async getEventsTrend(
     startDate: Date,
     endDate: Date,
-  ): Promise<Array<{ label: string; count: number }>> {
+  ): Promise<{ label: string; count: number }[]> {
     const hoursDiff = differenceInHours(endDate, startDate);
     const groupByHour = hoursDiff <= 48;
 
-    let results: Array<{ label: string; count: string }>;
+    let results: { label: string; count: string }[];
 
     if (groupByHour) {
       results = await this.auditLogRepository
@@ -469,7 +481,7 @@ export class AuditDashboardService {
         })
         .groupBy("TO_CHAR(log.created_at, 'YYYY-MM-DD HH24:00')")
         .orderBy('label', 'ASC')
-        .getRawMany();
+        .getRawMany<{ label: string; count: string }>();
     } else {
       results = await this.auditLogRepository
         .createQueryBuilder('log')
@@ -481,7 +493,7 @@ export class AuditDashboardService {
         })
         .groupBy('DATE(log.created_at)')
         .orderBy('label', 'ASC')
-        .getRawMany();
+        .getRawMany<{ label: string; count: string }>();
     }
 
     return results.map(r => ({
@@ -502,9 +514,9 @@ export class AuditDashboardService {
         endDate,
       })
       .andWhere('log.executionTimeMs IS NOT NULL')
-      .getRawOne();
+      .getRawOne<{ avg: string | null }>();
 
-    return Math.round((parseFloat(result?.avg || '0') * 100) / 100);
+    return Math.round(parseFloat(result?.avg ?? '0') * 100) / 100;
   }
 
   /**
@@ -537,15 +549,12 @@ export class AuditDashboardService {
         endDate,
       })
       .groupBy('log.action')
-      .getRawMany();
+      .getRawMany<{ action: string; count: string }>();
 
-    return results.reduce(
-      (acc, item) => {
-        acc[item.action] = parseInt(item.count, 10);
-        return acc;
-      },
-      {} as Record<string, number>,
-    );
+    return results.reduce<Record<string, number>>((acc, item) => {
+      acc[item.action] = parseInt(item.count, 10);
+      return acc;
+    }, {});
   }
 
   /**
@@ -555,9 +564,11 @@ export class AuditDashboardService {
     oldValues: Record<string, unknown> | null,
     newValues: Record<string, unknown> | null,
   ): string[] {
-    if (!oldValues && !newValues) return [];
+    if (!oldValues && !newValues) {
+      return [];
+    }
 
-    const allKeys = new Set([...Object.keys(oldValues || {}), ...Object.keys(newValues || {})]);
+    const allKeys = new Set([...Object.keys(oldValues ?? {}), ...Object.keys(newValues ?? {})]);
 
     const changedFields: string[] = [];
 
@@ -591,20 +602,27 @@ export class AuditDashboardService {
       .addSelect('COUNT(*)', 'failureCount')
       .where('log.action = :action', { action: AuditAction.FAILED_LOGIN })
       .andWhere('log.created_at >= :windowStart', { windowStart })
-      .groupBy('log.userId, log.userEmail, log.ipAddress')
+      .groupBy('log.userId')
+      .addGroupBy('log.userEmail')
+      .addGroupBy('log.ipAddress')
       .having('COUNT(*) >= :threshold', {
         threshold: AUDIT_ALERT_THRESHOLDS.LOGIN_FAILURES_THRESHOLD,
       })
-      .getRawMany();
+      .getRawMany<{
+        userId: string | null;
+        userEmail: string | null;
+        ipAddress: string | null;
+        failureCount: string;
+      }>();
 
     return results.map((r, index) => ({
       id: `login-failure-${index}-${Date.now()}`,
       type: 'MULTIPLE_LOGIN_FAILURES',
       severity: 'HIGH' as const,
-      message: `Múltiplas falhas de login detectadas: ${r.userEmail || r.userId || 'IP ' + r.ipAddress}`,
-      userId: r.userId,
-      userEmail: r.userEmail,
-      ipAddress: r.ipAddress,
+      message: `Múltiplas falhas de login detectadas: ${r.userEmail ?? r.userId ?? `IP ${r.ipAddress}`}`,
+      userId: r.userId ?? undefined,
+      userEmail: r.userEmail ?? undefined,
+      ipAddress: r.ipAddress ?? undefined,
       detectedAt: now,
       details: {
         failureCount: parseInt(r.failureCount, 10),
@@ -627,19 +645,26 @@ export class AuditDashboardService {
       .addSelect('COUNT(*)', 'deleteCount')
       .where('log.action = :action', { action: AuditAction.DELETE })
       .andWhere('log.created_at >= :windowStart', { windowStart })
-      .groupBy('log.userId, log.userEmail, log.resourceType')
+      .groupBy('log.userId')
+      .addGroupBy('log.userEmail')
+      .addGroupBy('log.resourceType')
       .having('COUNT(*) >= :threshold', {
         threshold: AUDIT_ALERT_THRESHOLDS.BULK_DELETE_THRESHOLD,
       })
-      .getRawMany();
+      .getRawMany<{
+        userId: string | null;
+        userEmail: string | null;
+        resourceType: string;
+        deleteCount: string;
+      }>();
 
     return results.map((r, index) => ({
       id: `bulk-delete-${index}-${Date.now()}`,
       type: 'BULK_DELETE',
       severity: 'CRITICAL' as const,
-      message: `Exclusão em massa detectada: ${r.deleteCount} ${r.resourceType} por ${r.userEmail || r.userId}`,
-      userId: r.userId,
-      userEmail: r.userEmail,
+      message: `Exclusão em massa detectada: ${r.deleteCount} ${r.resourceType} por ${r.userEmail ?? r.userId}`,
+      userId: r.userId ?? undefined,
+      userEmail: r.userEmail ?? undefined,
       detectedAt: now,
       details: {
         deleteCount: parseInt(r.deleteCount, 10),
@@ -662,19 +687,24 @@ export class AuditDashboardService {
       .addSelect('COUNT(*)', 'activityCount')
       .where('log.created_at >= :windowStart', { windowStart })
       .andWhere('log.userId IS NOT NULL')
-      .groupBy('log.userId, log.userEmail')
+      .groupBy('log.userId')
+      .addGroupBy('log.userEmail')
       .having('COUNT(*) >= :threshold', {
         threshold: AUDIT_ALERT_THRESHOLDS.HIGH_ACTIVITY_PER_MINUTE,
       })
-      .getRawMany();
+      .getRawMany<{
+        userId: string;
+        userEmail: string | null;
+        activityCount: string;
+      }>();
 
     return results.map((r, index) => ({
       id: `high-activity-${index}-${Date.now()}`,
       type: 'HIGH_ACTIVITY',
       severity: 'MEDIUM' as const,
-      message: `Atividade muito alta: ${r.activityCount} ações/minuto por ${r.userEmail || r.userId}`,
+      message: `Atividade muito alta: ${r.activityCount} ações/minuto por ${r.userEmail ?? r.userId}`,
       userId: r.userId,
-      userEmail: r.userEmail,
+      userEmail: r.userEmail ?? undefined,
       detectedAt: now,
       details: {
         activityCount: parseInt(r.activityCount, 10),
@@ -699,19 +729,24 @@ export class AuditDashboardService {
       .where('log.created_at >= :windowStart', { windowStart })
       .andWhere('log.userId IS NOT NULL')
       .andWhere('log.ipAddress IS NOT NULL')
-      .groupBy('log.userId, log.userEmail')
+      .groupBy('log.userId')
+      .addGroupBy('log.userEmail')
       .having('COUNT(DISTINCT log.ipAddress) >= :threshold', {
         threshold: AUDIT_ALERT_THRESHOLDS.DIFFERENT_IPS_THRESHOLD,
       })
-      .getRawMany();
+      .getRawMany<{
+        userId: string;
+        userEmail: string | null;
+        ipCount: string;
+      }>();
 
     return results.map((r, index) => ({
       id: `multiple-ips-${index}-${Date.now()}`,
       type: 'MULTIPLE_IPS',
       severity: 'MEDIUM' as const,
-      message: `Acesso de ${r.ipCount} IPs diferentes: ${r.userEmail || r.userId}`,
+      message: `Acesso de ${r.ipCount} IPs diferentes: ${r.userEmail ?? r.userId}`,
       userId: r.userId,
-      userEmail: r.userEmail,
+      userEmail: r.userEmail ?? undefined,
       detectedAt: now,
       details: {
         ipCount: parseInt(r.ipCount, 10),
