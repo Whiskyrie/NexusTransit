@@ -8,6 +8,7 @@ import {
   UseGuards,
   Res,
   StreamableFile,
+  Req,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -33,12 +34,23 @@ import {
 } from '@nexus/audit';
 import { PaginatedResponseDto } from '@nexus/common';
 import { JwtAuthGuard } from '@nexus/auth';
-import type { Response } from 'express';
+import type { Response, Request } from 'express';
+import { AuditAccessGuard } from './guards/audit-access.guard';
+import { AuditOwnerGuard, getAuditFilter } from './guards/audit-owner.guard';
+import { RequireAuditPermission } from './decorators/audit-access.decorator';
+import { AuditPermission } from './enums/audit-permission.enum';
 
+/**
+ * Controller principal de Auditoria
+ *
+ * Fornece endpoints REST para consulta de logs de auditoria.
+ * Aplica filtro de owner automaticamente para usuários sem permissão VIEW_ALL_LOGS.
+ */
 @ApiTags('Audit')
 @Controller('audit')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, AuditAccessGuard, AuditOwnerGuard)
+@RequireAuditPermission(AuditPermission.VIEW_LOGS)
 export class AuditController {
   constructor(
     private readonly auditService: AuditService,
@@ -115,8 +127,17 @@ export class AuditController {
   })
   async findAll(
     @Query() filterDto: AuditFilterDto,
+    @Req() request: Request,
   ): Promise<PaginatedResponseDto<AuditResponseDto>> {
-    return this.auditService.findAll(filterDto);
+    // Aplicar filtro de owner se necessário
+    const auditFilter = getAuditFilter(request);
+    const finalFilter = { ...filterDto };
+
+    if (auditFilter.restrictToOwner && auditFilter.userId) {
+      finalFilter.userId = auditFilter.userId;
+    }
+
+    return this.auditService.findAll(finalFilter);
   }
 
   @Get('logs/:id')

@@ -10,6 +10,12 @@ import {
 import { JwtAuthGuard } from '@nexus/auth';
 import { AuditDashboardService } from '../services/audit-dashboard.service';
 import { AuditRequestInterceptor } from '../interceptors/audit-request.interceptor';
+import { AuditAccessGuard } from '../guards/audit-access.guard';
+import {
+  CanViewSecurityAlerts,
+  RequireAuditPermission,
+} from '../decorators/audit-access.decorator';
+import { AuditPermission } from '../enums/audit-permission.enum';
 import {
   AuditDashboardFilterDto,
   AuditTimelineFilterDto,
@@ -26,12 +32,15 @@ import {
  *
  * Fornece endpoints para visualização de estatísticas,
  * análises e alertas de segurança dos logs de auditoria.
+ *
+ * Requer permissão VIEW_DASHBOARD para acessar.
  */
 @ApiTags('Audit Dashboard')
 @Controller('audit/dashboard')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, AuditAccessGuard)
 @UseInterceptors(AuditRequestInterceptor)
+@RequireAuditPermission(AuditPermission.VIEW_DASHBOARD)
 export class AuditDashboardController {
   constructor(private readonly dashboardService: AuditDashboardService) {}
 
@@ -152,6 +161,7 @@ Inclui para cada tipo:
   }
 
   @Get('alerts')
+  @CanViewSecurityAlerts()
   @ApiOperation({
     summary: 'Alertas de segurança',
     description: `
@@ -162,6 +172,8 @@ Retorna alertas de segurança detectados automaticamente:
 - **MULTIPLE_IPS**: Acesso do mesmo usuário de múltiplos IPs
 
 Alertas são ordenados por severidade (CRITICAL > HIGH > MEDIUM > LOW) e data.
+
+**Requer permissão:** VIEW_SECURITY_ALERTS
     `,
   })
   @ApiResponse({
