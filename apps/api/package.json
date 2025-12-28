@@ -85,6 +85,7 @@
     "csv-writer": "^1.6.0",
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.2",
+    "exceljs": "^4.4.0",
     "geolib": "^3.3.4",
     "keyv": "^5.5.1",
     "multer": "^2.0.2",
