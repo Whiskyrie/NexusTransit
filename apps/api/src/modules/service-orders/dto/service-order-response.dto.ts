@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
 import { OrderStatus } from '../enums/service_order-status';
 import { OrderPriority } from '../enums/service_order-priority';
+import { OrderType } from '../enums/order-type.enum';
 
 /**
  * DTO de resposta para ordem de serviço
@@ -32,6 +33,13 @@ export class ServiceOrderResponseDto {
     example: OrderPriority.NORMAL,
   })
   priority!: OrderPriority;
+
+  @ApiPropertyOptional({
+    description: 'Tipo da ordem',
+    enum: OrderType,
+    example: OrderType.PICKUP_DELIVERY,
+  })
+  order_type?: OrderType;
 
   @ApiProperty({
     description: 'Tipo de serviço',
