@@ -57,11 +57,11 @@ export class AuditRequestInterceptor implements NestInterceptor {
       tap({
         next: () => {
           const executionTime = Date.now() - startTime;
-          this.logAccess(request, user, actionInfo, executionTime, true);
+          void this.logAccess(request, user, actionInfo, executionTime, true);
         },
         error: (error: Error) => {
           const executionTime = Date.now() - startTime;
-          this.logAccess(request, user, actionInfo, executionTime, false, error.message);
+          void this.logAccess(request, user, actionInfo, executionTime, false, error.message);
         },
       }),
     );
@@ -119,7 +119,7 @@ export class AuditRequestInterceptor implements NestInterceptor {
         resourceType: META_AUDIT_CONFIG.RESOURCE_TYPE,
         description: `${actionInfo.description}${!success ? ' - FALHA' : ''}`,
         ipAddress: this.getClientIp(request),
-        userAgent: request.headers['user-agent'] || undefined,
+        userAgent: request.headers['user-agent'] ?? undefined,
         metadata: {
           ...metadata,
           executionTimeMs: executionTime,
