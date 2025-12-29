@@ -1,5 +1,5 @@
 import { SetMetadata } from "@nestjs/common";
-import type { Role } from "../enums/role.enum";
+import type { Role } from "@nexus/auth";
 
 /**
  * Decorator para definir roles permitidas em um endpoint

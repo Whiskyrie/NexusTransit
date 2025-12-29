@@ -8,9 +8,9 @@ import {
 } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import type { Request, Response } from "express";
+import { Role } from "@nexus/auth";
 import { RATE_LIMIT_KEY } from "../decorators/rate-limit.decorator";
 import { RateLimitType } from "../enums/rate-limit-type.enum";
-import { RoleLimits } from "../enums/role-limits.enum";
 import { RateLimitService } from "../services/rate-limit.service";
 import { BlacklistService } from "../services/blacklist.service";
 import type { RateLimitConfig, RateLimitResult } from "../interfaces/rate-limit.interface";
@@ -27,7 +27,52 @@ interface RateLimitContext {
   ip: string;
   endpoint: string;
   userId?: string;
-  userRole?: string;
+  userRole?: Role | "guest";
+}
+
+const ROLE_LIMITS_GUEST = 20;
+
+const ROLE_LIMITS_BY_ROLE: Record<Role, number> = {
+  [Role.SUPER_ADMIN]: 1000,
+  [Role.ADMIN]: 1000,
+  [Role.MANAGER]: 800,
+  [Role.GESTOR]: 800,
+  [Role.OPERATOR]: 600,
+  [Role.DESPACHANTE]: 600,
+  [Role.DRIVER]: 400,
+  [Role.MOTORISTA]: 400,
+  [Role.CUSTOMER]: 100,
+  [Role.CLIENTE]: 100,
+};
+
+function normalizeRole(role?: string): Role | "guest" {
+  if (!role) return "guest";
+  const normalized = role.trim().toLowerCase();
+
+  switch (normalized) {
+    case "super_admin":
+      return Role.SUPER_ADMIN;
+    case "admin":
+      return Role.ADMIN;
+    case "manager":
+      return Role.MANAGER;
+    case "gestor":
+      return Role.GESTOR;
+    case "operator":
+      return Role.OPERATOR;
+    case "despachante":
+      return Role.DESPACHANTE;
+    case "driver":
+      return Role.DRIVER;
+    case "motorista":
+      return Role.MOTORISTA;
+    case "customer":
+      return Role.CUSTOMER;
+    case "cliente":
+      return Role.CLIENTE;
+    default:
+      return "guest";
+  }
 }
 
 /**
@@ -65,6 +110,7 @@ export class RateLimitGuard implements CanActivate {
     const clientIp = this.getClientIp(request);
     const userId = request.user?.id;
     const userRole = request.user?.role;
+    const normalizedRole = normalizeRole(userRole);
 
     try {
       // Check if IP is whitelisted (bypass all checks)
@@ -117,8 +163,8 @@ export class RateLimitGuard implements CanActivate {
       if (userId) {
         rateLimitContext.userId = userId;
       }
-      if (userRole) {
-        rateLimitContext.userRole = userRole;
+      if (normalizedRole) {
+        rateLimitContext.userRole = normalizedRole;
       }
 
       const result = await this.checkRateLimit(rateLimitConfig, rateLimitContext);
@@ -131,7 +177,7 @@ export class RateLimitGuard implements CanActivate {
         this.logger.warn(`Rate limit exceeded for ${rateLimitConfig.type}`, {
           ip: clientIp,
           userId,
-          userRole,
+          userRole: normalizedRole,
           endpoint,
           limit: result.limit,
           current: result.current,
@@ -193,44 +239,19 @@ export class RateLimitGuard implements CanActivate {
     config: RateLimitConfig,
     context: RateLimitContext,
   ): Promise<RateLimitResult> {
-    const role = context.userRole?.toUpperCase();
+    const role = context.userRole ?? "guest";
     let limit: number;
     const windowMs = config.windowMs ?? 60000;
 
     // Use role overrides if provided
-    if (config.roleOverrides && role && config.roleOverrides[role]) {
+    if (config.roleOverrides && config.roleOverrides[role]) {
       limit = config.roleOverrides[role].limit;
     } else {
-      // Use default role limits
-      switch (role) {
-        case "ADMIN":
-          limit = RoleLimits.ADMIN;
-          break;
-        case "GESTOR":
-          limit = RoleLimits.GESTOR;
-          break;
-        case "DESPACHANTE":
-          limit = RoleLimits.DESPACHANTE;
-          break;
-        case "MOTORISTA":
-          limit = RoleLimits.MOTORISTA;
-          break;
-        case "CLIENTE":
-          limit = RoleLimits.CLIENTE;
-          break;
-        // Manter compatibilidade com nomes antigos
-        case "DRIVER":
-          limit = RoleLimits.MOTORISTA;
-          break;
-        case "CUSTOMER":
-          limit = RoleLimits.CLIENTE;
-          break;
-        default:
-          limit = RoleLimits.GUEST;
-      }
+      const isGuest = role === "guest";
+      limit = isGuest ? ROLE_LIMITS_GUEST : (ROLE_LIMITS_BY_ROLE[role] ?? ROLE_LIMITS_GUEST);
     }
 
-    const key = `rate_limit:role:${role ?? "GUEST"}:${context.userId ?? context.ip}:${context.endpoint}`;
+    const key = `rate_limit:role:${role}:${context.userId ?? context.ip}:${context.endpoint}`;
     return this.rateLimitService.checkLimit(key, limit, windowMs);
   }
 
