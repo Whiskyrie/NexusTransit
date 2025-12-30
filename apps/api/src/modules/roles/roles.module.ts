@@ -31,6 +31,7 @@ import { RoleSubscriber } from './subscribers/role.subscriber';
     RoleCacheService,
 
     // Guards
+    PermissionsGuard,
     {
       provide: APP_GUARD,
       useClass: PermissionsGuard,
