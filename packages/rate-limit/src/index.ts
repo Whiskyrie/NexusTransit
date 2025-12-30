@@ -25,8 +25,6 @@ export * from "./entities/quota-usage.entity";
 
 // Enums
 export * from "./enums/rate-limit-type.enum";
-export * from "./enums/role.enum";
-export * from "./enums/role-limits.enum";
 
 // Interfaces
 export * from "./interfaces/rate-limit.interface";

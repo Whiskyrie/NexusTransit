@@ -1,6 +1,6 @@
 import { SetMetadata } from "@nestjs/common";
 import { RateLimitType } from "../enums/rate-limit-type.enum";
-import type { RoleLimits } from "../enums/role-limits.enum";
+import { Role } from "@nexus/auth";
 
 export const RATE_LIMIT_KEY = "rate-limit";
 
@@ -28,7 +28,7 @@ export const SkipRateLimit = (): MethodDecorator => {
  * Apply rate limiting based on user role
  */
 export const RateLimitByRole = (
-  roleOverrides?: Partial<Record<RoleLimits, { limit: number; windowMs?: number }>>,
+  roleOverrides?: Partial<Record<Role | "guest", { limit: number; windowMs?: number }>>,
 ): MethodDecorator => {
   return SetMetadata(RATE_LIMIT_KEY, {
     type: RateLimitType.BY_ROLE,
