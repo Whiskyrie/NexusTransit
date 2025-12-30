@@ -1,7 +1,6 @@
 import {
   IsString,
   IsOptional,
-  IsEnum,
   IsArray,
   IsBoolean,
   IsNumber,
@@ -10,7 +9,6 @@ import {
   Max,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { RoleType } from '../enums/role-type.enum';
 
 /**
  * DTO para criação de role (papel/função)
@@ -18,16 +16,25 @@ import { RoleType } from '../enums/role-type.enum';
 export class CreateRoleDto {
   @ApiProperty({
     description: 'Nome único do role',
-    example: 'Administrador de Entregas',
+    example: 'admin',
+    maxLength: 50,
+  })
+  @IsString()
+  @MaxLength(50)
+  name!: string;
+
+  @ApiProperty({
+    description: 'Nome de exibição do role',
+    example: 'Administrador',
     maxLength: 100,
   })
   @IsString()
   @MaxLength(100)
-  name!: string;
+  display_name!: string;
 
   @ApiPropertyOptional({
     description: 'Descrição detalhada do role',
-    example: 'Gerencia e supervisiona todas as operações de entrega',
+    example: 'Administrador com acesso total ao sistema',
     maxLength: 255,
   })
   @IsOptional()
@@ -35,17 +42,21 @@ export class CreateRoleDto {
   @MaxLength(255)
   description?: string;
 
-  @ApiProperty({
-    description: 'Tipo do role',
-    enum: RoleType,
-    example: RoleType.ADMIN,
+  @ApiPropertyOptional({
+    description: 'Nível hierárquico do role (0 = mais alto)',
+    example: 1,
+    minimum: 0,
+    maximum: 10,
   })
-  @IsEnum(RoleType)
-  type!: RoleType;
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(10)
+  hierarchy_level?: number;
 
   @ApiPropertyOptional({
     description: 'Lista de permissões associadas ao role',
-    example: ['deliveries.create', 'deliveries.update', 'deliveries.view'],
+    example: ['users:read', 'users:write', 'roles:read'],
     isArray: true,
     type: [String],
   })
@@ -55,18 +66,6 @@ export class CreateRoleDto {
   permissions?: string[];
 
   @ApiPropertyOptional({
-    description: 'Nível hierárquico do role (menor = maior autoridade)',
-    example: 1,
-    minimum: 0,
-    maximum: 100,
-  })
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  @Max(100)
-  hierarchy_level?: number;
-
-  @ApiPropertyOptional({
     description: 'Indica se o role está ativo',
     example: true,
     default: true,
@@ -74,11 +73,4 @@ export class CreateRoleDto {
   @IsOptional()
   @IsBoolean()
   is_active?: boolean;
-
-  @ApiPropertyOptional({
-    description: 'Configurações adicionais do role',
-    example: { max_deliveries_per_day: 50, can_approve_exceptions: true },
-  })
-  @IsOptional()
-  settings?: Record<string, unknown>;
 }

@@ -12,6 +12,15 @@ import { type MigrationInterface, type QueryRunner, TableColumn, TableForeignKey
  * - Campos de SLA e prazos
  * - Novos enums (order_type, payment_status, payment_method)
  */
+
+interface ExistsQueryResult {
+  exists: boolean;
+}
+
+interface CountQueryResult {
+  count: string | number;
+}
+
 export class AddServiceOrdersExtendedFields1735246800000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Criar novos enums (com IF NOT EXISTS para suportar re-execução)
@@ -56,12 +65,12 @@ export class AddServiceOrdersExtendedFields1735246800000 implements MigrationInt
 
     // Helper para verificar se coluna existe
     const columnExists = async (table: string, column: string): Promise<boolean> => {
-      const result = await queryRunner.query(`
+      const result = (await queryRunner.query(`
         SELECT EXISTS (
           SELECT 1 FROM information_schema.columns 
           WHERE table_name = '${table}' AND column_name = '${column}'
         ) as exists
-      `);
+      `)) as ExistsQueryResult[];
       return result[0].exists;
     };
 
@@ -92,9 +101,9 @@ export class AddServiceOrdersExtendedFields1735246800000 implements MigrationInt
 
     // Agora tornar a coluna NOT NULL (só funcionará se todos os registros tiverem customer_id)
     // Se ainda houver registros sem customer_id, mantemos nullable
-    const hasNullCustomerId = await queryRunner.query(`
+    const hasNullCustomerId = (await queryRunner.query(`
       SELECT COUNT(*) as count FROM service_orders WHERE customer_id IS NULL
-    `);
+    `)) as CountQueryResult[];
 
     if (hasNullCustomerId[0].count === '0' || hasNullCustomerId[0].count === 0) {
       await queryRunner.query(`
@@ -330,12 +339,12 @@ export class AddServiceOrdersExtendedFields1735246800000 implements MigrationInt
 
     // Criar foreign keys (verificando se já existem)
     const fkExists = async (constraintName: string): Promise<boolean> => {
-      const result = await queryRunner.query(`
+      const result = (await queryRunner.query(`
         SELECT EXISTS (
           SELECT 1 FROM information_schema.table_constraints 
           WHERE constraint_name = '${constraintName}'
         ) as exists
-      `);
+      `)) as ExistsQueryResult[];
       return result[0].exists;
     };
 

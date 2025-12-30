@@ -1,4 +1,5 @@
 import type { RateLimitType } from "../enums/rate-limit-type.enum";
+import type { Role } from "@nexus/auth";
 
 /**
  * Configurações para rate limiting
@@ -26,7 +27,7 @@ export interface RateLimitConfig {
   skip?: boolean;
 
   /** Overrides para roles específicos */
-  roleOverrides?: Record<string, { limit: number; windowMs?: number }>;
+  roleOverrides?: Partial<Record<Role | "guest", { limit: number; windowMs?: number }>>;
 }
 
 /**

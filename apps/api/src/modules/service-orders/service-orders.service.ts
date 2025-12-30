@@ -1035,6 +1035,7 @@ export class ServiceOrdersService {
     const totalOrders = await queryBuilder.getCount();
 
     // Contagem por status
+    // Tipagem adicionada: <{ status: string; count: string }>
     const statusCounts = await this.serviceOrderRepository
       .createQueryBuilder('so')
       .select('so.status', 'status')
@@ -1046,14 +1047,16 @@ export class ServiceOrdersService {
         endDate: endDate ? new Date(endDate) : undefined,
       })
       .groupBy('so.status')
-      .getRawMany();
+      .getRawMany<{ status: string; count: string }>();
 
     const byStatus: Record<string, number> = {};
     for (const row of statusCounts) {
-      byStatus[row.status as string] = parseInt(row.count as string, 10);
+      // row.status e row.count agora são reconhecidos como string
+      byStatus[row.status] = parseInt(row.count, 10);
     }
 
     // Contagem por prioridade
+    // Tipagem adicionada: <{ priority: string; count: string }>
     const priorityCounts = await this.serviceOrderRepository
       .createQueryBuilder('so')
       .select('so.priority', 'priority')
@@ -1065,14 +1068,16 @@ export class ServiceOrdersService {
         endDate: endDate ? new Date(endDate) : undefined,
       })
       .groupBy('so.priority')
-      .getRawMany();
+      .getRawMany<{ priority: string; count: string }>();
 
     const byPriority: Record<string, number> = {};
     for (const row of priorityCounts) {
-      byPriority[row.priority as string] = parseInt(row.count as string, 10);
+      // row.priority e row.count agora são reconhecidos como string
+      byPriority[row.priority] = parseInt(row.count, 10);
     }
 
     // Métricas financeiras
+    // Tipagem adicionada para o objeto de retorno
     const financialMetrics = await this.serviceOrderRepository
       .createQueryBuilder('so')
       .select('SUM(so.estimated_cost)', 'total_estimated')
@@ -1091,7 +1096,12 @@ export class ServiceOrdersService {
       .andWhere(endDate ? 'so.created_at <= :endDate' : '1=1', {
         endDate: endDate ? new Date(endDate) : undefined,
       })
-      .getRawOne();
+      .getRawOne<{
+        total_estimated: string;
+        total_actual: string;
+        pending_payment: string;
+        paid: string;
+      }>();
 
     const financial = {
       total_estimated: parseFloat(String(financialMetrics?.total_estimated ?? '0')),
@@ -1108,6 +1118,7 @@ export class ServiceOrdersService {
     const cancellationRate = totalOrders > 0 ? (cancelledOrders / totalOrders) * 100 : 0;
 
     // Tempo médio de conclusão (ordens entregues)
+    // Tipagem adicionada: <{ avg_hours: string }>
     const avgCompletionTime = await this.serviceOrderRepository
       .createQueryBuilder('so')
       .select('AVG(EXTRACT(EPOCH FROM (so.updated_at - so.created_at)) / 3600)', 'avg_hours')
@@ -1118,9 +1129,10 @@ export class ServiceOrdersService {
       .andWhere(endDate ? 'so.created_at <= :endDate' : '1=1', {
         endDate: endDate ? new Date(endDate) : undefined,
       })
-      .getRawOne();
+      .getRawOne<{ avg_hours: string }>();
 
     // Taxa de cumprimento de SLA (ordens entregues dentro do prazo)
+    // Tipagem adicionada: <{ on_time: string }>
     const slaCompliance = await this.serviceOrderRepository
       .createQueryBuilder('so')
       .select('COUNT(*)', 'on_time')
@@ -1133,8 +1145,9 @@ export class ServiceOrdersService {
       .andWhere(endDate ? 'so.created_at <= :endDate' : '1=1', {
         endDate: endDate ? new Date(endDate) : undefined,
       })
-      .getRawOne();
+      .getRawOne<{ on_time: string }>();
 
+    // Tipagem adicionada: <{ total: string }>
     const ordersWithDeadline = await this.serviceOrderRepository
       .createQueryBuilder('so')
       .select('COUNT(*)', 'total')
@@ -1146,16 +1159,16 @@ export class ServiceOrdersService {
       .andWhere(endDate ? 'so.created_at <= :endDate' : '1=1', {
         endDate: endDate ? new Date(endDate) : undefined,
       })
-      .getRawOne();
+      .getRawOne<{ total: string }>();
 
-    const onTimeCount = parseInt(String(slaCompliance?.on_time ?? '0'), 10);
-    const totalWithDeadline = parseInt(String(ordersWithDeadline?.total ?? '0'), 10);
+    const onTimeCount = parseInt(slaCompliance?.on_time ?? '0', 10);
+    const totalWithDeadline = parseInt(ordersWithDeadline?.total ?? '0', 10);
     const slaComplianceRate = totalWithDeadline > 0 ? (onTimeCount / totalWithDeadline) * 100 : 100;
 
     const performance = {
       sla_compliance_rate: Math.round(slaComplianceRate * 100) / 100,
       average_completion_time_hours:
-        Math.round(parseFloat(String(avgCompletionTime?.avg_hours ?? '0')) * 100) / 100,
+        Math.round(parseFloat(avgCompletionTime?.avg_hours ?? '0') * 100) / 100,
       cancellation_rate: Math.round(cancellationRate * 100) / 100,
     };
 

@@ -486,7 +486,7 @@ export class VehiclesService {
       // Upload file to storage
       const uploadResult = await this.storageService.uploadFile(
         file,
-        'vehicles/documents',
+        { fileType: 'documents' },
         vehicleId,
       );
 
