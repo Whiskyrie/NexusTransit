@@ -1,5 +1,6 @@
 import { Entity, Column, ManyToMany, JoinTable } from 'typeorm';
 import { BaseEntity } from '@nexus/common';
+import { Auditable } from '@nexus/audit';
 import { UserStatus } from '../enums/user-status.enum';
 import { UserType } from '../enums/user-type.enum';
 import { Role } from '../../auth/entities/role.entity';
@@ -12,8 +13,23 @@ import { Role } from '../../auth/entities/role.entity';
  * - Perfis diferenciados (admin, driver, customer, etc.)
  * - Timestamps automáticos
  * - Soft delete
+ * - Auditoria completa de mudanças
  */
 @Entity('users')
+@Auditable({
+  trackCreation: true,
+  trackUpdates: true,
+  trackDeletion: true,
+  excludeFields: [
+    'password_hash',
+    'reset_password_token',
+    'reset_password_expires',
+    'updated_at',
+    'created_at',
+  ],
+  trackOldValues: true,
+  entityDisplayName: 'Usuário',
+})
 export class User extends BaseEntity {
   @Column({
     type: 'varchar',
@@ -74,6 +90,13 @@ export class User extends BaseEntity {
     comment: 'Último login do usuário',
   })
   last_login_at?: Date;
+
+  @Column({
+    type: 'timestamp with time zone',
+    nullable: true,
+    comment: 'Última atividade registrada do usuário',
+  })
+  last_activity_at?: Date;
 
   @Column({
     type: 'jsonb',
