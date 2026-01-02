@@ -7,7 +7,7 @@ import {
 } from 'class-validator';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Not } from 'typeorm';
+import { Repository, Not, FindOperator } from 'typeorm';
 import { User } from '../entities/user.entity';
 
 /**
@@ -81,7 +81,7 @@ export class IsUniqueEmailConstraint implements ValidatorConstraintInterface {
  * @param validationOptions - Opções adicionais de validação
  *
  * @example
- * // Uso em DTO de criação
+ * ! Uso em DTO de criação
  * class CreateUserDto {
  *   @IsUniqueEmail()
  *   @IsEmail()
@@ -89,7 +89,7 @@ export class IsUniqueEmailConstraint implements ValidatorConstraintInterface {
  * }
  *
  * @example
- * // Uso com mensagem customizada
+ * ! Uso com mensagem customizada
  * class RegisterDto {
  *   @IsUniqueEmail({
  *     message: 'Este email já está cadastrado. Tente fazer login ou recuperar sua senha.'
@@ -137,7 +137,7 @@ export async function checkEmailUniqueness(
 ): Promise<boolean> {
   const normalizedEmail = email.trim().toLowerCase();
 
-  const where: { email: string; id?: ReturnType<typeof Not> } = {
+  const where: { email: string; id?: FindOperator<string> } = {
     email: normalizedEmail,
   };
 

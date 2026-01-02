@@ -56,18 +56,25 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Tokens do usuário foram invalidados');
     }
 
-    const user = await this.usersService.findOne(payload.sub);
+    const userDto = await this.usersService.findOne(payload.sub);
 
-    if (!user) {
+    if (!userDto) {
       throw new UnauthorizedException('Token inválido: usuário não encontrado');
     }
 
-    if (!user.is_active) {
+    if (!userDto.is_active) {
       throw new UnauthorizedException('Usuário inativo');
     }
 
-    if (!user.email_verified) {
+    if (!userDto.email_verified) {
       throw new UnauthorizedException('Email não verificado');
+    }
+
+    // Buscar entidade User completa para anexar ao request
+    const user = await this.usersService.findByEmail(userDto.email);
+
+    if (!user) {
+      throw new UnauthorizedException('Token inválido: usuário não encontrado');
     }
 
     // Retorna o usuário que será anexado ao request

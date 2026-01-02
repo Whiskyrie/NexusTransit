@@ -1,10 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-  ServiceUnavailableException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere, ILike } from 'typeorm';
 import { Address } from './entities/address.entity';
@@ -13,12 +7,10 @@ import { UpdateAddressDto } from './dto/update-address.dto';
 import { AddressFilterDto } from './dto/address-filter.dto';
 import { AddressResponseDto } from './dto/address-response.dto';
 import { PaginatedResponseDto } from '@nexus/common';
-import {
-  CepFallbackService,
-  GoogleMapsService,
-  DistanceMatrixResponse,
-  RouteResponse,
-} from '@nexus/geo-services';
+import { GoogleMapsService, DistanceMatrixResponse, RouteResponse } from '@nexus/geo-services';
+import { CepLookupService } from './services/cep-lookup.service';
+import { AddressValidationService } from './services/address-validation.service';
+import { GeocodingService } from './services/geocoding.service';
 
 /**
  * Serviço de gerenciamento de endereços
@@ -30,77 +22,66 @@ export class AddressService {
   constructor(
     @InjectRepository(Address)
     private readonly addressRepository: Repository<Address>,
-    private readonly cepFallbackService: CepFallbackService,
+    private readonly cepLookupService: CepLookupService,
+    private readonly addressValidationService: AddressValidationService,
+    private readonly geocodingService: GeocodingService,
     private readonly googleMapsService: GoogleMapsService,
   ) {}
 
   /**
-   * Busca endereço por CEP usando ViaCEP
+   * Busca endereço por CEP usando CepLookupService
    */
   async searchByCep(cep: string): Promise<AddressResponseDto> {
     this.logger.log(`Buscando endereço por CEP: ${cep}`);
 
+    const cepData = await this.cepLookupService.lookupCep(cep);
+
+    this.logger.log(
+      `Endereço encontrado para CEP ${cep}: ${cepData.street}, ${cepData.city}/${cepData.state}`,
+    );
+
+    // Criar objeto de resposta
+    const response: AddressResponseDto = {
+      id: '', // Não tem ID pois não está salvo no banco
+      cep: cepData.cep,
+      street: cepData.street,
+      neighborhood: cepData.neighborhood,
+      city: cepData.city,
+      state: cepData.state,
+      complement: '',
+      ibge_code: cepData.ibge_code,
+      ddd: cepData.ddd,
+      country: 'Brasil',
+      is_active: true,
+      created_at: new Date(),
+      updated_at: new Date(),
+    };
+
+    // Tentar obter coordenadas via GeocodingService
     try {
-      const viaCepData = await this.cepFallbackService.getAddressByZipCode(cep);
-
-      this.logger.log(
-        `Endereço encontrado para CEP ${cep}: ${viaCepData.street}, ${viaCepData.city}/${viaCepData.state}`,
-      );
-
-      // Criar objeto de resposta
-      const response: AddressResponseDto = {
-        id: '', // Não tem ID pois não está salvo no banco
-        cep: viaCepData.zipCode,
-        street: viaCepData.street,
-        neighborhood: viaCepData.neighborhood,
-        city: viaCepData.city,
-        state: viaCepData.state,
-        complement: viaCepData.complement,
-        ibge_code: viaCepData.ibgeCode,
-        ddd: viaCepData.ddd,
-        country: 'Brasil',
-        is_active: true,
-        created_at: new Date(),
-        updated_at: new Date(),
+      const geocodingRequest = {
+        street: cepData.street,
+        neighborhood: cepData.neighborhood,
+        city: cepData.city,
+        state: cepData.state,
+        country: 'BR',
+        postal_code: cepData.cep,
       };
 
-      // Tentar obter coordenadas via Google Maps
-      const fullAddress = `${viaCepData.street}, ${viaCepData.neighborhood}, ${viaCepData.city}, ${viaCepData.state}`;
-      try {
-        const geocoded = await this.googleMapsService.geocode(fullAddress);
-        if (geocoded?.results?.length && geocoded.results.length > 0) {
-          const result = geocoded.results[0];
-          response.latitude = result.geometry.location.lat;
-          response.longitude = result.geometry.location.lng;
-          response.formatted_address = result.formatted_address;
-          this.logger.log(
-            `Coordenadas obtidas para CEP ${cep}: ${response.latitude}, ${response.longitude}`,
-          );
-        }
-      } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-        this.logger.warn(`Falha ao geocodificar endereço para CEP ${cep}: ${errorMessage}`);
-      }
+      const geocoded = await this.geocodingService.geocode(geocodingRequest);
+      response.latitude = geocoded.latitude;
+      response.longitude = geocoded.longitude;
+      response.formatted_address = geocoded.formatted_address;
 
-      return response;
-    } catch (error: unknown) {
-      // Se for exceção específica do ViaCEP, repassa a exceção original
-      if (
-        error instanceof BadRequestException ||
-        error instanceof NotFoundException ||
-        error instanceof ServiceUnavailableException
-      ) {
-        this.logger.error(`Erro ao buscar CEP ${cep}: ${error.message}`);
-        throw error;
-      }
-
-      // Para outros erros, loga e retorna erro genérico
-      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-      this.logger.error(`Erro inesperado ao buscar CEP ${cep}: ${errorMessage}`);
-      throw new BadRequestException(
-        'Não foi possível consultar o CEP. Tente novamente mais tarde.',
+      this.logger.log(
+        `Coordenadas obtidas para CEP ${cep}: ${response.latitude}, ${response.longitude}`,
       );
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      this.logger.warn(`Falha ao geocodificar endereço para CEP ${cep}: ${errorMessage}`);
     }
+
+    return response;
   }
 
   /**
@@ -114,25 +95,20 @@ export class AddressService {
   }> {
     this.logger.log(`Geocodificando endereço: ${address}`);
 
-    try {
-      const response = await this.googleMapsService.geocode(address);
+    const geocoded = await this.geocodingService.geocode({
+      street: address,
+      neighborhood: '',
+      city: '',
+      state: '',
+      country: 'BR',
+    });
 
-      if (response.results && response.results.length > 0) {
-        const result = response.results[0];
-        return {
-          latitude: result.geometry.location.lat,
-          longitude: result.geometry.location.lng,
-          formatted_address: result.formatted_address,
-          place_id: result.place_id,
-        };
-      }
-
-      throw new BadRequestException('Endereço não encontrado');
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-      this.logger.error(`Erro ao geocodificar endereço: ${errorMessage}`);
-      throw new BadRequestException('Endereço não encontrado');
-    }
+    return {
+      latitude: geocoded.latitude,
+      longitude: geocoded.longitude,
+      formatted_address: geocoded.formatted_address,
+      place_id: '',
+    };
   }
 
   /**
@@ -179,32 +155,40 @@ export class AddressService {
   async create(createDto: CreateAddressDto): Promise<AddressResponseDto> {
     this.logger.log('Criando novo endereço');
 
-    // Se tem CEP mas faltam dados, buscar no ViaCEP
+    // Autocompletar dados com CEP se necessário
     if (createDto.cep && (!createDto.street || !createDto.city)) {
       try {
-        const viaCepData = await this.cepFallbackService.getAddressByZipCode(createDto.cep);
-        createDto.street = createDto.street || viaCepData.street;
-        createDto.neighborhood = createDto.neighborhood || viaCepData.neighborhood;
-        createDto.city = createDto.city || viaCepData.city;
-        createDto.state = createDto.state || viaCepData.state;
-        createDto.ibge_code = createDto.ibge_code ?? viaCepData.ibgeCode;
-        createDto.ddd = createDto.ddd ?? viaCepData.ddd;
+        const autocompleted = await this.addressValidationService.autocompleteFromCep(
+          createDto.cep,
+        );
+
+        createDto.street = createDto.street ?? autocompleted.street;
+        createDto.neighborhood = createDto.neighborhood ?? autocompleted.neighborhood;
+        createDto.city = createDto.city ?? autocompleted.city;
+        createDto.state = createDto.state ?? autocompleted.state;
+        createDto.ibge_code = createDto.ibge_code ?? autocompleted.ibge_code;
+        createDto.ddd = createDto.ddd ?? autocompleted.ddd;
       } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-        this.logger.warn(`Falha ao buscar CEP: ${errorMessage}`);
+        this.logger.warn(`Falha ao autocompletar com CEP: ${errorMessage}`);
       }
     }
 
-    // Se não tem coordenadas, tentar geocodificar
+    // Geocodificar se não tem coordenadas
     if (!createDto.latitude || !createDto.longitude) {
       try {
-        const fullAddress = `${createDto.street}, ${createDto.number ?? ''}, ${createDto.neighborhood}, ${createDto.city}, ${createDto.state}`;
-        const geocoded = await this.googleMapsService.geocode(fullAddress);
-        if (geocoded?.results?.length && geocoded.results.length > 0) {
-          const result = geocoded.results[0];
-          createDto.latitude = result.geometry.location.lat;
-          createDto.longitude = result.geometry.location.lng;
-        }
+        const geocoded = await this.geocodingService.geocode({
+          street: createDto.street,
+          number: createDto.number,
+          neighborhood: createDto.neighborhood,
+          city: createDto.city,
+          state: createDto.state,
+          country: createDto.country ?? 'BR',
+          postal_code: createDto.cep,
+        });
+
+        createDto.latitude = geocoded.latitude;
+        createDto.longitude = geocoded.longitude;
       } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
         this.logger.warn(`Falha ao geocodificar: ${errorMessage}`);
@@ -301,13 +285,18 @@ export class AddressService {
     // Se mudou o endereço, tentar geocodificar novamente
     if (updateDto.street || updateDto.number || updateDto.city || updateDto.state) {
       try {
-        const fullAddress = `${updateDto.street ?? address.street}, ${updateDto.number ?? address.number ?? ''}, ${updateDto.neighborhood ?? address.neighborhood}, ${updateDto.city ?? address.city}, ${updateDto.state ?? address.state}`;
-        const geocoded = await this.googleMapsService.geocode(fullAddress);
-        if (geocoded?.results?.length && geocoded.results.length > 0) {
-          const result = geocoded.results[0];
-          updateDto.latitude = result.geometry.location.lat;
-          updateDto.longitude = result.geometry.location.lng;
-        }
+        const geocoded = await this.geocodingService.geocode({
+          street: updateDto.street ?? address.street,
+          number: updateDto.number ?? address.number,
+          neighborhood: updateDto.neighborhood ?? address.neighborhood,
+          city: updateDto.city ?? address.city,
+          state: updateDto.state ?? address.state,
+          country: updateDto.country ?? address.country ?? 'BR',
+          postal_code: updateDto.cep ?? address.cep,
+        });
+
+        updateDto.latitude = geocoded.latitude;
+        updateDto.longitude = geocoded.longitude;
       } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
         this.logger.warn(`Falha ao geocodificar: ${errorMessage}`);
