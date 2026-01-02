@@ -15,21 +15,21 @@ interface AuthenticatedRequest extends Request {
  * Extrai o usuário do objeto request, que é populado pelo guard de autenticação
  *
  * @example
- * // Obter o usuário completo
+ * ! Obter o usuário completo
  * @Get('profile')
  * getProfile(@CurrentUser() user: User) {
  *   return user;
  * }
  *
  * @example
- * // Obter apenas o ID do usuário
+ * ! Obter apenas o ID do usuário
  * @Get('my-orders')
  * getMyOrders(@CurrentUser('id') userId: string) {
  *   return this.ordersService.findByUserId(userId);
  * }
  *
  * @example
- * // Obter apenas o email
+ * ! Obter apenas o email
  * @Post('change-password')
  * changePassword(@CurrentUser('email') email: string, @Body() dto: ChangePasswordDto) {
  *   return this.usersService.changePassword(email, dto);
@@ -45,6 +45,15 @@ export const CurrentUser = createParamDecorator(
     }
 
     // Se um campo específico foi solicitado, retornar apenas esse campo
-    return data ? user[data] : user;
+    if (data) {
+      const value = user[data];
+      // Retornar apenas valores primitivos (string, boolean, number) ou undefined
+      if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+        return value as string;
+      }
+      return undefined;
+    }
+
+    return user;
   },
 );
