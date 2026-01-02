@@ -31,8 +31,18 @@ import { AddressResponseDto } from './dto/address-response.dto';
 import { SearchCepDto } from './dto/search-cep.dto';
 import { GeocodeDto } from './dto/geocode.dto';
 import { CalculateDistanceDto } from './dto/calculate-distance.dto';
+import {
+  ValidateAddressDto,
+  ValidateAddressResponseDto,
+  ReverseGeocodeRequestDto,
+  ReverseGeocodeResponseDto,
+  GeocodeRequestDto,
+  GeocodeResponseDto,
+} from './dto';
 import { PaginatedResponseDto } from '@nexus/common';
 import type { DistanceMatrixResponse, RouteResponse } from '@nexus/geo-services';
+import { AddressValidationService } from './services/address-validation.service';
+import { GeocodingService } from './services/geocoding.service';
 
 /**
  * Controller de gerenciamento de endereços
@@ -41,7 +51,11 @@ import type { DistanceMatrixResponse, RouteResponse } from '@nexus/geo-services'
 @Controller('addresses')
 @ApiBearerAuth()
 export class AddressController {
-  constructor(private readonly addressService: AddressService) {}
+  constructor(
+    private readonly addressService: AddressService,
+    private readonly addressValidationService: AddressValidationService,
+    private readonly geocodingService: GeocodingService,
+  ) {}
 
   @Post('search-cep')
   @HttpCode(HttpStatus.OK)
@@ -79,17 +93,67 @@ export class AddressController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Endereço geocodificado com sucesso',
+    type: GeocodeResponseDto,
   })
   @ApiBadRequestResponse({
     description: 'Endereço inválido ou não encontrado',
   })
-  async geocode(@Body() geocodeDto: GeocodeDto): Promise<{
-    latitude: number;
-    longitude: number;
-    formatted_address: string;
-    place_id: string;
-  }> {
+  async geocode(@Body() geocodeDto: GeocodeRequestDto): Promise<GeocodeResponseDto> {
     return this.addressService.geocodeAddress(geocodeDto.address);
+  }
+
+  @Post('validate')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Validar endereço',
+    description:
+      'Valida se um endereço possui todos os campos necessários e se os dados são válidos',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Validação concluída',
+    type: ValidateAddressResponseDto,
+  })
+  validateAddress(@Body() address: ValidateAddressDto): ValidateAddressResponseDto {
+    const validation = this.addressValidationService.validateAddress({
+      street: address.street,
+      number: address.number,
+      neighborhood: address.neighborhood,
+      city: address.city,
+      state: address.state,
+      cep: address.cep,
+      latitude: address.latitude,
+      longitude: address.longitude,
+    });
+
+    return {
+      is_valid: validation.isValid,
+      errors: validation.errors ?? [],
+      warnings: validation.warnings,
+    };
+  }
+
+  @Post('reverse-geocode')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Reverse geocoding',
+    description: 'Converte coordenadas geográficas em endereço',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Endereço encontrado com sucesso',
+    type: ReverseGeocodeResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Coordenadas inválidas',
+  })
+  async reverseGeocode(
+    @Body() coords: ReverseGeocodeRequestDto,
+  ): Promise<ReverseGeocodeResponseDto> {
+    return this.geocodingService.reverseGeocode({
+      latitude: coords.latitude,
+      longitude: coords.longitude,
+    });
   }
 
   @Post('calculate-distance')
