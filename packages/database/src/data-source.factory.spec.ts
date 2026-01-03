@@ -1,4 +1,5 @@
 import { DataSource } from "typeorm";
+import { PostgresConnectionOptions } from "typeorm/driver/postgres/PostgresConnectionOptions";
 import { createDataSourceOptions, createDataSource } from "./data-source.factory";
 import { DatabaseConfigOptions } from "./interfaces/database-options.interface";
 
@@ -14,7 +15,7 @@ describe("DataSourceFactory", () => {
 
     describe("basic configuration", () => {
       it("should create options with minimal configuration", () => {
-        const options = createDataSourceOptions(minimalConfig);
+        const options = createDataSourceOptions(minimalConfig) as PostgresConnectionOptions;
 
         expect(options.type).toBe("postgres");
         expect(options.host).toBe("localhost");
@@ -30,7 +31,7 @@ describe("DataSourceFactory", () => {
           url: "postgresql://user:pass@host:5432/db",
         };
 
-        const options = createDataSourceOptions(config);
+        const options = createDataSourceOptions(config) as PostgresConnectionOptions;
 
         expect(options.url).toBe("postgresql://user:pass@host:5432/db");
       });
@@ -41,7 +42,7 @@ describe("DataSourceFactory", () => {
           schema: "custom_schema",
         };
 
-        const options = createDataSourceOptions(config);
+        const options = createDataSourceOptions(config) as PostgresConnectionOptions;
 
         expect(options.schema).toBe("custom_schema");
       });
@@ -49,7 +50,7 @@ describe("DataSourceFactory", () => {
 
     describe("entities, migrations and subscribers", () => {
       it("should use empty arrays when not provided", () => {
-        const options = createDataSourceOptions(minimalConfig);
+        const options = createDataSourceOptions(minimalConfig) as PostgresConnectionOptions;
 
         expect(options.entities).toEqual([]);
         expect(options.migrations).toEqual([]);
@@ -64,7 +65,7 @@ describe("DataSourceFactory", () => {
           subscribers: ["src/**/*.subscriber.ts"],
         };
 
-        const options = createDataSourceOptions(config);
+        const options = createDataSourceOptions(config) as PostgresConnectionOptions;
 
         expect(options.entities).toEqual(["src/**/*.entity.ts"]);
         expect(options.migrations).toEqual(["src/migrations/*.ts"]);
@@ -74,13 +75,13 @@ describe("DataSourceFactory", () => {
 
     describe("default values", () => {
       it("should default synchronize to false", () => {
-        const options = createDataSourceOptions(minimalConfig);
+        const options = createDataSourceOptions(minimalConfig) as PostgresConnectionOptions;
 
         expect(options.synchronize).toBe(false);
       });
 
       it("should default logging to false", () => {
-        const options = createDataSourceOptions(minimalConfig);
+        const options = createDataSourceOptions(minimalConfig) as PostgresConnectionOptions;
 
         expect(options.logging).toBe(false);
       });
@@ -91,7 +92,7 @@ describe("DataSourceFactory", () => {
           synchronize: true,
         };
 
-        const options = createDataSourceOptions(config);
+        const options = createDataSourceOptions(config) as PostgresConnectionOptions;
 
         expect(options.synchronize).toBe(true);
       });
@@ -102,7 +103,7 @@ describe("DataSourceFactory", () => {
           logging: true,
         };
 
-        const options = createDataSourceOptions(config);
+        const options = createDataSourceOptions(config) as PostgresConnectionOptions;
 
         expect(options.logging).toBe(true);
       });
@@ -115,13 +116,13 @@ describe("DataSourceFactory", () => {
           ssl: false,
         };
 
-        const options = createDataSourceOptions(config);
+        const options = createDataSourceOptions(config) as PostgresConnectionOptions;
 
         expect(options.ssl).toBe(false);
       });
 
       it("should disable SSL when ssl is undefined", () => {
-        const options = createDataSourceOptions(minimalConfig);
+        const options = createDataSourceOptions(minimalConfig) as PostgresConnectionOptions;
 
         expect(options.ssl).toBe(false);
       });
@@ -132,7 +133,7 @@ describe("DataSourceFactory", () => {
           ssl: true,
         };
 
-        const options = createDataSourceOptions(config);
+        const options = createDataSourceOptions(config) as PostgresConnectionOptions;
 
         expect(options.ssl).toEqual({ rejectUnauthorized: false });
       });
@@ -140,7 +141,7 @@ describe("DataSourceFactory", () => {
 
     describe("connection pool configuration", () => {
       it("should set default pool options in extra", () => {
-        const options = createDataSourceOptions(minimalConfig);
+        const options = createDataSourceOptions(minimalConfig) as PostgresConnectionOptions;
 
         expect(options.extra).toBeDefined();
         expect(options.extra?.max).toBe(20);
@@ -161,7 +162,7 @@ describe("DataSourceFactory", () => {
           },
         };
 
-        const options = createDataSourceOptions(config);
+        const options = createDataSourceOptions(config) as PostgresConnectionOptions;
 
         // Custom values should override defaults
         expect(options.extra?.max).toBe(50);
@@ -186,7 +187,7 @@ describe("DataSourceFactory", () => {
           },
         };
 
-        const options = createDataSourceOptions(config);
+        const options = createDataSourceOptions(config) as PostgresConnectionOptions;
 
         expect(options.extra?.max).toBe(100);
         expect(options.extra?.min).toBe(10);
@@ -220,7 +221,7 @@ describe("DataSourceFactory", () => {
           },
         };
 
-        const options = createDataSourceOptions(fullConfig);
+        const options = createDataSourceOptions(fullConfig) as PostgresConnectionOptions;
 
         expect(options.type).toBe("postgres");
         expect(options.host).toBe("production-host");
@@ -260,12 +261,13 @@ describe("DataSourceFactory", () => {
 
     it("should create DataSource with correct options", () => {
       const dataSource = createDataSource(testConfig);
+      const options = dataSource.options as PostgresConnectionOptions;
 
-      expect(dataSource.options.type).toBe("postgres");
-      expect(dataSource.options.host).toBe("localhost");
-      expect(dataSource.options.port).toBe(5432);
-      expect(dataSource.options.username).toBe("testuser");
-      expect(dataSource.options.database).toBe("testdb");
+      expect(options.type).toBe("postgres");
+      expect(options.host).toBe("localhost");
+      expect(options.port).toBe(5432);
+      expect(options.username).toBe("testuser");
+      expect(options.database).toBe("testdb");
     });
 
     it("should create DataSource with SSL enabled", () => {
@@ -275,8 +277,9 @@ describe("DataSourceFactory", () => {
       };
 
       const dataSource = createDataSource(configWithSsl);
+      const options = dataSource.options as PostgresConnectionOptions;
 
-      expect(dataSource.options.ssl).toEqual({ rejectUnauthorized: false });
+      expect(options.ssl).toEqual({ rejectUnauthorized: false });
     });
 
     it("should not be initialized by default", () => {
