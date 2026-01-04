@@ -46,7 +46,7 @@ export interface CreateVehicleDto {
   status?: VehicleStatus;
 }
 
-export interface UpdateVehicleDto extends Partial(CreateVehicleDto) {}
+export interface UpdateVehicleDto extends Partial<CreateVehicleDto> {}
 
 export interface VehicleFilters {
   page?: number;

@@ -43,7 +43,7 @@ export interface CreateDriverDto {
   cnh_expiration_date: string;
 }
 
-export interface UpdateDriverDto extends Partial(CreateDriverDto) {
+export interface UpdateDriverDto extends Partial<CreateDriverDto> {
   status?: DriverStatus;
 }
 
