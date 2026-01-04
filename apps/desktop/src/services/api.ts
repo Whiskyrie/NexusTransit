@@ -3,7 +3,7 @@ import axios, { AxiosInstance, AxiosError } from "axios";
 /**
  * Configuração base da API
  */
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+const API_BASE_URL = "http://localhost:3033/";
 
 /**
  * Instância do Axios configurada
@@ -66,7 +66,7 @@ export interface PaginatedResponse<T> {
 /**
  * Helper para construir query strings
  */
-export function buildQueryString(params: Record<string, any>): string {
+export function buildQueryString(params: Record<string, unknown>): string {
   const searchParams = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== "") {
