@@ -9,6 +9,7 @@ import {
   Truck,
   Package,
 } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useUser } from "../stores/auth.store";
 
 // --- Components ---
@@ -156,25 +157,29 @@ export function DashboardPage() {
           </div>
 
           {/* Simple Bar Chart Visualization */}
-          <div className="space-y-4">
-            <div className="flex h-4 rounded-full overflow-hidden gap-1">
-              {salesData.map((item) => (
-                <div
-                  key={item.region}
-                  className={`h-full ${item.color}`}
-                  style={{ width: `${item.value}%` }}
+          <div className="h-75 w-full mt-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={salesData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                <XAxis
+                  dataKey="region"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: "#6B7280", fontSize: 12 }}
+                  dy={10}
                 />
-              ))}
-            </div>
-            <div className="flex flex-wrap gap-6 pt-2">
-              {salesData.map((item) => (
-                <div key={item.region} className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${item.color}`} />
-                  <span className="text-sm text-[#6B6B6B]">{item.region}</span>
-                  <span className="text-sm font-medium">{item.value}%</span>
-                </div>
-              ))}
-            </div>
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: "#6B7280", fontSize: 12 }} />
+                <Tooltip
+                  cursor={{ fill: "#F3F4F6" }}
+                  contentStyle={{
+                    borderRadius: "12px",
+                    border: "none",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                  }}
+                />
+                <Bar dataKey="value" fill="#1A1A1A" radius={[6, 6, 0, 0]} barSize={40} />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
