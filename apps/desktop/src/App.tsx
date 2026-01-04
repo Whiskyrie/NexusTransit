@@ -2,6 +2,8 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { LoginPage } from "./pages/LoginPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { UsersPage } from "./pages/UsersPage";
+import { DriversPage } from "./pages/DriversPage";
+import { VehiclesPage } from "./pages/VehiclesPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AppLayout } from "./components/layouts";
 import { useIsAuthenticated } from "./stores/auth.store";
@@ -27,6 +29,8 @@ function App() {
         <Route element={<AppLayout />}>
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/users" element={<UsersPage />} />
+          <Route path="/drivers" element={<DriversPage />} />
+          <Route path="/vehicles" element={<VehiclesPage />} />
           {/* Adicione mais rotas protegidas aqui */}
         </Route>
       </Route>
