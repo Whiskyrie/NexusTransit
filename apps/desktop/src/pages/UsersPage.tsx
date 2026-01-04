@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Search, Filter, MoreVertical, Edit, Trash2 } from "lucide-react";
+import { Plus, Search, Filter, Edit, Trash2 } from "lucide-react";
 import { Table, TableColumn } from "../components/ui/Table";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
@@ -75,8 +75,8 @@ export function UsersPage() {
             user.user_type === "admin"
               ? "bg-purple-100 text-purple-800"
               : user.user_type === "driver"
-              ? "bg-blue-100 text-blue-800"
-              : "bg-gray-100 text-gray-800"
+                ? "bg-blue-100 text-blue-800"
+                : "bg-gray-100 text-gray-800"
           }`}
         >
           {user.user_type}
@@ -89,11 +89,7 @@ export function UsersPage() {
       render: (user) => (
         <span
           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize
-          ${
-            user.status === "active"
-              ? "bg-green-100 text-green-800"
-              : "bg-red-100 text-red-800"
-          }`}
+          ${user.status === "active" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}
         >
           {user.status}
         </span>
