@@ -32,10 +32,11 @@ export function AppLayout() {
     { path: "/users", icon: Users, label: "Usuários" },
     { path: "/drivers", icon: UserCircle, label: "Motoristas" },
     { path: "/vehicles", icon: Truck, label: "Veículos" },
-    { path: "/orders", icon: Package, label: "Pedidos" },
-    { path: "/tracking", icon: MapPin, label: "Rastreamento" },
-    { path: "/reports", icon: FileText, label: "Relatórios" },
-    { path: "/settings", icon: Settings, label: "Configurações" },
+    { path: "/routes", icon: MapPin, label: "Rotas" },
+    // { path: "/orders", icon: Package, label: "Pedidos" }, // TODO: Implementar
+    // { path: "/tracking", icon: MapPin, label: "Rastreamento" }, // TODO: Implementar
+    // { path: "/reports", icon: FileText, label: "Relatórios" }, // TODO: Implementar
+    // { path: "/settings", icon: Settings, label: "Configurações" }, // TODO: Implementar
   ];
 
   return (
