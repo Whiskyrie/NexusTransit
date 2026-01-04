@@ -2,15 +2,43 @@ import {
   Search,
   Download,
   Plus,
-  MoreHorizontal,
   MapPin,
   Calendar,
-  ArrowUpRight,
   Truck,
-  Package,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  Filter,
+  RefreshCw,
 } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useUser } from "../stores/auth.store";
+import { MetricCard } from "../components/ui/MetricCard";
+import { LineChart } from "../components/ui/charts/LineChart";
+import { BarChart } from "../components/ui/charts/BarChart";
+
+// --- Types ---
+
+interface Order {
+  id: string;
+  assignedTo: string;
+  pickup: string;
+  delivery: string;
+  date: string;
+  status: OrderStatus;
+}
+
+type OrderStatus = "Picked up" | "In transit" | "Delivered" | "Pending";
+
+interface WeeklyPerformanceData {
+  day: string;
+  value: number;
+}
+
+interface DeliveryRegionData {
+  region: string;
+  completed: number;
+  pending: number;
+}
 
 // --- Components ---
 
@@ -36,15 +64,15 @@ function Badge({
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const styles = {
+function StatusBadge({ status }: { status: OrderStatus }) {
+  const styles: Record<OrderStatus, { bg: string; text: string; dot: string }> = {
     "Picked up": { bg: "bg-green-100", text: "text-green-700", dot: "bg-green-500" },
     "In transit": { bg: "bg-blue-100", text: "text-blue-700", dot: "bg-blue-500" },
     Delivered: { bg: "bg-gray-100", text: "text-gray-700", dot: "bg-gray-500" },
     Pending: { bg: "bg-yellow-100", text: "text-yellow-700", dot: "bg-yellow-500" },
   };
 
-  const style = styles[status as keyof typeof styles] || styles["Pending"];
+  const style = styles[status];
 
   return (
     <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full w-fit ${style.bg}`}>
@@ -54,9 +82,21 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function IconButton({ icon: Icon }: { icon: React.ElementType }) {
+function IconButton({
+  icon: Icon,
+  onClick,
+  title,
+}: {
+  icon: React.ElementType;
+  onClick?: () => void;
+  title?: string;
+}) {
   return (
-    <button className="w-10 h-10 rounded-[10px] bg-[#F5F5F0] flex items-center justify-center hover:bg-gray-200 transition-colors">
+    <button
+      onClick={onClick}
+      title={title}
+      className="w-10 h-10 rounded-[10px] bg-[#F5F5F0] flex items-center justify-center hover:bg-gray-200 transition-colors"
+    >
       <Icon className="w-5 h-5 text-[#1A1A1A]" strokeWidth={1.5} />
     </button>
   );
@@ -64,7 +104,7 @@ function IconButton({ icon: Icon }: { icon: React.ElementType }) {
 
 // --- Mock Data ---
 
-const orders = [
+const orders: Order[] = [
   {
     id: "#89242011",
     assignedTo: "Esther Howard",
@@ -99,12 +139,21 @@ const orders = [
   },
 ];
 
-const salesData = [
-  { region: "China", value: 45, color: "bg-[#1A1A1A]" },
-  { region: "UE", value: 25, color: "bg-[#6B7280]" },
-  { region: "USA", value: 15, color: "bg-[#9CA3AF]" },
-  { region: "Canada", value: 10, color: "bg-[#D1D5DB]" },
-  { region: "Outros", value: 5, color: "bg-[#E5E7EB]" },
+const weeklyPerformanceData: WeeklyPerformanceData[] = [
+  { day: "Seg", value: 120 },
+  { day: "Ter", value: 145 },
+  { day: "Qua", value: 132 },
+  { day: "Qui", value: 150 },
+  { day: "Sex", value: 180 },
+  { day: "Sáb", value: 90 },
+  { day: "Dom", value: 60 },
+];
+
+const deliveryVsPendingData: DeliveryRegionData[] = [
+  { region: "Norte", completed: 450, pending: 20 },
+  { region: "Sul", completed: 320, pending: 15 },
+  { region: "Leste", completed: 280, pending: 10 },
+  { region: "Oeste", completed: 190, pending: 5 },
 ];
 
 export function DashboardPage() {
@@ -128,6 +177,8 @@ export function DashboardPage() {
               className="pl-11 pr-4 py-3 bg-white rounded-xl border-none focus:ring-2 focus:ring-black/5 w-64 text-sm placeholder:text-[#9CA3AF]"
             />
           </div>
+          <IconButton icon={Filter} title="Filtros" />
+          <IconButton icon={RefreshCw} title="Atualizar" />
           <button className="flex items-center gap-2 px-5 py-3 bg-white border border-[#E5E7EB] rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors">
             <Download className="w-4 h-4" />
             Exportar
@@ -140,80 +191,54 @@ export function DashboardPage() {
       </div>
 
       {/* Metrics Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Sales Overview Card */}
-        <div className="bg-white p-6 rounded-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.04)] lg:col-span-2">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="font-semibold text-lg">Visão Geral de Vendas</h3>
-            <IconButton icon={MoreHorizontal} />
-          </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <MetricCard
+          label="Entregas Hoje"
+          value="1.284"
+          icon={Truck}
+          variant="primary"
+          trend={{ value: "+12%", direction: "up" }}
+        />
+        <MetricCard
+          label="Em Trânsito"
+          value="342"
+          icon={Clock}
+          variant="secondary"
+          trend={{ value: "+5%", direction: "up" }}
+        />
+        <MetricCard
+          label="Concluídas"
+          value="892"
+          icon={CheckCircle}
+          variant="success"
+          trend={{ value: "+18%", direction: "up" }}
+        />
+        <MetricCard
+          label="Pendentes"
+          value="50"
+          icon={AlertCircle}
+          variant="warning"
+          trend={{ value: "-2%", direction: "down" }}
+        />
+      </div>
 
-          <div className="flex items-end gap-4 mb-8">
-            <span className="text-4xl font-bold tracking-tight">R$ 24.500,00</span>
-            <div className="flex items-center gap-1 mb-1.5 px-2 py-1 bg-green-50 rounded-lg">
-              <ArrowUpRight className="w-4 h-4 text-green-600" />
-              <span className="text-sm font-medium text-green-600">+12%</span>
-            </div>
-          </div>
-
-          {/* Simple Bar Chart Visualization */}
-          <div className="h-75 w-full mt-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={salesData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
-                <XAxis
-                  dataKey="region"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: "#6B7280", fontSize: 12 }}
-                  dy={10}
-                />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: "#6B7280", fontSize: 12 }} />
-                <Tooltip
-                  cursor={{ fill: "#F3F4F6" }}
-                  contentStyle={{
-                    borderRadius: "12px",
-                    border: "none",
-                    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                  }}
-                />
-                <Bar dataKey="value" fill="#1A1A1A" radius={[6, 6, 0, 0]} barSize={40} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Fulfillment Performance Card */}
-        <div className="bg-[#E8E8E0] p-6 rounded-[20px] flex flex-col justify-between relative overflow-hidden">
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-lg">Performance</h3>
-              <IconButton icon={MoreHorizontal} />
-            </div>
-            <div className="space-y-4 mt-8">
-              <div className="bg-white/50 backdrop-blur-sm p-4 rounded-xl">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="p-2 bg-black text-white rounded-lg">
-                    <Truck className="w-4 h-4" />
-                  </div>
-                  <span className="text-sm font-medium">Entregas no Prazo</span>
-                </div>
-                <p className="text-2xl font-bold">94.2%</p>
-              </div>
-              <div className="bg-white/50 backdrop-blur-sm p-4 rounded-xl">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="p-2 bg-black text-white rounded-lg">
-                    <Package className="w-4 h-4" />
-                  </div>
-                  <span className="text-sm font-medium">Total Processado</span>
-                </div>
-                <p className="text-2xl font-bold">1,284</p>
-              </div>
-            </div>
-          </div>
-          {/* Decorative background element */}
-          <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-white/20 rounded-full blur-3xl" />
-        </div>
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <LineChart
+          title="Performance Semanal"
+          data={weeklyPerformanceData}
+          dataKey="value"
+          xAxisKey="day"
+        />
+        <BarChart
+          title="Entregas vs Pendências"
+          data={deliveryVsPendingData}
+          xAxisKey="region"
+          series={[
+            { key: "completed", name: "Concluídas", color: "#1A1A1A" },
+            { key: "pending", name: "Pendentes", color: "#D1D5DB" },
+          ]}
+        />
       </div>
 
       {/* Orders Section */}
