@@ -3,6 +3,7 @@ export interface RoleEntity {
   name: string;
   display_name?: string;
   description?: string;
+  type?: string;
   permissions?: string[];
   hierarchy_level?: number;
   is_active?: boolean;
