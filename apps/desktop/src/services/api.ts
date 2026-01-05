@@ -2,8 +2,9 @@ import axios, { AxiosInstance, AxiosError } from "axios";
 
 /**
  * Configuração base da API
+ * Obtém URL do ambiente (VITE_API_URL)
  */
-const API_BASE_URL = "http://localhost:3033/";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3033";
 
 /**
  * Instância do Axios configurada

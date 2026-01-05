@@ -16,7 +16,7 @@ export const routeService = {
     if (filters?.limit) params.append("limit", String(filters.limit));
     if (filters?.search) params.append("search", filters.search);
     if (filters?.status) params.append("status", filters.status);
-    if (filters?.priority) params.append("priority", filters.priority);
+    if (filters?.type) params.append("type", filters.type);
     if (filters?.driver_id) params.append("driver_id", filters.driver_id);
     if (filters?.vehicle_id) params.append("vehicle_id", filters.vehicle_id);
     if (filters?.start_date_from) params.append("start_date_from", filters.start_date_from);
@@ -32,7 +32,21 @@ export const routeService = {
   },
 
   async create(data: CreateRouteDto): Promise<Route> {
-    const response = await api.post<Route>("/routes", data);
+    // Generate route code if not provided
+    const routeCode = `RT-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${Math.floor(
+      Math.random() * 1000,
+    )
+      .toString()
+      .padStart(3, "0")}`;
+
+    // Backend expects these additional fields
+    const payload = {
+      ...data,
+      route_code: routeCode,
+      route_date: data.planned_date,
+    };
+
+    const response = await api.post<Route>("/routes", payload);
     return response.data;
   },
 
