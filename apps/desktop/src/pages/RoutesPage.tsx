@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, RefreshCw, Download, Map, Calendar } from "lucide-react";
+import { Plus, RefreshCw, Download, Map, Calendar, MapPin, Truck } from "lucide-react";
 import { Table, TableColumn } from "../components/ui/Table";
 import { Button } from "../components/ui/Button";
 import {
@@ -104,7 +104,6 @@ export function RoutesPage() {
   // Removed unused handler functions - to be implemented when needed
 
   const handleExport = () => {
-    console.log("Export routes");
     // Implement export functionality
   };
 
@@ -112,11 +111,16 @@ export function RoutesPage() {
     {
       key: "name",
       header: "Rota",
-      width: "20%",
+      width: "18%",
       render: (route) => (
-        <div>
-          <div className="font-semibold text-[#1A1A1A]">{route.name}</div>
-          <div className="text-xs text-gray-500 mt-1">ID: {route.id.slice(0, 8)}...</div>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center w-10 h-10 bg-linear-to-br from-[#1A1A1A] to-gray-700 rounded-xl shadow-md">
+            <MapPin className="w-5 h-5 text-white" strokeWidth={2} />
+          </div>
+          <div>
+            <div className="font-semibold text-[#1A1A1A] text-sm">{route.name}</div>
+            <div className="text-xs text-gray-400 font-mono mt-0.5">#{route.id.slice(0, 8)}</div>
+          </div>
         </div>
       ),
     },
@@ -151,37 +155,53 @@ export function RoutesPage() {
     {
       key: "vehicle",
       header: "Veículo",
-      width: "10%",
+      width: "11%",
       render: (route) =>
         route.vehicle_plate ? (
-          <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-gray-100 text-sm font-mono text-[#1A1A1A]">
-            {route.vehicle_plate}
-          </span>
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-linear-to-br from-gray-50 to-gray-100 border border-gray-200 shadow-sm">
+            <Truck className="w-3.5 h-3.5 text-gray-600" strokeWidth={2} />
+            <span className="text-sm font-bold text-[#1A1A1A] font-mono tracking-wide">
+              {route.vehicle_plate}
+            </span>
+          </div>
         ) : (
-          <span className="text-sm text-gray-400">Não atribuído</span>
+          <span className="text-sm text-gray-400 italic">Não atribuído</span>
         ),
     },
     {
       key: "progress",
       header: "Progresso",
-      width: "15%",
+      width: "16%",
       render: (route) => {
         const progressPercentage =
           route.total_deliveries > 0
             ? Math.round((route.completed_deliveries / route.total_deliveries) * 100)
             : 0;
 
+        const getProgressColor = () => {
+          if (progressPercentage === 100) return "bg-green-500";
+          if (progressPercentage >= 50) return "bg-blue-500";
+          if (progressPercentage > 0) return "bg-amber-500";
+          return "bg-gray-300";
+        };
+
         return (
           <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-600">
-                {route.completed_deliveries}/{route.total_deliveries}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 text-xs font-medium text-[#1A1A1A]">
+                  <span className="font-semibold">{route.completed_deliveries}</span>
+                  <span className="text-gray-400">/</span>
+                  <span className="text-gray-600">{route.total_deliveries}</span>
+                </div>
+              </div>
+              <span className="inline-flex items-center justify-center min-w-10.5 px-2 py-0.5 rounded-md bg-[#1A1A1A] text-white text-xs font-bold">
+                {progressPercentage}%
               </span>
-              <span className="font-medium text-[#1A1A1A]">{progressPercentage}%</span>
             </div>
-            <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div className="relative w-full h-2 bg-gray-100 rounded-full overflow-hidden shadow-inner">
               <div
-                className="h-full bg-[#1A1A1A] rounded-full transition-all duration-300"
+                className={`h-full ${getProgressColor()} rounded-full transition-all duration-500 ease-out shadow-sm`}
                 style={{ width: `${progressPercentage}%` }}
               />
             </div>
@@ -192,24 +212,38 @@ export function RoutesPage() {
     {
       key: "date",
       header: "Data",
-      width: "15%",
+      width: "18%",
       render: (route) => (
-        <div className="space-y-1">
-          <div className="flex items-center gap-1.5 text-xs text-gray-600">
-            <Calendar className="w-3.5 h-3.5" strokeWidth={1.5} />
-            <span>
-              {format(new Date(route.start_date), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-            </span>
-          </div>
-          {route.estimated_end_date && (
-            <div className="flex items-center gap-1.5 text-xs text-gray-500">
-              <RefreshCw className="w-3.5 h-3.5" strokeWidth={1.5} />
-              <span>
-                Prev:{" "}
-                {format(new Date(route.estimated_end_date), "dd/MM/yyyy 'às' HH:mm", {
-                  locale: ptBR,
-                })}
+        <div className="space-y-2.5">
+          {/* Data de Início */}
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#F5F5F0] rounded-lg border border-gray-100">
+            <div className="flex items-center justify-center w-6 h-6 bg-white rounded-md shadow-sm">
+              <Calendar className="w-3.5 h-3.5 text-[#1A1A1A]" strokeWidth={2} />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-medium text-[#6B6B6B] leading-tight">Início</span>
+              <span className="text-xs font-semibold text-[#1A1A1A] leading-tight">
+                {format(new Date(route.start_date), "dd/MM/yy HH:mm", { locale: ptBR })}
               </span>
+            </div>
+          </div>
+
+          {/* Data Prevista */}
+          {route.estimated_end_date && (
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-linear-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
+              <div className="flex items-center justify-center w-6 h-6 bg-white rounded-md shadow-sm">
+                <RefreshCw className="w-3.5 h-3.5 text-blue-600" strokeWidth={2} />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[10px] font-medium text-blue-600 leading-tight">
+                  Previsão
+                </span>
+                <span className="text-xs font-semibold text-blue-700 leading-tight">
+                  {format(new Date(route.estimated_end_date), "dd/MM/yy HH:mm", {
+                    locale: ptBR,
+                  })}
+                </span>
+              </div>
             </div>
           )}
         </div>
@@ -221,38 +255,49 @@ export function RoutesPage() {
       width: "10%",
       render: (route) =>
         route.total_distance ? (
-          <div className="flex items-center gap-1.5 text-sm text-[#1A1A1A]">
-            <Map className="w-4 h-4 text-gray-500" strokeWidth={1.5} />
-            <span className="font-medium">{route.total_distance.toLocaleString("pt-BR")} km</span>
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-linear-to-br from-green-50 to-emerald-50 rounded-lg border border-green-100">
+            <Map className="w-4 h-4 text-green-600" strokeWidth={2} />
+            <span className="text-sm font-bold text-green-700">
+              {route.total_distance.toLocaleString("pt-BR")} km
+            </span>
           </div>
         ) : (
-          <span className="text-sm text-gray-400">-</span>
+          <span className="text-sm text-gray-400 italic">-</span>
         ),
     },
   ];
 
   return (
-    <div className="min-h-screen bg-[#F5F5F0] p-8">
-      <div className="max-w-360 mx-auto space-y-6">
+    <div className="min-h-screen bg-[#F5F5F0]">
+      <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-[#1A1A1A]">Rotas</h1>
-            <p className="text-gray-600 mt-1">Gerencie todas as rotas de entrega</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button variant="outline" onClick={handleExport} className="h-10!">
-              <Download className="w-4 h-4 mr-2" strokeWidth={1.5} />
-              Exportar
-            </Button>
-            <Button variant="outline" onClick={fetchRoutes} className="h-10!">
-              <RefreshCw className="w-4 h-4 mr-2" strokeWidth={1.5} />
-              Atualizar
-            </Button>
-            <Button onClick={() => setShowCreateModal(true)} className="h-10!">
-              <Plus className="w-4 h-4 mr-2" strokeWidth={1.5} />
-              Nova Rota
-            </Button>
+        <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center justify-center w-14 h-14 bg-linear-to-br from-[#1A1A1A] to-gray-700 rounded-2xl shadow-lg">
+                <MapPin className="w-7 h-7 text-white" strokeWidth={2} />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-[#1A1A1A] mb-1">Rotas</h1>
+                <p className="text-sm text-gray-600">
+                  Gerencie e monitore todas as rotas de entrega em tempo real
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button variant="outline" onClick={handleExport} className="h-11 shadow-sm">
+                <Download className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                Exportar
+              </Button>
+              <Button variant="outline" onClick={fetchRoutes} className="h-11 shadow-sm">
+                <RefreshCw className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                Atualizar
+              </Button>
+              <Button onClick={() => setShowCreateModal(true)} className="h-11 shadow-lg">
+                <Plus className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                Nova Rota
+              </Button>
+            </div>
           </div>
         </div>
 
