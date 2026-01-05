@@ -3,6 +3,9 @@ import { SeedingService } from "./seeding.service";
 import { RolesSeed } from "./seeds/roles.seed";
 import { AdminUserSeed } from "./seeds/admin-user.seed";
 import { TestUsersSeed } from "./seeds/test-users.seed";
+import { DriversSeed } from "./seeds/drivers.seed";
+import { VehiclesSeed } from "./seeds/vehicles.seed";
+import { RoutesSeed } from "./seeds/routes.seed";
 import { ServiceOrdersSeed } from "./seeds/service-orders.seed";
 import { seedingProviders } from "./seeding.providers";
 import { DataSource } from "typeorm";
@@ -32,6 +35,9 @@ export class SeedingModule {
         RolesSeed,
         AdminUserSeed,
         TestUsersSeed,
+        DriversSeed,
+        VehiclesSeed,
+        RoutesSeed,
         ServiceOrdersSeed,
       ],
       exports: [SeedingService],

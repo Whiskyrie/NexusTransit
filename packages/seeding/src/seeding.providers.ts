@@ -74,12 +74,42 @@ export const seedingProviders = [
     inject: ["DATA_SOURCE"],
   },
   {
+    provide: "DRIVER_LICENSE_REPOSITORY",
+    useFactory: (dataSource: DataSource) => {
+      if (!dataSource) {
+        throw new Error("DataSource not provided to seeding module");
+      }
+      return dataSource.getRepository("DriverLicense");
+    },
+    inject: ["DATA_SOURCE"],
+  },
+  {
     provide: "VEHICLE_REPOSITORY",
     useFactory: (dataSource: DataSource) => {
       if (!dataSource) {
         throw new Error("DataSource not provided to seeding module");
       }
       return dataSource.getRepository("Vehicle");
+    },
+    inject: ["DATA_SOURCE"],
+  },
+  {
+    provide: "ROUTE_REPOSITORY",
+    useFactory: (dataSource: DataSource) => {
+      if (!dataSource) {
+        throw new Error("DataSource not provided to seeding module");
+      }
+      return dataSource.getRepository("Route");
+    },
+    inject: ["DATA_SOURCE"],
+  },
+  {
+    provide: "ROUTE_STOP_REPOSITORY",
+    useFactory: (dataSource: DataSource) => {
+      if (!dataSource) {
+        throw new Error("DataSource not provided to seeding module");
+      }
+      return dataSource.getRepository("RouteStop");
     },
     inject: ["DATA_SOURCE"],
   },

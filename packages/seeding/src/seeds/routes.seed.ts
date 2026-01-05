@@ -15,6 +15,7 @@ interface RouteEntity {
   status: string;
   type: string;
   route_date: Date;
+  planned_date: Date;
   origin_address: string;
   origin_coordinates?: string;
   destination_address: string;
@@ -160,8 +161,9 @@ export class RoutesSeed implements ISeed {
           vehicle_id: vehicles[0]?.id ?? "",
           driver_id: drivers[0]?.id ?? "",
           status: "PLANNED",
-          type: "DELIVERY",
+          type: "URBAN",
           route_date: today,
+          planned_date: today,
           origin_address: "Av. Paulista, 1000, São Paulo - SP",
           origin_coordinates: "POINT(-46.6558 -23.5632)",
           destination_address: "Av. Paulista, 1000, São Paulo - SP",
@@ -250,8 +252,9 @@ export class RoutesSeed implements ISeed {
           vehicle_id: vehicles[1]?.id ?? vehicles[0]?.id ?? "",
           driver_id: drivers[1]?.id ?? drivers[0]?.id ?? "",
           status: "IN_PROGRESS",
-          type: "DELIVERY",
+          type: "URBAN",
           route_date: today,
+          planned_date: today,
           origin_address: "Terminal Tietê, São Paulo - SP",
           origin_coordinates: "POINT(-46.6250 -23.5150)",
           destination_address: "Terminal Tietê, São Paulo - SP",
@@ -329,8 +332,9 @@ export class RoutesSeed implements ISeed {
           vehicle_id: vehicles[2]?.id ?? vehicles[0]?.id ?? "",
           driver_id: drivers[2]?.id ?? drivers[0]?.id ?? "",
           status: "PLANNED",
-          type: "DELIVERY",
+          type: "URBAN",
           route_date: tomorrow,
+          planned_date: tomorrow,
           origin_address: "Av. Brigadeiro Faria Lima, 3000, São Paulo - SP",
           origin_coordinates: "POINT(-46.6800 -23.5850)",
           destination_address: "Av. Brigadeiro Faria Lima, 3000, São Paulo - SP",
