@@ -43,17 +43,18 @@ export class RouteStop extends BaseEntity {
 
   // Relacionamento com Endereço do Cliente
   @ManyToOne(() => CustomerAddress, address => address.route_stops, {
-    nullable: false,
+    nullable: true,
     onDelete: 'RESTRICT',
   })
   @JoinColumn({ name: 'customer_address_id' })
-  customer_address!: CustomerAddress;
+  customer_address?: CustomerAddress;
 
   @Column({
     type: 'uuid',
+    nullable: true,
     comment: 'ID do endereço do cliente',
   })
-  customer_address_id!: string;
+  customer_address_id?: string;
 
   @Column({
     type: 'uuid',

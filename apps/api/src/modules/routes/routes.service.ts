@@ -863,7 +863,7 @@ export class RoutesService {
       longitude: number | null;
       status: string;
       address: string;
-      customer_address_id: string;
+      customer_address_id: string | undefined;
       planned_arrival_time: string | null;
       actual_arrival_time: Date | null;
     }[];
