@@ -13,6 +13,7 @@ interface DatePickerProps {
   maxDate?: Date;
   clearable?: boolean;
   className?: string;
+  compact?: boolean;
 }
 
 export function DatePicker({
@@ -25,6 +26,7 @@ export function DatePicker({
   maxDate,
   clearable = true,
   className,
+  compact = false,
 }: DatePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
@@ -85,25 +87,44 @@ export function DatePicker({
 
   return (
     <div ref={containerRef} className={clsx("relative w-full", className)}>
-      {label && <label className="block text-sm font-medium text-[#1A1A1A] mb-2">{label}</label>}
+      {label && (
+        <label
+          className={clsx(
+            "block font-medium mb-1.5",
+            compact ? "text-xs text-gray-700" : "text-sm text-[#1A1A1A] mb-2",
+          )}
+        >
+          {label}
+        </label>
+      )}
 
       {/* Input */}
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={clsx(
-          "w-full pl-12 pr-4 py-3.5 text-sm bg-white border rounded-xl outline-none transition-all duration-200 text-left relative",
+          "w-full bg-white border outline-none transition-all duration-200 text-left relative",
+          compact ? "pl-9 pr-4 h-10 text-sm rounded-lg" : "pl-12 pr-4 py-3.5 text-sm rounded-xl",
           error
-            ? "border-[#EF4444] shadow-[0_0_0_3px_rgba(239,68,68,0.1)]"
-            : "border-[#E5E7EB] focus:border-[#1A1A1A] focus:shadow-[0_0_0_3px_rgba(26,26,26,0.1)]",
-          isOpen && !error && "border-[#1A1A1A] shadow-[0_0_0_3px_rgba(26,26,26,0.1)]",
+            ? compact
+              ? "border-red-300"
+              : "border-[#EF4444] shadow-[0_0_0_3px_rgba(239,68,68,0.1)]"
+            : compact
+              ? "border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              : "border-[#E5E7EB] focus:border-[#1A1A1A] focus:shadow-[0_0_0_3px_rgba(26,26,26,0.1)]",
+          isOpen && !error && !compact && "border-[#1A1A1A] shadow-[0_0_0_3px_rgba(26,26,26,0.1)]",
         )}
       >
-        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9CA3AF] flex items-center justify-center">
-          <CalendarIcon size={18} strokeWidth={1.5} />
+        <div
+          className={clsx(
+            "absolute top-1/2 -translate-y-1/2 text-gray-400 flex items-center justify-center",
+            compact ? "left-3" : "left-4",
+          )}
+        >
+          <CalendarIcon size={compact ? 16 : 18} strokeWidth={1.5} />
         </div>
 
-        <span className={clsx(value ? "text-[#1A1A1A] font-medium" : "text-[#9CA3AF]")}>
+        <span className={clsx(value ? "text-[#1A1A1A] font-medium" : "text-gray-400")}>
           {value ? formatDate(value) : placeholder}
         </span>
 
@@ -111,14 +132,17 @@ export function DatePicker({
           <button
             onClick={handleClear}
             type="button"
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[#6B6B6B] transition-colors flex items-center justify-center"
+            className={clsx(
+              "absolute top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[#6B6B6B] transition-colors flex items-center justify-center",
+              compact ? "right-3" : "right-4",
+            )}
           >
             <X size={16} strokeWidth={2} />
           </button>
         )}
       </button>
 
-      {error && <p className="text-xs text-[#EF4444] mt-1.5">{error}</p>}
+      {error && <p className="text-xs text-red-500 mt-1.5">{error}</p>}
 
       {/* Calendar Dropdown */}
       {isOpen && (
