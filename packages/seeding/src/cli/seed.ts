@@ -15,8 +15,14 @@
 
 import { NestFactory } from "@nestjs/core";
 import { Logger } from "@nestjs/common";
+import { DataSource } from "typeorm";
 import { SeedingModule } from "../seeding.module";
 import { SeedingService, SeedEnvironment } from "../seeding.service";
+import * as dotenv from "dotenv";
+import * as path from "path";
+
+// Load environment variables
+dotenv.config({ path: path.join(__dirname, "../../../../apps/api/.env") });
 
 interface CliArgs {
   seedName?: string;
@@ -54,7 +60,24 @@ async function bootstrap() {
 
   const logger = new Logger("SeedingCLI");
 
-  const app = await NestFactory.createApplicationContext(SeedingModule, {
+  // Inicializar DataSource
+  const dataSource = new DataSource({
+    type: "postgres",
+    host: process.env.POSTGRES_HOST || "localhost",
+    port: parseInt(process.env.POSTGRES_PORT || "5432", 10),
+    database: process.env.POSTGRES_DB || "nexus_transit",
+    username: process.env.POSTGRES_USER || "nexus_user",
+    password: process.env.POSTGRES_PASSWORD || "nexus_password_123",
+    entities: [path.join(__dirname, "../../../../apps/api/src/**/*.entity.ts")],
+    synchronize: false,
+    logging: false,
+  });
+
+  logger.log("Conectando ao banco de dados...");
+  await dataSource.initialize();
+  logger.log("Conexão estabelecida");
+
+  const app = await NestFactory.createApplicationContext(SeedingModule.forRoot(dataSource), {
     logger: ["log", "error", "warn"],
   });
   const seedingService = app.get(SeedingService);
@@ -66,6 +89,7 @@ async function bootstrap() {
         logger.log(`  - ${seed}`);
       });
       await app.close();
+      await dataSource.destroy();
       process.exit(0);
     }
 
@@ -80,10 +104,12 @@ async function bootstrap() {
     logger.log("Processo finalizado com sucesso");
 
     await app.close();
+    await dataSource.destroy();
     process.exit(0);
   } catch (error) {
     logger.error("Erro ao executar seed:", error);
     await app.close();
+    await dataSource.destroy();
     process.exit(1);
   }
 }
