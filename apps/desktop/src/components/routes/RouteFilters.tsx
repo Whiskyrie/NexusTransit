@@ -4,8 +4,9 @@ import {
   RouteFilters as RouteFiltersType,
 } from "../../types/route.types";
 import { Input } from "../ui/Input";
+import { DateRangePicker } from "../ui/DateRangePicker";
 import { Button } from "../ui/Button";
-import { Search, Filter, X, Calendar } from "lucide-react";
+import { Search, Filter, X } from "lucide-react";
 
 interface RouteFiltersProps {
   filters: RouteFiltersType;
@@ -97,36 +98,18 @@ export function RouteFilters({ filters, onFiltersChange, onClearFilters }: Route
         </div>
 
         {/* Date Range */}
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-2">Data Início</label>
-          <div className="relative">
-            <Input
-              type="date"
-              value={filters.start_date_from || ""}
-              onChange={(e) => handleFilterChange("start_date_from", e.target.value)}
-              className="pl-10!"
-            />
-            <Calendar
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
-              strokeWidth={1.5}
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-2">Data Fim</label>
-          <div className="relative">
-            <Input
-              type="date"
-              value={filters.start_date_to || ""}
-              onChange={(e) => handleFilterChange("start_date_to", e.target.value)}
-              className="pl-10!"
-            />
-            <Calendar
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
-              strokeWidth={1.5}
-            />
-          </div>
+        <div className="lg:col-span-2">
+          <DateRangePicker
+            label="Período"
+            value={{
+              start: filters.start_date_from ? new Date(filters.start_date_from) : undefined,
+              end: filters.start_date_to ? new Date(filters.start_date_to) : undefined,
+            }}
+            onChange={(range) => {
+              handleFilterChange("start_date_from", range.start?.toISOString() || undefined);
+              handleFilterChange("start_date_to", range.end?.toISOString() || undefined);
+            }}
+          />
         </div>
 
         {/* Driver ID */}
