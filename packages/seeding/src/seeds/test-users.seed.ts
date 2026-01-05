@@ -58,7 +58,7 @@ export class TestUsersSeed implements ISeed {
         first_name: "Admin",
         last_name: "Teste",
         phone: "+5511999999999",
-        user_type: "ADMIN",
+        user_type: "admin",
         role: adminRole,
       },
       {
@@ -66,7 +66,7 @@ export class TestUsersSeed implements ISeed {
         first_name: "Gestor",
         last_name: "Teste",
         phone: "+5511988888888",
-        user_type: "GESTOR",
+        user_type: "manager",
         role: gestorRole,
       },
       {
@@ -74,7 +74,7 @@ export class TestUsersSeed implements ISeed {
         first_name: "Despachante",
         last_name: "Teste",
         phone: "+5511977777777",
-        user_type: "DESPACHANTE",
+        user_type: "operator",
         role: despachanteRole,
       },
       {
@@ -82,7 +82,7 @@ export class TestUsersSeed implements ISeed {
         first_name: "Motorista",
         last_name: "Teste",
         phone: "+5511966666666",
-        user_type: "MOTORISTA",
+        user_type: "driver",
         role: motoristaRole,
       },
       {
@@ -90,7 +90,7 @@ export class TestUsersSeed implements ISeed {
         first_name: "Cliente",
         last_name: "Teste",
         phone: "+5511955555555",
-        user_type: "CLIENTE",
+        user_type: "customer",
         role: clienteRole,
       },
     ];
@@ -110,12 +110,18 @@ export class TestUsersSeed implements ISeed {
           last_name: userData.last_name,
           phone: userData.phone,
           user_type: userData.user_type,
-          status: "ACTIVE",
+          status: "active",
           email_verified: true,
-          roles: [userData.role],
         });
 
-        await this.userRepository.save(user);
+        const savedUser = await this.userRepository.save(user);
+
+        // Associar role manualmente
+        await this.userRepository.query(
+          `INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2)`,
+          [savedUser.id, userData.role.id],
+        );
+
         this.logger.log(`Usuário criado: ${userData.email}`);
       } else {
         this.logger.debug(`Usuário já existe: ${userData.email}`);

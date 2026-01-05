@@ -54,13 +54,18 @@ export class AdminUserSeed implements ISeed {
       first_name: "Administrador",
       last_name: "Sistema",
       phone: "+5511999999999",
-      user_type: "ADMIN",
-      status: "ACTIVE",
+      user_type: "admin",
+      status: "active",
       email_verified: true,
-      roles: [adminRole],
     });
 
-    await this.userRepository.save(admin);
+    const savedAdmin = await this.userRepository.save(admin);
+
+    // Associar role manualmente (sem acionar triggers problemáticos)
+    await this.userRepository.query(`INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2)`, [
+      savedAdmin.id,
+      adminRole.id,
+    ]);
 
     this.logger.log("Usuário admin criado com sucesso!");
     this.logger.log(`Email: ${adminEmail}`);
