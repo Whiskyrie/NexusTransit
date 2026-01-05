@@ -2,7 +2,8 @@ import { useState } from "react";
 import { CreateRouteDto, RoutePriority } from "../../types/route.types";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
-import { X, MapPin, Calendar } from "lucide-react";
+import { DateTimePicker } from "../ui/DateTimePicker";
+import { X, MapPin } from "lucide-react";
 
 interface RouteFormModalProps {
   isOpen: boolean;
@@ -17,18 +18,23 @@ export function RouteFormModal({
   onSubmit,
   isLoading = false,
 }: RouteFormModalProps) {
-  const [formData, setFormData] = useState<CreateRouteDto>({
+  const [formData, setFormData] = useState({
     name: "",
-    start_date: "",
-    estimated_end_date: "",
     priority: RoutePriority.MEDIUM,
   });
+  const [startDate, setStartDate] = useState<Date>();
+  const [endDate, setEndDate] = useState<Date>();
 
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    const submitData: CreateRouteDto = {
+      ...formData,
+      start_date: startDate?.toISOString() || "",
+      estimated_end_date: endDate?.toISOString() || "",
+    };
+    onSubmit(submitData);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -42,7 +48,7 @@ export function RouteFormModal({
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative bg-white rounded-3xl p-8 max-w-lg w-full mx-4 shadow-2xl animate-in fade-in zoom-in duration-200">
+      <div className="relative bg-white rounded-3xl p-8 max-w-lg w-full mx-4 shadow-2xl animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -90,43 +96,22 @@ export function RouteFormModal({
           </div>
 
           {/* Start Date */}
-          <div>
-            <label className="block text-sm font-medium text-[#1A1A1A] mb-2">Data de Início</label>
-            <div className="relative">
-              <Input
-                type="datetime-local"
-                name="start_date"
-                value={formData.start_date}
-                onChange={handleChange}
-                required
-                className="pl-10!"
-              />
-              <Calendar
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
-                strokeWidth={1.5}
-              />
-            </div>
-          </div>
+          <DateTimePicker
+            label="Data e Horário de Início"
+            value={startDate}
+            onChange={setStartDate}
+            placeholder="Selecione data e horário de início"
+            minDate={new Date()}
+          />
 
           {/* Estimated End Date */}
-          <div>
-            <label className="block text-sm font-medium text-[#1A1A1A] mb-2">
-              Data Prevista de Término
-            </label>
-            <div className="relative">
-              <Input
-                type="datetime-local"
-                name="estimated_end_date"
-                value={formData.estimated_end_date}
-                onChange={handleChange}
-                className="pl-10!"
-              />
-              <Calendar
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
-                strokeWidth={1.5}
-              />
-            </div>
-          </div>
+          <DateTimePicker
+            label="Data e Horário Previsto de Término"
+            value={endDate}
+            onChange={setEndDate}
+            placeholder="Selecione data e horário previsto"
+            minDate={startDate || new Date()}
+          />
 
           {/* Footer */}
           <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
