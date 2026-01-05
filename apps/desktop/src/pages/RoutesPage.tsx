@@ -1,25 +1,147 @@
 import { useState, useEffect } from "react";
-import { Plus, RefreshCw, Download, Map, Calendar, MapPin, Truck } from "lucide-react";
+import {
+  Plus,
+  RefreshCw,
+  Download,
+  Calendar,
+  Truck,
+  User,
+  Navigation,
+  CheckCircle,
+  XCircle,
+  Edit2,
+  Trash2,
+  AlertTriangle,
+  X,
+} from "lucide-react";
 import { Table, TableColumn } from "../components/ui/Table";
 import { Button } from "../components/ui/Button";
-import {
-  RouteStatusBadge,
-  RoutePriorityBadge,
-  RouteFilters,
-  RouteMetricsCard,
-  RouteFormModal,
-} from "../components/routes";
+import { RouteStatusBadge, RouteFilters, RouteFormModal } from "../components/routes";
 import { routeService } from "../services/route.service";
-import type { Route, RouteFilters as RouteFiltersType, RouteMetrics } from "../types/route.types";
+import type { Route, RouteFilters as RouteFiltersType, CreateRouteDto } from "../types/route.types";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+
+// Simple toast notification component
+interface ToastProps {
+  message: string;
+  type: "success" | "error";
+  onClose: () => void;
+}
+
+function Toast({ message, type, onClose }: ToastProps) {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 4000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <div
+      className={`fixed bottom-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-lg shadow-lg animate-in slide-in-from-bottom-2 duration-200 ${
+        type === "success" ? "bg-emerald-500 text-white" : "bg-red-500 text-white"
+      }`}
+    >
+      {type === "success" ? <CheckCircle className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
+      <span className="text-sm font-medium">{message}</span>
+      <button onClick={onClose} className="ml-2 opacity-70 hover:opacity-100">
+        ×
+      </button>
+    </div>
+  );
+}
+
+// Modal de confirmação de exclusão
+interface ConfirmDeleteModalProps {
+  isOpen: boolean;
+  routeName: string;
+  isDeleting: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+function ConfirmDeleteModal({
+  isOpen,
+  routeName,
+  isDeleting,
+  onConfirm,
+  onCancel,
+}: ConfirmDeleteModalProps) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onCancel} />
+
+      {/* Modal */}
+      <div className="relative bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl animate-in fade-in zoom-in duration-200">
+        {/* Close button */}
+        <button
+          onClick={onCancel}
+          className="absolute top-4 right-4 w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
+        >
+          <X className="w-4 h-4 text-gray-600" strokeWidth={1.5} />
+        </button>
+
+        {/* Icon */}
+        <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+          <AlertTriangle className="w-6 h-6 text-red-600" strokeWidth={2} />
+        </div>
+
+        {/* Content */}
+        <div className="text-center mb-6">
+          <h3 className="text-lg font-bold text-[#1A1A1A] mb-2">Excluir Rota</h3>
+          <p className="text-sm text-gray-600">
+            Tem certeza que deseja excluir a rota{" "}
+            <span className="font-semibold text-[#1A1A1A]">"{routeName}"</span>?
+          </p>
+          <p className="text-xs text-gray-500 mt-2">Esta ação não pode ser desfeita.</p>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center justify-center gap-3">
+          <Button
+            variant="outline"
+            onClick={onCancel}
+            disabled={isDeleting}
+            className="px-4! py-2! text-sm"
+          >
+            Cancelar
+          </Button>
+          <button
+            onClick={onConfirm}
+            disabled={isDeleting}
+            className="px-4 py-2 text-sm font-semibold text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {isDeleting ? (
+              <>
+                <RefreshCw className="w-4 h-4 animate-spin" />
+                Excluindo...
+              </>
+            ) : (
+              <>
+                <Trash2 className="w-4 h-4" />
+                Excluir
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function RoutesPage() {
   const [routes, setRoutes] = useState<Route[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [metrics, setMetrics] = useState<RouteMetrics | null>(null);
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; route: Route | null }>({
+    isOpen: false,
+    route: null,
+  });
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [filters, setFilters] = useState<RouteFiltersType>({
     page: 1,
     limit: 10,
@@ -36,7 +158,13 @@ export function RoutesPage() {
     try {
       setIsLoading(true);
       const response = await routeService.list(filters);
-      setRoutes(response.data);
+      // Adicionar campos computados
+      const routesWithComputed = response.data.map((route) => ({
+        ...route,
+        total_deliveries: route.stops?.length || 0,
+        completed_deliveries: route.stops?.filter((s) => s.status === "COMPLETED").length || 0,
+      }));
+      setRoutes(routesWithComputed);
       setPagination(response.meta);
     } catch (error) {
       console.error("Failed to fetch routes:", error);
@@ -45,33 +173,9 @@ export function RoutesPage() {
     }
   };
 
-  // Fetch metrics
-  const fetchMetrics = async () => {
-    try {
-      // Simulated metrics - replace with actual API call when available
-      const mockMetrics: RouteMetrics = {
-        total_routes: pagination.total,
-        active_routes: routes.filter((r) => r.status === "IN_PROGRESS").length,
-        completed_routes: routes.filter((r) => r.status === "COMPLETED").length,
-        pending_routes: routes.filter((r) => r.status === "PENDING").length,
-        total_distance: routes.reduce((acc, r) => acc + (r.total_distance || 0), 0),
-        average_duration: 0,
-      };
-      setMetrics(mockMetrics);
-    } catch (error) {
-      console.error("Failed to fetch metrics:", error);
-    }
-  };
-
   useEffect(() => {
     fetchRoutes();
   }, [filters]);
-
-  useEffect(() => {
-    if (routes.length > 0) {
-      fetchMetrics();
-    }
-  }, [routes]);
 
   const handlePageChange = (page: number) => {
     setFilters((prev) => ({ ...prev, page }));
@@ -88,20 +192,56 @@ export function RoutesPage() {
     });
   };
 
-  const handleCreateRoute = async (data: any) => {
+  const handleCreateRoute = async (data: CreateRouteDto) => {
     try {
       setIsCreating(true);
       await routeService.create(data);
       setShowCreateModal(false);
+      setToast({ message: "Rota criada com sucesso!", type: "success" });
       fetchRoutes();
     } catch (error) {
       console.error("Failed to create route:", error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Erro ao criar rota. Verifique os dados e tente novamente.";
+      setToast({ message: errorMessage, type: "error" });
     } finally {
       setIsCreating(false);
     }
   };
 
   // Removed unused handler functions - to be implemented when needed
+
+  const openDeleteModal = (route: Route) => {
+    setDeleteModal({ isOpen: true, route });
+  };
+
+  const closeDeleteModal = () => {
+    setDeleteModal({ isOpen: false, route: null });
+  };
+
+  const handleDeleteRoute = async () => {
+    if (!deleteModal.route) return;
+    try {
+      setIsDeleting(true);
+      await routeService.delete(deleteModal.route.id);
+      setToast({ message: "Rota excluída com sucesso!", type: "success" });
+      closeDeleteModal();
+      fetchRoutes();
+    } catch (error) {
+      console.error("Failed to delete route:", error);
+      setToast({ message: "Erro ao excluir rota.", type: "error" });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleEditRoute = (route: Route) => {
+    // TODO: Implementar modal de edição
+    void route; // Evita erro de variável não utilizada
+    setToast({ message: "Função de edição em desenvolvimento.", type: "error" });
+  };
 
   const handleExport = () => {
     // Implement export functionality
@@ -113,13 +253,11 @@ export function RoutesPage() {
       header: "Rota",
       width: "18%",
       render: (route) => (
-        <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-10 h-10 bg-linear-to-br from-[#1A1A1A] to-gray-700 rounded-xl shadow-md">
-            <MapPin className="w-5 h-5 text-white" strokeWidth={2} />
-          </div>
+        <div className="flex items-center gap-2">
+          <Navigation className="w-4 h-4 text-dark-gray-300" strokeWidth={1.75} />
           <div>
             <div className="font-semibold text-[#1A1A1A] text-sm">{route.name}</div>
-            <div className="text-xs text-gray-400 font-mono mt-0.5">#{route.id.slice(0, 8)}</div>
+            <div className="text-[10px] text-gray-400 font-mono">#{route.id.slice(0, 8)}</div>
           </div>
         </div>
       ),
@@ -131,80 +269,86 @@ export function RoutesPage() {
       render: (route) => <RouteStatusBadge status={route.status} />,
     },
     {
-      key: "priority",
-      header: "Prioridade",
-      width: "12%",
-      render: (route) => <RoutePriorityBadge priority={route.priority} />,
+      key: "type",
+      header: "Tipo",
+      width: "10%",
+      render: (route) => {
+        const typeLabels: Record<string, string> = {
+          URBAN: "Urbana",
+          LONG_DISTANCE: "Longa Distância",
+          REGIONAL: "Regional",
+          EXPRESS: "Expressa",
+        };
+        return (
+          <span className="inline-flex items-center px-3 py-1.5 rounded-lg bg-gray-100 text-xs font-semibold text-gray-700 uppercase tracking-wide">
+            {typeLabels[route.type] || route.type}
+          </span>
+        );
+      },
     },
     {
       key: "driver",
       header: "Motorista",
-      width: "15%",
+      width: "14%",
       render: (route) =>
-        route.driver_name ? (
+        route.driver ? (
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-[#F5F5F0] flex items-center justify-center">
-              <Map className="w-4 h-4 text-gray-600" strokeWidth={1.5} />
-            </div>
-            <span className="text-sm text-[#1A1A1A]">{route.driver_name}</span>
+            <User className="w-4 h-4 text-gray-400" strokeWidth={1.5} />
+            <span className="text-sm text-[#1A1A1A]">
+              {route.driver.full_name.split(" ").slice(0, 2).join(" ")}
+            </span>
           </div>
         ) : (
-          <span className="text-sm text-gray-400">Não atribuído</span>
+          <span className="text-sm text-gray-400">-</span>
         ),
     },
     {
       key: "vehicle",
       header: "Veículo",
-      width: "11%",
+      width: "10%",
       render: (route) =>
-        route.vehicle_plate ? (
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-linear-to-br from-gray-50 to-gray-100 border border-gray-200 shadow-sm">
-            <Truck className="w-3.5 h-3.5 text-gray-600" strokeWidth={2} />
-            <span className="text-sm font-bold text-[#1A1A1A] font-mono tracking-wide">
-              {route.vehicle_plate}
+        route.vehicle ? (
+          <div className="flex items-center gap-1.5">
+            <Truck className="w-3.5 h-3.5 text-gray-400" strokeWidth={1.5} />
+            <span className="text-sm font-semibold text-[#1A1A1A] font-mono">
+              {route.vehicle.license_plate}
             </span>
           </div>
         ) : (
-          <span className="text-sm text-gray-400 italic">Não atribuído</span>
+          <span className="text-sm text-gray-400">—</span>
         ),
     },
     {
       key: "progress",
       header: "Progresso",
-      width: "16%",
+      width: "12%",
       render: (route) => {
+        const totalStops = route.stops?.length || 0;
+        const completedStops = route.stops?.filter((s) => s.status === "COMPLETED").length || 0;
         const progressPercentage =
-          route.total_deliveries > 0
-            ? Math.round((route.completed_deliveries / route.total_deliveries) * 100)
-            : 0;
+          totalStops > 0 ? Math.round((completedStops / totalStops) * 100) : 0;
 
         const getProgressColor = () => {
-          if (progressPercentage === 100) return "bg-green-500";
+          if (progressPercentage === 100) return "bg-emerald-500";
           if (progressPercentage >= 50) return "bg-blue-500";
           if (progressPercentage > 0) return "bg-amber-500";
           return "bg-gray-300";
         };
 
         return (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1 text-xs font-medium text-[#1A1A1A]">
-                  <span className="font-semibold">{route.completed_deliveries}</span>
-                  <span className="text-gray-400">/</span>
-                  <span className="text-gray-600">{route.total_deliveries}</span>
-                </div>
-              </div>
-              <span className="inline-flex items-center justify-center min-w-10.5 px-2 py-0.5 rounded-md bg-[#1A1A1A] text-white text-xs font-bold">
-                {progressPercentage}%
-              </span>
-            </div>
-            <div className="relative w-full h-2 bg-gray-100 rounded-full overflow-hidden shadow-inner">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500">
+              {completedStops}/{totalStops}
+            </span>
+            <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden min-w-12">
               <div
-                className={`h-full ${getProgressColor()} rounded-full transition-all duration-500 ease-out shadow-sm`}
+                className={`h-full ${getProgressColor()} rounded-full`}
                 style={{ width: `${progressPercentage}%` }}
               />
             </div>
+            <span className="text-xs font-semibold text-[#1A1A1A] min-w-8">
+              {progressPercentage}%
+            </span>
           </div>
         );
       },
@@ -212,38 +356,29 @@ export function RoutesPage() {
     {
       key: "date",
       header: "Data",
-      width: "18%",
+      width: "16%",
       render: (route) => (
-        <div className="space-y-2.5">
-          {/* Data de Início */}
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#F5F5F0] rounded-lg border border-gray-100">
-            <div className="flex items-center justify-center w-6 h-6 bg-white rounded-md shadow-sm">
-              <Calendar className="w-3.5 h-3.5 text-[#1A1A1A]" strokeWidth={2} />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[10px] font-medium text-[#6B6B6B] leading-tight">Início</span>
-              <span className="text-xs font-semibold text-[#1A1A1A] leading-tight">
-                {format(new Date(route.start_date), "dd/MM/yy HH:mm", { locale: ptBR })}
-              </span>
-            </div>
+        <div className="space-y-1">
+          <div className="flex items-center gap-1.5">
+            <Calendar className="w-3.5 h-3.5 text-gray-400" strokeWidth={1.5} />
+            <span className="text-xs font-medium text-[#1A1A1A]">
+              {format(
+                new Date(`${route.planned_date}T${route.planned_start_time}`),
+                "dd/MM/yy HH:mm",
+                { locale: ptBR },
+              )}
+            </span>
           </div>
-
-          {/* Data Prevista */}
-          {route.estimated_end_date && (
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-linear-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
-              <div className="flex items-center justify-center w-6 h-6 bg-white rounded-md shadow-sm">
-                <RefreshCw className="w-3.5 h-3.5 text-blue-600" strokeWidth={2} />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[10px] font-medium text-blue-600 leading-tight">
-                  Previsão
-                </span>
-                <span className="text-xs font-semibold text-blue-700 leading-tight">
-                  {format(new Date(route.estimated_end_date), "dd/MM/yy HH:mm", {
-                    locale: ptBR,
-                  })}
-                </span>
-              </div>
+          {route.planned_end_time && (
+            <div className="flex items-center gap-1.5">
+              <RefreshCw className="w-3.5 h-3.5 text-blue-500" strokeWidth={1.5} />
+              <span className="text-xs text-blue-600">
+                {format(
+                  new Date(`${route.planned_date}T${route.planned_end_time}`),
+                  "dd/MM/yy HH:mm",
+                  { locale: ptBR },
+                )}
+              </span>
             </div>
           )}
         </div>
@@ -252,57 +387,71 @@ export function RoutesPage() {
     {
       key: "distance",
       header: "Distância",
-      width: "10%",
-      render: (route) =>
-        route.total_distance ? (
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-linear-to-br from-green-50 to-emerald-50 rounded-lg border border-green-100">
-            <Map className="w-4 h-4 text-green-600" strokeWidth={2} />
-            <span className="text-sm font-bold text-green-700">
-              {route.total_distance.toLocaleString("pt-BR")} km
+      width: "8%",
+      render: (route) => (
+        <div className="flex items-center justify-center">
+          {route.estimated_distance_km ? (
+            <span className="text-sm font-medium text-emerald-600">
+              {route.estimated_distance_km.toLocaleString("pt-BR")} km
             </span>
-          </div>
-        ) : (
-          <span className="text-sm text-gray-400 italic">-</span>
-        ),
+          ) : (
+            <span className="text-sm text-gray-400">—</span>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: "actions",
+      header: "",
+      width: "8%",
+      render: (route) => (
+        <div className="flex items-center justify-end gap-1">
+          <button
+            onClick={() => handleEditRoute(route)}
+            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-blue-600 transition-colors"
+            title="Editar rota"
+          >
+            <Edit2 className="w-4 h-4" strokeWidth={1.5} />
+          </button>
+          <button
+            onClick={() => openDeleteModal(route)}
+            className="p-1.5 rounded-lg hover:bg-red-50 text-gray-500 hover:text-red-600 transition-colors"
+            title="Excluir rota"
+          >
+            <Trash2 className="w-4 h-4" strokeWidth={1.5} />
+          </button>
+        </div>
+      ),
     },
   ];
 
   return (
     <div className="min-h-screen bg-[#F5F5F0]">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
+      <div className="max-w-full mx-auto space-y-4 px-4">
+        {/* Header Compacto */}
+        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center justify-center w-14 h-14 bg-linear-to-br from-[#1A1A1A] to-gray-700 rounded-2xl shadow-lg">
-                <MapPin className="w-7 h-7 text-white" strokeWidth={2} />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold text-[#1A1A1A] mb-1">Rotas</h1>
-                <p className="text-sm text-gray-600">
-                  Gerencie e monitore todas as rotas de entrega em tempo real
-                </p>
-              </div>
+            <div>
+              <h1 className="text-xl font-bold text-[#1A1A1A]">Rotas</h1>
+              <p className="text-xs text-gray-500">Gerencie suas rotas de entrega</p>
             </div>
-            <div className="flex items-center gap-3">
-              <Button variant="outline" onClick={handleExport} className="h-11 shadow-sm">
-                <Download className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                Exportar
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" onClick={handleExport} className="h-9 px-3">
+                <Download className="w-4 h-4" strokeWidth={1.5} />
               </Button>
-              <Button variant="outline" onClick={fetchRoutes} className="h-11 shadow-sm">
-                <RefreshCw className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                Atualizar
+              <Button variant="outline" onClick={fetchRoutes} className="h-9 px-3">
+                <RefreshCw
+                  className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`}
+                  strokeWidth={1.5}
+                />
               </Button>
-              <Button onClick={() => setShowCreateModal(true)} className="h-11 shadow-lg">
-                <Plus className="w-4 h-4 mr-2" strokeWidth={1.5} />
+              <Button onClick={() => setShowCreateModal(true)} className="h-9 px-4">
+                <Plus className="w-4 h-4 mr-1" strokeWidth={2} />
                 Nova Rota
               </Button>
             </div>
           </div>
         </div>
-
-        {/* Metrics */}
-        {metrics && <RouteMetricsCard metrics={metrics} />}
 
         {/* Filters */}
         <RouteFilters
@@ -338,6 +487,20 @@ export function RoutesPage() {
           onSubmit={handleCreateRoute}
           isLoading={isCreating}
         />
+
+        {/* Delete Confirmation Modal */}
+        <ConfirmDeleteModal
+          isOpen={deleteModal.isOpen}
+          routeName={deleteModal.route?.name || ""}
+          isDeleting={isDeleting}
+          onConfirm={handleDeleteRoute}
+          onCancel={closeDeleteModal}
+        />
+
+        {/* Toast Notification */}
+        {toast && (
+          <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
+        )}
       </div>
     </div>
   );
