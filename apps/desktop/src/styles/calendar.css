@@ -1,0 +1,32 @@
+/**
+ * Estilos suaves para campos de data
+ * Seguindo o design system do NexusTransit
+ */
+
+/* Placeholder quando o campo está vazio */
+input[type="date"]:not(:focus):invalid,
+input[type="datetime-local"]:not(:focus):invalid {
+  color: #9CA3AF;
+}
+
+/* Remove placeholder ao focar */
+input[type="date"]:focus::-webkit-datetime-edit,
+input[type="datetime-local"]:focus::-webkit-datetime-edit {
+  color: #1A1A1A;
+}
+
+/* Melhora a legibilidade */
+input[type="date"],
+input[type="datetime-local"],
+input[type="time"] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Previne zoom em dispositivos móveis */
+@media (hover: none) and (pointer: coarse) {
+  input[type="date"],
+  input[type="datetime-local"],
+  input[type="time"] {
+    font-size: 16px;
+  }
+}
