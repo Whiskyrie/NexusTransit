@@ -1,50 +1,88 @@
 import { RouteStatus } from "../../types/route.types";
+import { Clock, Truck, PauseCircle, PackageCheck, Ban, LucideIcon } from "lucide-react";
 
 interface RouteStatusBadgeProps {
   status: RouteStatus;
+  size?: "sm" | "md" | "lg";
+  showLabel?: boolean;
 }
 
-const statusConfig: Record<RouteStatus, { label: string; bg: string; text: string; dot: string }> =
+const statusConfig: Record<
+  RouteStatus,
   {
-    [RouteStatus.PENDING]: {
-      label: "Pendente",
-      bg: "bg-[#FEF3C7]",
-      text: "text-[#D97706]",
-      dot: "bg-[#F59E0B]",
-    },
-    [RouteStatus.IN_PROGRESS]: {
-      label: "Em Andamento",
-      bg: "bg-[#EFF6FF]",
-      text: "text-[#2563EB]",
-      dot: "bg-[#3B82F6]",
-    },
-    [RouteStatus.PAUSED]: {
-      label: "Pausada",
-      bg: "bg-[#F3F4F6]",
-      text: "text-[#6B7280]",
-      dot: "bg-[#9CA3AF]",
-    },
-    [RouteStatus.COMPLETED]: {
-      label: "Concluída",
-      bg: "bg-[#ECFDF5]",
-      text: "text-[#059669]",
-      dot: "bg-[#10B981]",
-    },
-    [RouteStatus.CANCELLED]: {
-      label: "Cancelada",
-      bg: "bg-[#FEF2F2]",
-      text: "text-[#DC2626]",
-      dot: "bg-[#EF4444]",
-    },
+    label: string;
+    bg: string;
+    iconColor: string;
+    icon: LucideIcon;
+  }
+> = {
+  [RouteStatus.PLANNED]: {
+    label: "Planejada",
+    bg: "bg-amber-100",
+    iconColor: "text-amber-600",
+    icon: Clock,
+  },
+  [RouteStatus.IN_PROGRESS]: {
+    label: "Em Andamento",
+    bg: "bg-blue-100",
+    iconColor: "text-blue-600",
+    icon: Truck,
+  },
+  [RouteStatus.PAUSED]: {
+    label: "Pausada",
+    bg: "bg-slate-200",
+    iconColor: "text-slate-600",
+    icon: PauseCircle,
+  },
+  [RouteStatus.COMPLETED]: {
+    label: "Concluída",
+    bg: "bg-emerald-100",
+    iconColor: "text-emerald-600",
+    icon: PackageCheck,
+  },
+  [RouteStatus.CANCELLED]: {
+    label: "Cancelada",
+    bg: "bg-red-100",
+    iconColor: "text-red-600",
+    icon: Ban,
+  },
+};
+
+export function RouteStatusBadge({
+  status,
+  size = "md",
+  showLabel = false,
+}: RouteStatusBadgeProps) {
+  const config = statusConfig[status];
+  const Icon = config.icon;
+
+  const iconSizes = {
+    sm: "w-4 h-4",
+    md: "w-5 h-5",
+    lg: "w-6 h-6",
   };
 
-export function RouteStatusBadge({ status }: RouteStatusBadgeProps) {
-  const config = statusConfig[status];
+  const containerSizes = {
+    sm: "w-6 h-6",
+    md: "w-8 h-8",
+    lg: "w-10 h-10",
+  };
+
+  if (showLabel) {
+    return (
+      <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full ${config.bg}`}>
+        <Icon className={`${iconSizes.sm} ${config.iconColor}`} strokeWidth={2} />
+        <span className={`text-xs font-medium ${config.iconColor}`}>{config.label}</span>
+      </div>
+    );
+  }
 
   return (
-    <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full ${config.bg}`}>
-      <div className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
-      <span className={`text-xs font-medium ${config.text}`}>{config.label}</span>
+    <div
+      className={`inline-flex items-center justify-center ${containerSizes[size]} rounded-full ${config.bg}`}
+      title={config.label}
+    >
+      <Icon className={`${iconSizes[size]} ${config.iconColor}`} strokeWidth={2} />
     </div>
   );
 }
