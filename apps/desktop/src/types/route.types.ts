@@ -3,11 +3,19 @@
  */
 
 export enum RouteStatus {
-  PENDING = "PENDING",
+  PLANNED = "PLANNED",
   IN_PROGRESS = "IN_PROGRESS",
   PAUSED = "PAUSED",
   COMPLETED = "COMPLETED",
   CANCELLED = "CANCELLED",
+}
+
+export enum RouteType {
+  URBAN = "URBAN",
+  INTERSTATE = "INTERSTATE",
+  RURAL = "RURAL",
+  EXPRESS = "EXPRESS",
+  LOCAL = "LOCAL",
 }
 
 export enum RoutePriority {
@@ -17,33 +25,90 @@ export enum RoutePriority {
   URGENT = "URGENT",
 }
 
-export interface Route {
+export interface RouteVehicle {
   id: string;
-  name: string;
-  status: RouteStatus;
-  priority: RoutePriority;
-  driver_id?: string;
-  driver_name?: string;
-  vehicle_id?: string;
-  vehicle_plate?: string;
-  start_date: string;
-  estimated_end_date?: string;
-  actual_end_date?: string;
-  total_deliveries: number;
-  completed_deliveries: number;
-  total_distance?: number;
-  estimated_duration?: number;
+  license_plate: string;
+  brand: string;
+  model: string;
+  vehicle_type: string;
+}
+
+export interface RouteDriver {
+  id: string;
+  full_name: string;
+  email: string;
+  phone: string;
+  cpf: string;
+}
+
+export interface RouteStop {
+  id: string;
+  customer_address_id: string | null;
+  sequence_order: number;
+  status: string;
+  address: string;
+  coordinates?: { x: number; y: number };
+  planned_arrival_time: string | null;
+  planned_departure_time: string | null;
+  actual_arrival_time: string | null;
+  actual_departure_time: string | null;
+  notes: string | null;
   created_at: string;
   updated_at: string;
 }
 
+export interface Route {
+  id: string;
+  route_code: string;
+  name: string;
+  description?: string;
+  status: RouteStatus;
+  type: RouteType;
+  vehicle: RouteVehicle;
+  vehicle_id: string;
+  driver: RouteDriver;
+  driver_id: string;
+  origin_address: string;
+  origin_coordinates?: { x: number; y: number };
+  destination_address: string;
+  destination_coordinates?: { x: number; y: number };
+  planned_date: string;
+  planned_start_time: string;
+  planned_end_time: string;
+  actual_start_time: string | null;
+  actual_end_time: string | null;
+  estimated_distance_km: number;
+  actual_distance_km: number | null;
+  estimated_duration_minutes: number | null;
+  actual_duration_minutes: number | null;
+  total_load_kg: number | null;
+  total_volume_m3: number | null;
+  difficulty_level: number;
+  notes: string | null;
+  cancellation_reason: string | null;
+  cancelled_at: string | null;
+  stops: RouteStop[];
+  created_at: string;
+  updated_at: string;
+  // Campos computados
+  priority?: RoutePriority;
+  total_deliveries: number;
+  completed_deliveries: number;
+}
+
 export interface CreateRouteDto {
   name: string;
-  driver_id?: string;
-  vehicle_id?: string;
-  start_date: string;
-  estimated_end_date?: string;
-  priority?: RoutePriority;
+  description?: string;
+  driver_id: string;
+  vehicle_id: string;
+  type: RouteType;
+  planned_date: string;
+  planned_start_time: string;
+  planned_end_time?: string;
+  origin_address: string;
+  destination_address?: string;
+  estimated_distance_km?: number;
+  notes?: string;
 }
 
 export type UpdateRouteDto = Partial<CreateRouteDto>;
@@ -53,7 +118,7 @@ export interface RouteFilters {
   limit?: number;
   search?: string;
   status?: RouteStatus;
-  priority?: RoutePriority;
+  type?: RouteType;
   driver_id?: string;
   vehicle_id?: string;
   start_date_from?: string;
