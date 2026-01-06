@@ -10,3 +10,4 @@ export * from "./AuthCard";
 export * from "./Table";
 export * from "./Toast";
 export * from "./ConfirmDeleteModal";
+export * from "./Select";
