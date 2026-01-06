@@ -2,8 +2,10 @@ import { RouteStatus, RouteType, RouteFilters as RouteFiltersType } from "../../
 import { Input } from "../ui/Input";
 import { DateRangePicker } from "../ui/DateRangePicker";
 import { Button } from "../ui/Button";
+import { Select, type SelectOption } from "../ui/Select";
 import { Search, SlidersHorizontal, X, ChevronDown } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { format } from "date-fns";
 
 interface RouteFiltersProps {
   filters: RouteFiltersType;
@@ -35,15 +37,39 @@ export function RouteFilters({ filters, onFiltersChange, onClearFilters }: Route
     filters.type,
     filters.driver_id,
     filters.vehicle_id,
-    filters.start_date_from,
-    filters.start_date_to,
+    filters.route_date_from,
+    filters.route_date_to,
   ].filter(Boolean).length;
 
   const hasActiveFilters = activeFiltersCount > 0 || filters.search;
 
-  const handleFilterChange = (key: keyof RouteFiltersType, value: any) => {
+  const handleFilterChange = (key: keyof RouteFiltersType, value: unknown) => {
     onFiltersChange({ ...filters, [key]: value, page: 1 });
   };
+
+  // Opções de status para o Select
+  const statusOptions: SelectOption<string>[] = useMemo(
+    () => [
+      { value: "", label: "Todos os status" },
+      ...Object.values(RouteStatus).map((status) => ({
+        value: status,
+        label: statusLabels[status],
+      })),
+    ],
+    [],
+  );
+
+  // Opções de tipo de rota para o Select
+  const typeOptions: SelectOption<string>[] = useMemo(
+    () => [
+      { value: "", label: "Todos os tipos" },
+      ...Object.values(RouteType).map((type) => ({
+        value: type,
+        label: typeLabels[type],
+      })),
+    ],
+    [],
+  );
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -121,65 +147,35 @@ export function RouteFilters({ filters, onFiltersChange, onClearFilters }: Route
       {/* Advanced Filters Panel */}
       <div
         className={`grid transition-all duration-300 ease-out ${
-          isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+          isExpanded
+            ? "grid-rows-[1fr] opacity-100"
+            : "grid-rows-[0fr] opacity-0 pointer-events-none"
         }`}
       >
-        <div className="overflow-hidden">
+        <div className={isExpanded ? "" : "overflow-hidden"}>
           <div className="px-4 pb-4 pt-2 border-t border-gray-100">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Status */}
-              <div className="space-y-2">
-                <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                  Status
-                </label>
-                <div className="relative">
-                  <select
-                    value={filters.status || ""}
-                    onChange={(e) =>
-                      handleFilterChange(
-                        "status",
-                        e.target.value ? (e.target.value as RouteStatus) : undefined,
-                      )
-                    }
-                    className="w-full h-11 px-4 pr-10 text-sm font-medium border border-gray-200 rounded-xl bg-white cursor-pointer focus:outline-none focus:border-[#1A1A1A] focus:ring-2 focus:ring-[#1A1A1A]/10 appearance-none transition-all"
-                  >
-                    <option value="">Todos os status</option>
-                    {Object.values(RouteStatus).map((status) => (
-                      <option key={status} value={status}>
-                        {statusLabels[status]}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                </div>
-              </div>
+              <Select
+                label="Status"
+                options={statusOptions}
+                value={filters.status || ""}
+                onChange={(value) =>
+                  handleFilterChange("status", value ? (value as RouteStatus) : undefined)
+                }
+                placeholder="Todos os status"
+              />
 
               {/* Type */}
-              <div className="space-y-2">
-                <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                  Tipo de Rota
-                </label>
-                <div className="relative">
-                  <select
-                    value={filters.type || ""}
-                    onChange={(e) =>
-                      handleFilterChange(
-                        "type",
-                        e.target.value ? (e.target.value as RouteType) : undefined,
-                      )
-                    }
-                    className="w-full h-11 px-4 pr-10 text-sm font-medium border border-gray-200 rounded-xl bg-white cursor-pointer focus:outline-none focus:border-[#1A1A1A] focus:ring-2 focus:ring-[#1A1A1A]/10 appearance-none transition-all"
-                  >
-                    <option value="">Todos os tipos</option>
-                    {Object.values(RouteType).map((type) => (
-                      <option key={type} value={type}>
-                        {typeLabels[type]}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                </div>
-              </div>
+              <Select
+                label="Tipo de Rota"
+                options={typeOptions}
+                value={filters.type || ""}
+                onChange={(value) =>
+                  handleFilterChange("type", value ? (value as RouteType) : undefined)
+                }
+                placeholder="Todos os tipos"
+              />
 
               {/* Driver ID */}
               <div className="space-y-2">
@@ -214,12 +210,25 @@ export function RouteFilters({ filters, onFiltersChange, onClearFilters }: Route
                 </label>
                 <DateRangePicker
                   value={{
-                    start: filters.start_date_from ? new Date(filters.start_date_from) : undefined,
-                    end: filters.start_date_to ? new Date(filters.start_date_to) : undefined,
+                    start: filters.route_date_from
+                      ? new Date(filters.route_date_from + "T12:00:00")
+                      : undefined,
+                    end: filters.route_date_to
+                      ? new Date(filters.route_date_to + "T12:00:00")
+                      : undefined,
                   }}
                   onChange={(range) => {
-                    handleFilterChange("start_date_from", range.start?.toISOString() || undefined);
-                    handleFilterChange("start_date_to", range.end?.toISOString() || undefined);
+                    // Formatar datas como YYYY-MM-DD usando date-fns para preservar timezone local
+                    const formatLocalDate = (date: Date | undefined) => {
+                      if (!date) return undefined;
+                      return format(date, "yyyy-MM-dd");
+                    };
+                    onFiltersChange({
+                      ...filters,
+                      route_date_from: formatLocalDate(range.start),
+                      route_date_to: formatLocalDate(range.end),
+                      page: 1,
+                    });
                   }}
                 />
               </div>
