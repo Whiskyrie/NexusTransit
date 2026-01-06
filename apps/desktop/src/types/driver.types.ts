@@ -13,15 +13,15 @@ export enum DriverStatus {
 }
 
 export enum CNHCategory {
-  A = "A",
-  B = "B",
-  C = "C",
-  D = "D",
-  E = "E",
-  AB = "AB",
-  AC = "AC",
-  AD = "AD",
-  AE = "AE",
+  A = "a",
+  B = "b",
+  C = "c",
+  D = "d",
+  E = "e",
+  AB = "ab",
+  AC = "ac",
+  AD = "ad",
+  AE = "ae",
 }
 
 export interface Driver {

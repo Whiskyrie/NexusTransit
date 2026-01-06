@@ -121,8 +121,8 @@ export interface RouteFilters {
   type?: RouteType;
   driver_id?: string;
   vehicle_id?: string;
-  start_date_from?: string;
-  start_date_to?: string;
+  route_date_from?: string;
+  route_date_to?: string;
 }
 
 export interface RouteMetrics {

@@ -7,10 +7,11 @@ export enum VehicleStatus {
 }
 
 export enum VehicleType {
-  MOTORCYCLE = "MOTORCYCLE",
-  CAR = "CAR",
-  VAN = "VAN",
-  TRUCK = "TRUCK",
+  MOTORCYCLE = "motorcycle",
+  CAR = "car",
+  VAN = "van",
+  TRUCK = "truck",
+  BICYCLE = "bicycle",
 }
 
 export enum FuelType {

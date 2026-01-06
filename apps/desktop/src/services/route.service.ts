@@ -19,8 +19,8 @@ export const routeService = {
     if (filters?.type) params.append("type", filters.type);
     if (filters?.driver_id) params.append("driver_id", filters.driver_id);
     if (filters?.vehicle_id) params.append("vehicle_id", filters.vehicle_id);
-    if (filters?.start_date_from) params.append("start_date_from", filters.start_date_from);
-    if (filters?.start_date_to) params.append("start_date_to", filters.start_date_to);
+    if (filters?.route_date_from) params.append("route_date_from", filters.route_date_from);
+    if (filters?.route_date_to) params.append("route_date_to", filters.route_date_to);
 
     const response = await api.get<PaginatedResponse<Route>>(`/routes?${params.toString()}`);
     return response.data;
