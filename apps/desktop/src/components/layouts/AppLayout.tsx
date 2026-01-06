@@ -1,15 +1,5 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
-import {
-  LayoutDashboard,
-  Users,
-  Truck,
-  UserCircle,
-  Package,
-  MapPin,
-  FileText,
-  Settings,
-  LogOut,
-} from "lucide-react";
+import { LayoutDashboard, Users, Truck, UserCircle, MapPin, LogOut } from "lucide-react";
 import { useAuthStore, useUser } from "../../stores/auth.store";
 
 /**
@@ -46,12 +36,7 @@ export function AppLayout() {
         {/* Logo */}
         <div className="p-6">
           <div className="flex items-center gap-3 px-2">
-            <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
-              <Truck className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h1 className="text-lg font-bold text-[#1A1A1A] leading-tight">Nexus</h1>
-            </div>
+            <img src="/nexus.svg" alt="Nexus Transit" className="h-8 w-auto" />
           </div>
         </div>
 
