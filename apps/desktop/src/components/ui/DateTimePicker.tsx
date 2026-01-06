@@ -80,7 +80,8 @@ export function DateTimePicker({
     }).format(date);
   };
 
-  const handleDateChange = (date: Date) => {
+  const handleDateChange = (date: Date | undefined) => {
+    if (!date) return;
     setSelectedDate(date);
     date.setHours(parseInt(hours), parseInt(minutes));
     onChange?.(date);

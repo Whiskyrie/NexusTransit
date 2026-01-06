@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { Calendar as CalendarIcon, X } from "lucide-react";
 import { Calendar } from "./Calendar";
 import { clsx } from "clsx";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface DatePickerProps {
   value?: Date;
@@ -31,10 +33,15 @@ export function DatePicker({
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
+  const calendarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const isOutsideContainer = containerRef.current && !containerRef.current.contains(target);
+      const isOutsideCalendar = calendarRef.current && !calendarRef.current.contains(target);
+
+      if (isOutsideContainer && isOutsideCalendar) {
         setIsOpen(false);
       }
     };
@@ -45,7 +52,7 @@ export function DatePicker({
       // Calcular posição do dropdown
       if (containerRef.current) {
         const rect = containerRef.current.getBoundingClientRect();
-        const dropdownHeight = 480; // Altura aproximada do calendário
+        const dropdownHeight = 400; // Altura aproximada do calendário
         const spaceBelow = window.innerHeight - rect.bottom - 16;
         const spaceAbove = rect.top - 16;
 
@@ -68,16 +75,14 @@ export function DatePicker({
   }, [isOpen]);
 
   const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat("pt-BR", {
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-    }).format(date);
+    return format(date, "d 'de' MMMM 'de' yyyy", { locale: ptBR });
   };
 
-  const handleDateChange = (date: Date) => {
+  const handleDateChange = (date: Date | undefined) => {
     onChange?.(date);
-    setIsOpen(false);
+    if (date) {
+      setIsOpen(false);
+    }
   };
 
   const handleClear = (e: React.MouseEvent) => {
@@ -147,7 +152,8 @@ export function DatePicker({
       {/* Calendar Dropdown */}
       {isOpen && (
         <div
-          className="fixed z-9999 animate-in fade-in slide-in-from-top-2 duration-200 overflow-y-auto"
+          ref={calendarRef}
+          className="fixed z-9999"
           style={{
             top: `${dropdownPosition.top}px`,
             left: `${dropdownPosition.left}px`,
