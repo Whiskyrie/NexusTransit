@@ -28,12 +28,12 @@ export function RouteActions({
 }: RouteActionsProps) {
   const [showDropdown, setShowDropdown] = useState(false);
 
-  const canStart = status === RouteStatus.PENDING;
+  const canStart = status === RouteStatus.PLANNED;
   const canPause = status === RouteStatus.IN_PROGRESS;
   const canResume = status === RouteStatus.PAUSED;
   const canComplete = status === RouteStatus.IN_PROGRESS;
-  const canCancel = status === RouteStatus.PENDING || status === RouteStatus.PAUSED;
-  const canOptimize = status === RouteStatus.PENDING || status === RouteStatus.PAUSED;
+  const canCancel = status === RouteStatus.PLANNED || status === RouteStatus.PAUSED;
+  const canOptimize = status === RouteStatus.PLANNED || status === RouteStatus.PAUSED;
 
   const handleAction = async (action: () => void) => {
     setShowDropdown(false);
