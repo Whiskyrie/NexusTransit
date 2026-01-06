@@ -1,8 +1,15 @@
 export enum DriverStatus {
   ACTIVE = "ACTIVE",
   INACTIVE = "INACTIVE",
+  SUSPENDED = "SUSPENDED",
   ON_LEAVE = "ON_LEAVE",
   BLOCKED = "BLOCKED",
+  // Valores legados (lowercase)
+  AVAILABLE = "available",
+  ON_ROUTE = "on_route",
+  UNAVAILABLE = "unavailable",
+  BLOCKED_LEGACY = "blocked",
+  VACATION = "vacation",
 }
 
 export enum CNHCategory {
