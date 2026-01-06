@@ -1,15 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { X, User, Mail, Phone, CreditCard, FileText } from "lucide-react";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { DatePicker } from "../ui/DatePicker";
-import { CreateDriverDto, CNHCategory, Driver } from "../../types/driver.types";
+import { Select, type SelectOption } from "../ui/Select";
+import { CreateDriverDto, UpdateDriverDto, CNHCategory, Driver } from "../../types/driver.types";
 import { format, parse } from "date-fns";
+import { maskCPF, maskPhone, formatCPF, formatPhone } from "../../utils/formatters";
 
 interface DriverFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: CreateDriverDto) => Promise<void>;
+  onSubmit: (data: CreateDriverDto | UpdateDriverDto) => Promise<void>;
   isLoading?: boolean;
   driver?: Driver | null;
 }
@@ -37,11 +39,11 @@ export function DriverFormModal({
   useEffect(() => {
     if (driver) {
       setFormData({
-        cpf: driver.cpf,
+        cpf: formatCPF(driver.cpf),
         full_name: driver.full_name,
         birth_date: driver.birth_date,
         email: driver.email,
-        phone: driver.phone,
+        phone: formatPhone(driver.phone),
         cnh_number: driver.cnh_number,
         cnh_category: driver.cnh_category,
         cnh_expiration_date: driver.cnh_expiration_date,
@@ -68,10 +70,14 @@ export function DriverFormModal({
       newErrors.full_name = "Nome completo é obrigatório";
     }
 
-    if (!formData.cpf.trim()) {
-      newErrors.cpf = "CPF é obrigatório";
-    } else if (!/^\d{11}$/.test(formData.cpf.replace(/\D/g, ""))) {
-      newErrors.cpf = "CPF inválido";
+    // CPF só é obrigatório na criação
+    if (!driver) {
+      const cpfDigits = formData.cpf.replace(/\D/g, "");
+      if (!cpfDigits) {
+        newErrors.cpf = "CPF é obrigatório";
+      } else if (cpfDigits.length !== 11) {
+        newErrors.cpf = "CPF deve ter 11 dígitos";
+      }
     }
 
     if (!formData.email.trim()) {
@@ -80,12 +86,21 @@ export function DriverFormModal({
       newErrors.email = "E-mail inválido";
     }
 
-    if (!formData.phone.trim()) {
+    const phoneDigits = formData.phone.replace(/\D/g, "");
+    if (!phoneDigits) {
       newErrors.phone = "Telefone é obrigatório";
+    } else if (phoneDigits.length < 10 || phoneDigits.length > 11) {
+      newErrors.phone = "Telefone deve ter 10 ou 11 dígitos";
     }
 
-    if (!formData.cnh_number.trim()) {
-      newErrors.cnh_number = "CNH é obrigatória";
+    // CNH só é obrigatória na criação
+    if (!driver) {
+      const cnhDigits = formData.cnh_number.replace(/\D/g, "");
+      if (!cnhDigits) {
+        newErrors.cnh_number = "CNH é obrigatória";
+      } else if (cnhDigits.length !== 11) {
+        newErrors.cnh_number = "CNH deve ter 11 dígitos";
+      }
     }
 
     if (!formData.birth_date) {
@@ -107,7 +122,41 @@ export function DriverFormModal({
       return;
     }
 
-    await onSubmit(formData);
+    if (driver) {
+      // Para atualização, enviar apenas os campos que mudaram
+      const updateData: UpdateDriverDto = {};
+
+      if (formData.full_name !== driver.full_name) {
+        updateData.full_name = formData.full_name;
+      }
+      if (formData.email !== driver.email) {
+        updateData.email = formData.email;
+      }
+      if (formData.phone.replace(/\D/g, "") !== driver.phone.replace(/\D/g, "")) {
+        updateData.phone = formData.phone.replace(/\D/g, "");
+      }
+      if (formData.birth_date !== driver.birth_date) {
+        updateData.birth_date = formData.birth_date;
+      }
+      if (formData.cnh_category !== driver.cnh_category) {
+        updateData.cnh_category = formData.cnh_category;
+      }
+      if (formData.cnh_expiration_date !== driver.cnh_expiration_date) {
+        updateData.cnh_expiration_date = formData.cnh_expiration_date;
+      }
+
+      await onSubmit(updateData);
+    } else {
+      // Para criação, enviar todos os campos
+      const createData: CreateDriverDto = {
+        ...formData,
+        cpf: formData.cpf.replace(/\D/g, ""),
+        phone: formData.phone.replace(/\D/g, ""),
+        cnh_number: formData.cnh_number.replace(/\D/g, ""),
+      };
+
+      await onSubmit(createData);
+    }
   };
 
   const handleInputChange = (field: keyof CreateDriverDto, value: string) => {
@@ -130,6 +179,22 @@ export function DriverFormModal({
       handleInputChange("cnh_expiration_date", formattedDate);
     }
   };
+
+  // Options para o Select de categoria CNH
+  const cnhCategoryOptions: SelectOption<string>[] = useMemo(
+    () => [
+      { value: CNHCategory.A, label: "A" },
+      { value: CNHCategory.B, label: "B" },
+      { value: CNHCategory.C, label: "C" },
+      { value: CNHCategory.D, label: "D" },
+      { value: CNHCategory.E, label: "E" },
+      { value: CNHCategory.AB, label: "AB" },
+      { value: CNHCategory.AC, label: "AC" },
+      { value: CNHCategory.AD, label: "AD" },
+      { value: CNHCategory.AE, label: "AE" },
+    ],
+    [],
+  );
 
   if (!isOpen) return null;
 
@@ -181,16 +246,20 @@ export function DriverFormModal({
           {/* Row 2: CPF e Data de Nascimento */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1.5">CPF *</label>
+              <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                CPF {!driver && "*"}
+              </label>
               <Input
                 value={formData.cpf}
-                onChange={(e) => handleInputChange("cpf", e.target.value.replace(/\D/g, ""))}
+                onChange={(e) => handleInputChange("cpf", maskCPF(e.target.value))}
                 placeholder="000.000.000-00"
                 icon={<CreditCard className="w-4 h-4 text-gray-400" strokeWidth={1.5} />}
                 error={errors.cpf}
                 className="h-10! text-sm!"
                 maxLength={14}
+                disabled={!!driver}
               />
+              {driver && <p className="text-xs text-gray-400 mt-1">CPF não pode ser alterado</p>}
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1.5">
@@ -227,7 +296,7 @@ export function DriverFormModal({
               <label className="block text-xs font-medium text-gray-700 mb-1.5">Telefone *</label>
               <Input
                 value={formData.phone}
-                onChange={(e) => handleInputChange("phone", e.target.value.replace(/\D/g, ""))}
+                onChange={(e) => handleInputChange("phone", maskPhone(e.target.value))}
                 placeholder="(00) 00000-0000"
                 icon={<Phone className="w-4 h-4 text-gray-400" strokeWidth={1.5} />}
                 error={errors.phone}
@@ -241,7 +310,7 @@ export function DriverFormModal({
           <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1.5">
-                Número da CNH *
+                Número da CNH {!driver && "*"}
               </label>
               <Input
                 value={formData.cnh_number}
@@ -251,26 +320,18 @@ export function DriverFormModal({
                 error={errors.cnh_number}
                 className="h-10! text-sm!"
                 maxLength={11}
+                disabled={!!driver}
               />
+              {driver && <p className="text-xs text-gray-400 mt-1">CNH não pode ser alterada</p>}
             </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1.5">Categoria *</label>
-              <select
-                value={formData.cnh_category}
-                onChange={(e) => handleInputChange("cnh_category", e.target.value as CNHCategory)}
-                className="w-full h-10 px-3 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              >
-                <option value={CNHCategory.A}>A</option>
-                <option value={CNHCategory.B}>B</option>
-                <option value={CNHCategory.C}>C</option>
-                <option value={CNHCategory.D}>D</option>
-                <option value={CNHCategory.E}>E</option>
-                <option value={CNHCategory.AB}>AB</option>
-                <option value={CNHCategory.AC}>AC</option>
-                <option value={CNHCategory.AD}>AD</option>
-                <option value={CNHCategory.AE}>AE</option>
-              </select>
-            </div>
+            <Select
+              label="Categoria *"
+              options={cnhCategoryOptions}
+              value={formData.cnh_category}
+              onChange={(value) => handleInputChange("cnh_category", value as CNHCategory)}
+              compact
+              position="top"
+            />
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1.5">
                 Validade da CNH *
