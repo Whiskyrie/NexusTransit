@@ -137,6 +137,8 @@ export function RoutesPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedRoute, setSelectedRoute] = useState<Route | null>(null);
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; route: Route | null }>({
     isOpen: false,
     route: null,
@@ -238,9 +240,8 @@ export function RoutesPage() {
   };
 
   const handleEditRoute = (route: Route) => {
-    // TODO: Implementar modal de edição
-    void route; // Evita erro de variável não utilizada
-    setToast({ message: "Função de edição em desenvolvimento.", type: "error" });
+    setSelectedRoute(route);
+    setShowEditModal(true);
   };
 
   const handleExport = () => {
@@ -486,6 +487,18 @@ export function RoutesPage() {
           onClose={() => setShowCreateModal(false)}
           onSubmit={handleCreateRoute}
           isLoading={isCreating}
+        />
+
+        {/* Edit Modal */}
+        <RouteFormModal
+          isOpen={showEditModal}
+          onClose={() => {
+            setShowEditModal(false);
+            setSelectedRoute(null);
+          }}
+          onSubmit={handleCreateRoute}
+          isLoading={isCreating}
+          route={selectedRoute}
         />
 
         {/* Delete Confirmation Modal */}
