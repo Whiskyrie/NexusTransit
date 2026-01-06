@@ -15,7 +15,9 @@ import type {
   Driver,
   DriverFilters as DriverFiltersType,
   CreateDriverDto,
+  UpdateDriverDto,
 } from "../types/driver.types";
+import { formatCPF, formatPhone, formatCNH } from "../utils/formatters";
 
 export function DriversPage() {
   const [drivers, setDrivers] = useState<Driver[]>([]);
@@ -35,6 +37,8 @@ export function DriversPage() {
   // Modals
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
     driverId: string | null;
@@ -97,10 +101,10 @@ export function DriversPage() {
     });
   };
 
-  const handleCreateDriver = async (data: CreateDriverDto) => {
+  const handleCreateDriver = async (data: CreateDriverDto | UpdateDriverDto) => {
     try {
       setIsCreating(true);
-      await driverService.create(data);
+      await driverService.create(data as CreateDriverDto);
       setIsFormModalOpen(false);
       showToast("Motorista criado com sucesso!", "success");
       fetchDrivers();
@@ -110,6 +114,28 @@ export function DriversPage() {
         error instanceof Error
           ? error.message
           : "Erro ao criar motorista. Verifique os dados e tente novamente.";
+      showToast(errorMessage, "error");
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleUpdateDriver = async (data: CreateDriverDto | UpdateDriverDto) => {
+    if (!selectedDriver) return;
+
+    try {
+      setIsCreating(true);
+      await driverService.update(selectedDriver.id, data);
+      setIsEditModalOpen(false);
+      setSelectedDriver(null);
+      showToast("Motorista atualizado com sucesso!", "success");
+      fetchDrivers();
+    } catch (error) {
+      console.error("Failed to update driver:", error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Erro ao atualizar motorista. Verifique os dados e tente novamente.";
       showToast(errorMessage, "error");
     } finally {
       setIsCreating(false);
@@ -146,8 +172,8 @@ export function DriversPage() {
   };
 
   const handleEditDriver = (driver: Driver) => {
-    console.log("Edit driver:", driver);
-    // TODO: Implementar edição
+    setSelectedDriver(driver);
+    setIsEditModalOpen(true);
   };
 
   const columns: TableColumn<Driver>[] = [
@@ -157,7 +183,7 @@ export function DriversPage() {
       width: "25%",
       render: (driver) => (
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold shadow-sm">
+          <div className="w-10 h-10 rounded-full bg-linear-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold shadow-sm">
             {driver.full_name
               .split(" ")
               .map((n) => n[0])
@@ -176,9 +202,7 @@ export function DriversPage() {
       header: "CPF",
       width: "12%",
       render: (driver) => (
-        <span className="text-sm font-medium text-gray-700">
-          {driver.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4")}
-        </span>
+        <span className="text-sm font-medium text-gray-700">{formatCPF(driver.cpf)}</span>
       ),
     },
     {
@@ -187,8 +211,10 @@ export function DriversPage() {
       width: "15%",
       render: (driver) => (
         <div>
-          <div className="text-sm font-medium text-[#1A1A1A]">{driver.cnh_number}</div>
-          <div className="text-xs text-gray-500">Categoria: {driver.cnh_category}</div>
+          <div className="text-sm font-medium text-[#1A1A1A]">{formatCNH(driver.cnh_number)}</div>
+          <div className="text-xs text-gray-500">
+            Categoria: {driver.cnh_category.toUpperCase()}
+          </div>
         </div>
       ),
     },
@@ -196,7 +222,9 @@ export function DriversPage() {
       key: "phone",
       header: "Telefone",
       width: "12%",
-      render: (driver) => <span className="text-sm text-gray-700">{driver.phone}</span>,
+      render: (driver) => (
+        <span className="text-sm text-gray-700">{formatPhone(driver.phone)}</span>
+      ),
     },
     {
       key: "status",
@@ -265,6 +293,7 @@ export function DriversPage() {
               limit: filters.limit || 10,
               onPageChange: handlePageChange,
             }}
+            emptyMessage="Nenhum motorista encontrado"
           />
         </div>
 
@@ -274,6 +303,17 @@ export function DriversPage() {
           onClose={() => setIsFormModalOpen(false)}
           onSubmit={handleCreateDriver}
           isLoading={isCreating}
+        />
+
+        <DriverFormModal
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setSelectedDriver(null);
+          }}
+          onSubmit={handleUpdateDriver}
+          isLoading={isCreating}
+          driver={selectedDriver}
         />
 
         <ConfirmDeleteModal
