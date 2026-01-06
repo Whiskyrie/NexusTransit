@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository, InjectEntityManager } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere, ILike, Between, EntityManager } from 'typeorm';
+import { Repository, EntityManager } from 'typeorm';
 import { plainToInstance } from 'class-transformer';
 import { Route } from './entities/route.entity';
 import { RouteStop } from './entities/route_stop.entity';
@@ -360,26 +360,35 @@ export class RoutesService {
       ...filters
     } = filterDto;
 
-    const where: FindOptionsWhere<Route> = {};
+    // Usar QueryBuilder para busca mais flexível
+    const queryBuilder = this.routeRepository
+      .createQueryBuilder('route')
+      .leftJoinAndSelect('route.vehicle', 'vehicle')
+      .leftJoinAndSelect('route.driver', 'driver')
+      .leftJoinAndSelect('route.stops', 'stops');
 
+    // Busca por texto (nome da rota, código, nome do motorista, placa do veículo)
     if (search) {
-      where.name = ILike(`%${search}%`);
+      queryBuilder.andWhere(
+        '(route.name ILIKE :search OR route.route_code ILIKE :search OR driver.full_name ILIKE :search OR vehicle.license_plate ILIKE :search)',
+        { search: `%${search}%` },
+      );
     }
 
     if (filters.status) {
-      where.status = filters.status;
+      queryBuilder.andWhere('route.status = :status', { status: filters.status });
     }
 
     if (filters.type) {
-      where.type = filters.type;
+      queryBuilder.andWhere('route.type = :type', { type: filters.type });
     }
 
     if (filters.vehicle_id) {
-      where.vehicle_id = filters.vehicle_id;
+      queryBuilder.andWhere('route.vehicle_id = :vehicle_id', { vehicle_id: filters.vehicle_id });
     }
 
     if (filters.driver_id) {
-      where.driver_id = filters.driver_id;
+      queryBuilder.andWhere('route.driver_id = :driver_id', { driver_id: filters.driver_id });
     }
 
     if (filters.route_date_from || filters.route_date_to) {
@@ -396,16 +405,20 @@ export class RoutesService {
           ? new Date(endDateInput)
           : new Date(ROUTE_DATE_DEFAULTS.MAX_DATE);
 
-      where.planned_date = Between(startDate, endDate);
+      queryBuilder.andWhere('route.planned_date BETWEEN :startDate AND :endDate', {
+        startDate,
+        endDate,
+      });
     }
 
-    const [routes, total] = await this.routeRepository.findAndCount({
-      where,
-      relations: ['vehicle', 'driver', 'stops'],
-      take: limit,
-      skip: (page - 1) * limit,
-      order: { planned_date: 'DESC', created_at: 'DESC' },
-    });
+    // Ordenação e paginação
+    queryBuilder
+      .orderBy('route.planned_date', 'DESC')
+      .addOrderBy('route.created_at', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    const [routes, total] = await queryBuilder.getManyAndCount();
 
     const totalPages = Math.ceil(total / limit);
 
