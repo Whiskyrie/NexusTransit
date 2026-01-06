@@ -1,20 +1,22 @@
-import { useState, useEffect } from "react";
-import { CreateRouteDto, RouteType } from "../../types/route.types";
+import { useState, useEffect, useMemo } from "react";
+import { CreateRouteDto, RouteType, Route } from "../../types/route.types";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { DatePicker } from "../ui/DatePicker";
-import { X, MapPin, User, Truck, Clock, Route, FileText, Loader2 } from "lucide-react";
+import { Select, type SelectOption } from "../ui/Select";
+import { X, MapPin, Clock, Route as RouteIcon, FileText, Loader2 } from "lucide-react";
 import { driverService } from "../../services/driver.service";
 import { vehicleService } from "../../services/vehicle.service";
 import type { Driver } from "../../types/driver.types";
 import type { Vehicle } from "../../types/vehicle.types";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 
 interface RouteFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: CreateRouteDto) => void;
   isLoading?: boolean;
+  route?: Route | null;
 }
 
 // Gera código de rota único
@@ -31,6 +33,7 @@ export function RouteFormModal({
   onClose,
   onSubmit,
   isLoading = false,
+  route,
 }: RouteFormModalProps) {
   // Form state
   const [formData, setFormData] = useState({
@@ -63,27 +66,49 @@ export function RouteFormModal({
     if (isOpen) {
       fetchDrivers();
       fetchVehicles();
-      // Reset form
-      const now = new Date();
-      setSelectedDate(now);
-      setFormData({
-        route_code: generateRouteCode(),
-        name: "",
-        description: "",
-        driver_id: "",
-        vehicle_id: "",
-        type: RouteType.URBAN,
-        origin_address: "",
-        destination_address: "",
-        planned_date: format(now, "yyyy-MM-dd"),
-        planned_start_time: "08:00",
-        planned_end_time: "18:00",
-        estimated_distance_km: 0,
-        notes: "",
-      });
+
+      if (route) {
+        // Populate form with route data for editing
+        const routeDate = parse(route.planned_date, "yyyy-MM-dd", new Date());
+        setSelectedDate(routeDate);
+        setFormData({
+          route_code: route.route_code,
+          name: route.name,
+          description: route.description || "",
+          driver_id: route.driver_id,
+          vehicle_id: route.vehicle_id,
+          type: route.type,
+          origin_address: route.origin_address,
+          destination_address: route.destination_address,
+          planned_date: route.planned_date,
+          planned_start_time: route.planned_start_time,
+          planned_end_time: route.planned_end_time,
+          estimated_distance_km: route.estimated_distance_km || 0,
+          notes: route.notes || "",
+        });
+      } else {
+        // Reset form for new route
+        const now = new Date();
+        setSelectedDate(now);
+        setFormData({
+          route_code: generateRouteCode(),
+          name: "",
+          description: "",
+          driver_id: "",
+          vehicle_id: "",
+          type: RouteType.URBAN,
+          origin_address: "",
+          destination_address: "",
+          planned_date: format(now, "yyyy-MM-dd"),
+          planned_start_time: "08:00",
+          planned_end_time: "18:00",
+          estimated_distance_km: 0,
+          notes: "",
+        });
+      }
       setErrors({});
     }
-  }, [isOpen]);
+  }, [isOpen, route]);
 
   const fetchDrivers = async () => {
     try {
@@ -111,6 +136,41 @@ export function RouteFormModal({
     }
   };
 
+  // Options for Select components - MUST be before early return
+  const routeTypeOptions: SelectOption<string>[] = useMemo(
+    () => [
+      { value: RouteType.URBAN, label: "Urbana" },
+      { value: RouteType.INTERSTATE, label: "Interestadual" },
+      { value: RouteType.RURAL, label: "Rural" },
+      { value: RouteType.EXPRESS, label: "Expressa" },
+      { value: RouteType.LOCAL, label: "Local" },
+    ],
+    [],
+  );
+
+  const driverOptions: SelectOption<string>[] = useMemo(
+    () => [
+      { value: "", label: isLoadingDrivers ? "Carregando..." : "Selecione o motorista" },
+      ...drivers.map((driver) => ({
+        value: driver.id,
+        label: driver.full_name,
+      })),
+    ],
+    [drivers, isLoadingDrivers],
+  );
+
+  const vehicleOptions: SelectOption<string>[] = useMemo(
+    () => [
+      { value: "", label: isLoadingVehicles ? "Carregando..." : "Selecione o veículo" },
+      ...vehicles.map((vehicle) => ({
+        value: vehicle.id,
+        label: `${vehicle.license_plate} - ${vehicle.brand} ${vehicle.model}`,
+      })),
+    ],
+    [vehicles, isLoadingVehicles],
+  );
+
+  // Early return AFTER all hooks
   if (!isOpen) return null;
 
   const validateForm = (): boolean => {
@@ -184,14 +244,6 @@ export function RouteFormModal({
     }
   };
 
-  const routeTypeLabels: Record<RouteType, string> = {
-    [RouteType.URBAN]: "Urbana",
-    [RouteType.INTERSTATE]: "Interestadual",
-    [RouteType.RURAL]: "Rural",
-    [RouteType.EXPRESS]: "Expressa",
-    [RouteType.LOCAL]: "Local",
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Overlay */}
@@ -203,11 +255,15 @@ export function RouteFormModal({
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
-              <Route className="w-5 h-5 text-blue-600" strokeWidth={1.5} />
+              <RouteIcon className="w-5 h-5 text-blue-600" strokeWidth={1.5} />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-[#1A1A1A]">Nova Rota</h2>
-              <p className="text-xs text-gray-500">Código: {formData.route_code}</p>
+              <h2 className="text-lg font-bold text-[#1A1A1A]">
+                {route ? "Editar Rota" : "Nova Rota"}
+              </h2>
+              <p className="text-xs text-gray-500">
+                {route ? "Atualize as informações da rota" : `Código: ${formData.route_code}`}
+              </p>
             </div>
           </div>
           <button
@@ -238,18 +294,13 @@ export function RouteFormModal({
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1.5">Tipo *</label>
-              <select
-                name="type"
+              <Select
+                options={routeTypeOptions}
                 value={formData.type}
-                onChange={handleChange}
-                className="w-full h-10 px-3 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              >
-                {Object.entries(routeTypeLabels).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
+                onChange={(value) => setFormData((prev) => ({ ...prev, type: value as RouteType }))}
+                placeholder="Selecione o tipo"
+                compact
+              />
             </div>
           </div>
 
@@ -257,63 +308,37 @@ export function RouteFormModal({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1.5">Motorista *</label>
-              <div className="relative">
-                <User
-                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
-                  strokeWidth={1.5}
-                />
-                <select
-                  name="driver_id"
-                  value={formData.driver_id}
-                  onChange={handleChange}
-                  disabled={isLoadingDrivers}
-                  className={`w-full h-10 pl-9 pr-3 text-sm border rounded-lg bg-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 ${
-                    errors.driver_id ? "border-red-300" : "border-gray-200"
-                  }`}
-                >
-                  <option value="">
-                    {isLoadingDrivers ? "Carregando..." : "Selecione o motorista"}
-                  </option>
-                  {drivers.map((driver) => (
-                    <option key={driver.id} value={driver.id}>
-                      {driver.full_name}
-                    </option>
-                  ))}
-                </select>
-                {isLoadingDrivers && (
-                  <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 animate-spin" />
-                )}
-              </div>
+              <Select
+                options={driverOptions}
+                value={formData.driver_id}
+                onChange={(value) => {
+                  setFormData((prev) => ({ ...prev, driver_id: value }));
+                  if (errors.driver_id) {
+                    setErrors((prev) => ({ ...prev, driver_id: "" }));
+                  }
+                }}
+                placeholder="Selecione o motorista"
+                error={errors.driver_id}
+                disabled={isLoadingDrivers}
+                compact
+              />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1.5">Veículo *</label>
-              <div className="relative">
-                <Truck
-                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
-                  strokeWidth={1.5}
-                />
-                <select
-                  name="vehicle_id"
-                  value={formData.vehicle_id}
-                  onChange={handleChange}
-                  disabled={isLoadingVehicles}
-                  className={`w-full h-10 pl-9 pr-3 text-sm border rounded-lg bg-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 ${
-                    errors.vehicle_id ? "border-red-300" : "border-gray-200"
-                  }`}
-                >
-                  <option value="">
-                    {isLoadingVehicles ? "Carregando..." : "Selecione o veículo"}
-                  </option>
-                  {vehicles.map((vehicle) => (
-                    <option key={vehicle.id} value={vehicle.id}>
-                      {vehicle.license_plate} - {vehicle.brand} {vehicle.model}
-                    </option>
-                  ))}
-                </select>
-                {isLoadingVehicles && (
-                  <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 animate-spin" />
-                )}
-              </div>
+              <Select
+                options={vehicleOptions}
+                value={formData.vehicle_id}
+                onChange={(value) => {
+                  setFormData((prev) => ({ ...prev, vehicle_id: value }));
+                  if (errors.vehicle_id) {
+                    setErrors((prev) => ({ ...prev, vehicle_id: "" }));
+                  }
+                }}
+                placeholder="Selecione o veículo"
+                error={errors.vehicle_id}
+                disabled={isLoadingVehicles}
+                compact
+              />
             </div>
           </div>
 
@@ -446,7 +471,16 @@ export function RouteFormModal({
               className="px-4! py-2! text-sm"
               disabled={isLoadingDrivers || isLoadingVehicles}
             >
-              Criar Rota
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  {route ? "Atualizando..." : "Criando..."}
+                </>
+              ) : route ? (
+                "Atualizar Rota"
+              ) : (
+                "Criar Rota"
+              )}
             </Button>
           </div>
         </form>
