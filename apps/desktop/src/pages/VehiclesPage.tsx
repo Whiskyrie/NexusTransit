@@ -1,15 +1,24 @@
 import { useState, useEffect } from "react";
-import { Plus, Search, Filter, Edit, Trash2 } from "lucide-react";
-import { Table, TableColumn } from "../components/ui/Table";
+import { Plus, RefreshCw, Download } from "lucide-react";
+import { Table, TableColumn, Toast, ConfirmDeleteModal } from "../components/ui";
 import { Button } from "../components/ui/Button";
-import { Input } from "../components/ui/Input";
+import {
+  VehicleStatusBadge,
+  VehicleFilters,
+  VehicleFormModal,
+  VehicleActions,
+} from "../components/vehicles";
 import { vehicleService } from "../services/vehicle.service";
-import type { Vehicle, VehicleFilters } from "../types/vehicle.types";
+import type {
+  Vehicle,
+  VehicleFilters as VehicleFiltersType,
+  CreateVehicleDto,
+} from "../types/vehicle.types";
 
 export function VehiclesPage() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [filters, setFilters] = useState<VehicleFilters>({
+  const [filters, setFilters] = useState<VehicleFiltersType>({
     page: 1,
     limit: 10,
     search: "",
@@ -21,6 +30,40 @@ export function VehiclesPage() {
     has_next: false,
   });
 
+  // Modal states
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+
+  // Delete modal states
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean;
+    vehicleId: string;
+    vehicleName: string;
+  }>({
+    isOpen: false,
+    vehicleId: "",
+    vehicleName: "",
+  });
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Toast state
+  const [toast, setToast] = useState<{
+    show: boolean;
+    message: string;
+    type: "success" | "error" | "warning" | "info";
+  }>({
+    show: false,
+    message: "",
+    type: "success",
+  });
+
+  const showToast = (
+    message: string,
+    type: "success" | "error" | "warning" | "info" = "success",
+  ) => {
+    setToast({ show: true, message, type });
+  };
+
   const fetchVehicles = async () => {
     try {
       setIsLoading(true);
@@ -29,6 +72,8 @@ export function VehiclesPage() {
       setPagination(response.meta);
     } catch (error) {
       console.error("Failed to fetch vehicles:", error);
+      showToast("Erro ao carregar veículos", "error");
+      setVehicles([]);
     } finally {
       setIsLoading(false);
     }
@@ -36,14 +81,68 @@ export function VehiclesPage() {
 
   useEffect(() => {
     fetchVehicles();
-  }, [filters]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.page, filters.limit, filters.search, filters.status, filters.vehicle_type]);
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFilters((prev) => ({ ...prev, search: e.target.value, page: 1 }));
+  const handleFiltersChange = (newFilters: VehicleFiltersType) => {
+    setFilters(newFilters);
+  };
+
+  const handleClearFilters = () => {
+    setFilters({
+      page: 1,
+      limit: 10,
+      search: "",
+    });
   };
 
   const handlePageChange = (page: number) => {
     setFilters((prev) => ({ ...prev, page }));
+  };
+
+  const handleCreateVehicle = async (data: CreateVehicleDto) => {
+    try {
+      setIsCreating(true);
+      await vehicleService.create(data);
+      showToast("Veículo criado com sucesso!", "success");
+      setIsFormModalOpen(false);
+      fetchVehicles();
+    } catch (error: any) {
+      const errorMessage =
+        error.response?.data?.message ||
+        "Erro ao criar veículo. Verifique os dados e tente novamente.";
+      showToast(errorMessage, "error");
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleDeleteClick = (vehicle: Vehicle) => {
+    setDeleteModal({
+      isOpen: true,
+      vehicleId: vehicle.id,
+      vehicleName: `${vehicle.brand} ${vehicle.model} - ${vehicle.license_plate}`,
+    });
+  };
+
+  const handleDeleteConfirm = async () => {
+    try {
+      setIsDeleting(true);
+      await vehicleService.delete(deleteModal.vehicleId);
+      showToast("Veículo excluído com sucesso!", "success");
+      setDeleteModal({ isOpen: false, vehicleId: "", vehicleName: "" });
+      fetchVehicles();
+    } catch (error: any) {
+      const errorMessage =
+        error.response?.data?.message || "Erro ao excluir veículo. Tente novamente.";
+      showToast(errorMessage, "error");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteModal({ isOpen: false, vehicleId: "", vehicleName: "" });
   };
 
   const columns: TableColumn<Vehicle>[] = [
@@ -78,80 +177,98 @@ export function VehiclesPage() {
     {
       key: "status",
       header: "Status",
-      render: (vehicle) => (
-        <span
-          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize
-          ${
-            vehicle.status === "AVAILABLE"
-              ? "bg-green-100 text-green-800"
-              : vehicle.status === "IN_USE"
-                ? "bg-blue-100 text-blue-800"
-                : vehicle.status === "MAINTENANCE"
-                  ? "bg-yellow-100 text-yellow-800"
-                  : "bg-red-100 text-red-800"
-          }`}
-        >
-          {vehicle.status.replace(/_/g, " ").toLowerCase()}
-        </span>
-      ),
+      render: (vehicle) => <VehicleStatusBadge status={vehicle.status} />,
     },
     {
       key: "actions",
       header: "",
-      width: "50px",
-      render: () => (
-        <div className="flex items-center justify-end gap-2">
-          <button className="p-2 hover:bg-gray-100 rounded-lg text-gray-500 transition-colors">
-            <Edit className="w-4 h-4" />
-          </button>
-          <button className="p-2 hover:bg-red-50 rounded-lg text-red-500 transition-colors">
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
+      width: "80px",
+      render: (vehicle) => (
+        <VehicleActions
+          onEdit={() => console.log("Edit", vehicle.id)}
+          onDelete={() => handleDeleteClick(vehicle)}
+        />
       ),
     },
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-[#1A1A1A]">Veículos</h1>
-          <p className="text-gray-500 mt-1">Gerencie a frota de veículos</p>
+    <div className="min-h-screen bg-[#F5F5F0]">
+      <div className="max-w-full mx-auto space-y-4 px-4">
+        {/* Header Compacto */}
+        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-xl font-bold text-[#1A1A1A]">Veículos</h1>
+              <p className="text-xs text-gray-500">Gerencie sua frota de veículos</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" className="h-9 px-3">
+                <Download className="w-4 h-4" strokeWidth={1.5} />
+              </Button>
+              <Button variant="outline" onClick={fetchVehicles} className="h-9 px-3">
+                <RefreshCw
+                  className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`}
+                  strokeWidth={1.5}
+                />
+              </Button>
+              <Button onClick={() => setIsFormModalOpen(true)} className="h-9 px-4">
+                <Plus className="w-4 h-4 mr-1" strokeWidth={2} />
+                Novo Veículo
+              </Button>
+            </div>
+          </div>
         </div>
-        <Button>
-          <Plus className="w-5 h-5 mr-2" />
-          Novo Veículo
-        </Button>
-      </div>
 
-      <div className="flex items-center gap-4 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
-        <div className="flex-1 max-w-md">
-          <Input
-            placeholder="Buscar por placa, modelo ou marca..."
-            icon={<Search className="w-5 h-5" />}
-            value={filters.search}
-            onChange={handleSearch}
+        {/* Filters */}
+        <VehicleFilters
+          filters={filters}
+          onFiltersChange={handleFiltersChange}
+          onClearFilters={handleClearFilters}
+        />
+
+        {/* Table */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <Table
+            columns={columns}
+            data={vehicles}
+            keyExtractor={(vehicle) => vehicle.id}
+            isLoading={isLoading}
+            pagination={{
+              ...pagination,
+              page: filters.page || 1,
+              limit: filters.limit || 10,
+              onPageChange: handlePageChange,
+            }}
           />
         </div>
-        <Button variant="outline" className="px-4">
-          <Filter className="w-5 h-5 mr-2" />
-          Filtros
-        </Button>
-      </div>
 
-      <Table
-        columns={columns}
-        data={vehicles}
-        keyExtractor={(vehicle) => vehicle.id}
-        isLoading={isLoading}
-        pagination={{
-          ...pagination,
-          page: filters.page || 1,
-          limit: filters.limit || 10,
-          onPageChange: handlePageChange,
-        }}
-      />
+        {/* Modals */}
+        <VehicleFormModal
+          isOpen={isFormModalOpen}
+          onClose={() => setIsFormModalOpen(false)}
+          onSubmit={handleCreateVehicle}
+          isLoading={isCreating}
+        />
+
+        <ConfirmDeleteModal
+          isOpen={deleteModal.isOpen}
+          title="Excluir Veículo"
+          itemName={deleteModal.vehicleName}
+          isDeleting={isDeleting}
+          onConfirm={handleDeleteConfirm}
+          onCancel={handleDeleteCancel}
+        />
+
+        {/* Toast */}
+        {toast.show && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast({ ...toast, show: false })}
+          />
+        )}
+      </div>
     </div>
   );
 }
