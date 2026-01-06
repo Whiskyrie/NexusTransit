@@ -1,10 +1,18 @@
 import { useState, useEffect } from "react";
-import { Plus, Search, Filter, Edit, Trash2 } from "lucide-react";
+import { Plus, Download, RefreshCw } from "lucide-react";
 import { Table, TableColumn } from "../components/ui/Table";
 import { Button } from "../components/ui/Button";
-import { Input } from "../components/ui/Input";
+import { Toast } from "../components/ui/Toast";
+import { ConfirmDeleteModal } from "../components/ui/ConfirmDeleteModal";
 import { userService } from "../services/user.service";
 import type { User, UserFilters } from "../types/user.types";
+import {
+  UserStatusBadge,
+  UserTypeBadge,
+  UserFilters as UserFiltersComponent,
+  UserFormModal,
+  UserActions,
+} from "../components/users";
 
 export function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -21,6 +29,32 @@ export function UsersPage() {
     has_next: false,
   });
 
+  // Modal states
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | undefined>();
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | undefined>();
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Toast state
+  const [toast, setToast] = useState<{
+    show: boolean;
+    message: string;
+    type: "success" | "error" | "warning" | "info";
+  }>({
+    show: false,
+    message: "",
+    type: "success",
+  });
+
+  const showToast = (
+    message: string,
+    type: "success" | "error" | "warning" | "info" = "success",
+  ) => {
+    setToast({ show: true, message, type });
+  };
+
   const fetchUsers = async () => {
     try {
       setIsLoading(true);
@@ -29,6 +63,7 @@ export function UsersPage() {
       setPagination(response.meta);
     } catch (error) {
       console.error("Failed to fetch users:", error);
+      showToast("Erro ao carregar usuários", "error");
     } finally {
       setIsLoading(false);
     }
@@ -38,8 +73,46 @@ export function UsersPage() {
     fetchUsers();
   }, [filters]);
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFilters((prev) => ({ ...prev, search: e.target.value, page: 1 }));
+  const handleCreateUser = () => {
+    setSelectedUser(undefined);
+    setIsCreateModalOpen(true);
+  };
+
+  const handleEditUser = (user: User) => {
+    setSelectedUser(user);
+    setIsEditModalOpen(true);
+  };
+
+  const handleDeleteClick = (user: User) => {
+    setUserToDelete(user);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!userToDelete) return;
+
+    try {
+      setIsDeleting(true);
+      await userService.delete(userToDelete.id);
+      showToast("Usuário excluído com sucesso!", "success");
+      setDeleteModalOpen(false);
+      setUserToDelete(undefined);
+      fetchUsers();
+    } catch (error) {
+      console.error("Failed to delete user:", error);
+      const errorMessage =
+        error && typeof error === "object" && "response" in error
+          ? (error.response as { data?: { message?: string } })?.data?.message ||
+            "Erro ao excluir usuário"
+          : "Erro ao excluir usuário";
+      showToast(errorMessage, "error");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleModalSuccess = () => {
+    fetchUsers();
   };
 
   const handlePageChange = (page: number) => {
@@ -68,32 +141,12 @@ export function UsersPage() {
     {
       key: "user_type",
       header: "Tipo",
-      render: (user) => (
-        <span
-          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize
-          ${
-            user.user_type === "admin"
-              ? "bg-purple-100 text-purple-800"
-              : user.user_type === "driver"
-                ? "bg-blue-100 text-blue-800"
-                : "bg-gray-100 text-gray-800"
-          }`}
-        >
-          {user.user_type}
-        </span>
-      ),
+      render: (user) => <UserTypeBadge userType={user.user_type} />,
     },
     {
       key: "status",
       header: "Status",
-      render: (user) => (
-        <span
-          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize
-          ${user.status === "active" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}
-        >
-          {user.status}
-        </span>
-      ),
+      render: (user) => <UserStatusBadge status={user.status} />,
     },
     {
       key: "created_at",
@@ -104,62 +157,101 @@ export function UsersPage() {
       key: "actions",
       header: "",
       width: "50px",
-      render: () => (
-        <div className="flex items-center justify-end gap-2">
-          <button className="p-2 hover:bg-gray-100 rounded-lg text-gray-500 transition-colors">
-            <Edit className="w-4 h-4" />
-          </button>
-          <button className="p-2 hover:bg-red-50 rounded-lg text-red-500 transition-colors">
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
+      render: (user) => (
+        <UserActions user={user} onEdit={handleEditUser} onDelete={handleDeleteClick} />
       ),
     },
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-[#1A1A1A]">Usuários</h1>
-          <p className="text-gray-500 mt-1">Gerencie os usuários do sistema</p>
+    <div className="min-h-screen bg-[#F5F5F0]">
+      <div className="max-w-full mx-auto space-y-4 px-4">
+        {/* Header Compacto */}
+        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-xl font-bold text-[#1A1A1A]">Usuários</h1>
+              <p className="text-xs text-gray-500">Gerencie os usuários do sistema</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" className="h-9 px-3">
+                <Download className="w-4 h-4" strokeWidth={1.5} />
+              </Button>
+              <Button variant="outline" onClick={fetchUsers} className="h-9 px-3">
+                <RefreshCw
+                  className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`}
+                  strokeWidth={1.5}
+                />
+              </Button>
+              <Button onClick={handleCreateUser} className="h-9 px-4">
+                <Plus className="w-4 h-4 mr-1" strokeWidth={2} />
+                Novo Usuário
+              </Button>
+            </div>
+          </div>
         </div>
-        <Button>
-          <Plus className="w-5 h-5 mr-2" />
-          Novo Usuário
-        </Button>
-      </div>
 
-      {/* Filters */}
-      <div className="flex items-center gap-4 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
-        <div className="flex-1 max-w-md">
-          <Input
-            placeholder="Buscar por nome ou email..."
-            icon={<Search className="w-5 h-5" />}
-            value={filters.search}
-            onChange={handleSearch}
+        {/* Filters */}
+        <UserFiltersComponent
+          filters={filters}
+          onFiltersChange={setFilters}
+          onClearFilters={() =>
+            setFilters({ page: 1, limit: 10, search: "", status: undefined, user_type: undefined })
+          }
+        />
+
+        {/* Table */}
+        <Table
+          columns={columns}
+          data={users}
+          keyExtractor={(user) => user.id}
+          isLoading={isLoading}
+          pagination={{
+            ...pagination,
+            page: filters.page || 1,
+            limit: filters.limit || 10,
+            onPageChange: handlePageChange,
+          }}
+          emptyMessage="Nenhum usuário encontrado"
+        />
+
+        {/* Create Modal */}
+        <UserFormModal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          onSuccess={handleModalSuccess}
+        />
+
+        {/* Edit Modal */}
+        <UserFormModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          onSuccess={handleModalSuccess}
+          user={selectedUser}
+        />
+
+        {/* Delete Confirmation Modal */}
+        <ConfirmDeleteModal
+          isOpen={deleteModalOpen}
+          title="Excluir Usuário"
+          itemName={userToDelete ? `${userToDelete.first_name} ${userToDelete.last_name}` : ""}
+          isDeleting={isDeleting}
+          onConfirm={handleConfirmDelete}
+          onCancel={() => {
+            setDeleteModalOpen(false);
+            setUserToDelete(undefined);
+          }}
+        />
+
+        {/* Toast */}
+        {toast.show && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast({ ...toast, show: false })}
           />
-        </div>
-        <Button variant="outline" className="px-4">
-          <Filter className="w-5 h-5 mr-2" />
-          Filtros
-        </Button>
+        )}
       </div>
-
-      {/* Table */}
-      <Table
-        columns={columns}
-        data={users}
-        keyExtractor={(user) => user.id}
-        isLoading={isLoading}
-        pagination={{
-          ...pagination,
-          page: filters.page || 1,
-          limit: filters.limit || 10,
-          onPageChange: handlePageChange,
-        }}
-      />
     </div>
   );
 }
