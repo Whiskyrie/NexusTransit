@@ -4,8 +4,9 @@ import {
   VehicleFilters as VehicleFiltersType,
 } from "../../types/vehicle.types";
 import { Button } from "../ui/Button";
+import { Select, type SelectOption } from "../ui/Select";
 import { Search, SlidersHorizontal, X, ChevronDown } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 interface VehicleFiltersProps {
   filters: VehicleFiltersType;
@@ -26,6 +27,7 @@ const typeLabels: Record<VehicleType, string> = {
   [VehicleType.CAR]: "Carro",
   [VehicleType.VAN]: "Van",
   [VehicleType.TRUCK]: "Caminhão",
+  [VehicleType.BICYCLE]: "Bicicleta",
 };
 
 export function VehicleFilters({ filters, onFiltersChange, onClearFilters }: VehicleFiltersProps) {
@@ -41,6 +43,30 @@ export function VehicleFilters({ filters, onFiltersChange, onClearFilters }: Veh
   ) => {
     onFiltersChange({ ...filters, [key]: value, page: 1 });
   };
+
+  // Opções de status para o Select
+  const statusOptions: SelectOption<string>[] = useMemo(
+    () => [
+      { value: "", label: "Todos os status" },
+      ...Object.entries(statusLabels).map(([value, label]) => ({
+        value,
+        label,
+      })),
+    ],
+    [],
+  );
+
+  // Opções de tipo de veículo para o Select
+  const typeOptions: SelectOption<string>[] = useMemo(
+    () => [
+      { value: "", label: "Todos os tipos" },
+      ...Object.entries(typeLabels).map(([value, label]) => ({
+        value,
+        label,
+      })),
+    ],
+    [],
+  );
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -125,64 +151,26 @@ export function VehicleFilters({ filters, onFiltersChange, onClearFilters }: Veh
           <div className="px-4 pb-4 pt-2 border-t border-gray-100">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Status */}
-              <div className="space-y-2">
-                <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                  Status
-                </label>
-                <div className="relative">
-                  <select
-                    value={filters.status || ""}
-                    onChange={(e) =>
-                      handleFilterChange(
-                        "status",
-                        e.target.value ? (e.target.value as VehicleStatus) : undefined,
-                      )
-                    }
-                    className="w-full h-11 pl-4 pr-10 text-sm bg-white border-2 border-gray-200 rounded-xl appearance-none cursor-pointer focus:outline-none focus:border-[#1A1A1A] focus:ring-2 focus:ring-[#1A1A1A]/10 transition-all"
-                  >
-                    <option value="">Todos os status</option>
-                    {Object.entries(statusLabels).map(([value, label]) => (
-                      <option key={value} value={value}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown
-                    className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
-                    strokeWidth={2}
-                  />
-                </div>
-              </div>
+              <Select
+                label="Status"
+                options={statusOptions}
+                value={filters.status || ""}
+                onChange={(value) =>
+                  handleFilterChange("status", value ? (value as VehicleStatus) : undefined)
+                }
+                placeholder="Todos os status"
+              />
 
               {/* Tipo */}
-              <div className="space-y-2">
-                <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                  Tipo de Veículo
-                </label>
-                <div className="relative">
-                  <select
-                    value={filters.vehicle_type || ""}
-                    onChange={(e) =>
-                      handleFilterChange(
-                        "vehicle_type",
-                        e.target.value ? (e.target.value as VehicleType) : undefined,
-                      )
-                    }
-                    className="w-full h-11 pl-4 pr-10 text-sm bg-white border-2 border-gray-200 rounded-xl appearance-none cursor-pointer focus:outline-none focus:border-[#1A1A1A] focus:ring-2 focus:ring-[#1A1A1A]/10 transition-all"
-                  >
-                    <option value="">Todos os tipos</option>
-                    {Object.entries(typeLabels).map(([value, label]) => (
-                      <option key={value} value={value}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown
-                    className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
-                    strokeWidth={2}
-                  />
-                </div>
-              </div>
+              <Select
+                label="Tipo de Veículo"
+                options={typeOptions}
+                value={filters.vehicle_type || ""}
+                onChange={(value) =>
+                  handleFilterChange("vehicle_type", value ? (value as VehicleType) : undefined)
+                }
+                placeholder="Todos os tipos"
+              />
             </div>
           </div>
         </div>

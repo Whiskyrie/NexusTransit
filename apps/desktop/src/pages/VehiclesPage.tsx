@@ -33,6 +33,8 @@ export function VehiclesPage() {
   // Modal states
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Delete modal states
   const [deleteModal, setDeleteModal] = useState<{
@@ -145,6 +147,11 @@ export function VehiclesPage() {
     setDeleteModal({ isOpen: false, vehicleId: "", vehicleName: "" });
   };
 
+  const handleEditVehicle = (vehicle: Vehicle) => {
+    setSelectedVehicle(vehicle);
+    setIsEditModalOpen(true);
+  };
+
   const columns: TableColumn<Vehicle>[] = [
     {
       key: "vehicle",
@@ -185,7 +192,7 @@ export function VehiclesPage() {
       width: "80px",
       render: (vehicle) => (
         <VehicleActions
-          onEdit={() => console.log("Edit", vehicle.id)}
+          onEdit={() => handleEditVehicle(vehicle)}
           onDelete={() => handleDeleteClick(vehicle)}
         />
       ),
@@ -240,6 +247,7 @@ export function VehiclesPage() {
               limit: filters.limit || 10,
               onPageChange: handlePageChange,
             }}
+            emptyMessage="Nenhum veículo encontrado"
           />
         </div>
 
@@ -249,6 +257,17 @@ export function VehiclesPage() {
           onClose={() => setIsFormModalOpen(false)}
           onSubmit={handleCreateVehicle}
           isLoading={isCreating}
+        />
+
+        <VehicleFormModal
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setSelectedVehicle(null);
+          }}
+          onSubmit={handleCreateVehicle}
+          isLoading={isCreating}
+          vehicle={selectedVehicle}
         />
 
         <ConfirmDeleteModal

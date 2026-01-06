@@ -1,14 +1,22 @@
-import { useState, useEffect } from "react";
-import { CreateVehicleDto, VehicleType, VehicleStatus, FuelType } from "../../types/vehicle.types";
+import { useState, useEffect, useMemo } from "react";
+import {
+  CreateVehicleDto,
+  VehicleType,
+  VehicleStatus,
+  FuelType,
+  Vehicle,
+} from "../../types/vehicle.types";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
-import { X, Truck, Hash, Calendar, Palette, Fuel, Gauge, Loader2 } from "lucide-react";
+import { Select, type SelectOption } from "../ui/Select";
+import { X, Truck, Hash, Calendar, Palette, Loader2 } from "lucide-react";
 
 interface VehicleFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: CreateVehicleDto) => void;
   isLoading?: boolean;
+  vehicle?: Vehicle | null;
 }
 
 const vehicleTypeLabels: Record<VehicleType, string> = {
@@ -16,6 +24,7 @@ const vehicleTypeLabels: Record<VehicleType, string> = {
   [VehicleType.CAR]: "Carro",
   [VehicleType.VAN]: "Van",
   [VehicleType.TRUCK]: "Caminhão",
+  [VehicleType.BICYCLE]: "Bicicleta",
 };
 
 const fuelTypeLabels: Record<FuelType, string> = {
@@ -32,6 +41,7 @@ export function VehicleFormModal({
   onClose,
   onSubmit,
   isLoading = false,
+  vehicle,
 }: VehicleFormModalProps) {
   const [formData, setFormData] = useState<CreateVehicleDto>({
     license_plate: "",
@@ -48,20 +58,53 @@ export function VehicleFormModal({
 
   useEffect(() => {
     if (isOpen) {
-      // Reset form
-      setFormData({
-        license_plate: "",
-        brand: "",
-        model: "",
-        year: new Date().getFullYear(),
-        color: "",
-        vehicle_type: VehicleType.CAR,
-        fuel_type: FuelType.FLEX,
-        status: VehicleStatus.ACTIVE,
-      });
+      if (vehicle) {
+        // Populate form with vehicle data for editing
+        setFormData({
+          license_plate: vehicle.license_plate,
+          brand: vehicle.brand,
+          model: vehicle.model,
+          year: vehicle.year,
+          color: vehicle.color,
+          vehicle_type: vehicle.vehicle_type,
+          fuel_type: vehicle.fuel_type,
+          status: vehicle.status,
+        });
+      } else {
+        // Reset form for new vehicle
+        setFormData({
+          license_plate: "",
+          brand: "",
+          model: "",
+          year: new Date().getFullYear(),
+          color: "",
+          vehicle_type: VehicleType.CAR,
+          fuel_type: FuelType.FLEX,
+          status: VehicleStatus.ACTIVE,
+        });
+      }
       setErrors({});
     }
-  }, [isOpen]);
+  }, [isOpen, vehicle]);
+
+  // Options para os Select components
+  const vehicleTypeSelectOptions: SelectOption<string>[] = useMemo(
+    () =>
+      Object.entries(vehicleTypeLabels).map(([value, label]) => ({
+        value,
+        label,
+      })),
+    [],
+  );
+
+  const fuelTypeSelectOptions: SelectOption<string>[] = useMemo(
+    () =>
+      Object.entries(fuelTypeLabels).map(([value, label]) => ({
+        value,
+        label,
+      })),
+    [],
+  );
 
   if (!isOpen) return null;
 
@@ -121,8 +164,14 @@ export function VehicleFormModal({
               <Truck className="w-5 h-5 text-blue-600" strokeWidth={1.5} />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-[#1A1A1A]">Novo Veículo</h2>
-              <p className="text-xs text-gray-500">Adicione um novo veículo à frota</p>
+              <h2 className="text-lg font-bold text-[#1A1A1A]">
+                {vehicle ? "Editar Veículo" : "Novo Veículo"}
+              </h2>
+              <p className="text-xs text-gray-500">
+                {vehicle
+                  ? "Atualize as informações do veículo"
+                  : "Adicione um novo veículo à frota"}
+              </p>
             </div>
           </div>
           <button
@@ -201,29 +250,15 @@ export function VehicleFormModal({
 
           {/* Row 3: Tipo e Cor */}
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1.5">
-                Tipo de Veículo *
-              </label>
-              <div className="relative">
-                <Gauge
-                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none z-10"
-                  strokeWidth={1.5}
-                />
-                <select
-                  name="vehicle_type"
-                  value={formData.vehicle_type}
-                  onChange={handleChange}
-                  className="w-full h-10 pl-9 pr-3 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 appearance-none cursor-pointer"
-                >
-                  {Object.entries(vehicleTypeLabels).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+            <Select
+              label="Tipo de Veículo *"
+              options={vehicleTypeSelectOptions}
+              value={formData.vehicle_type}
+              onChange={(value) =>
+                setFormData((prev) => ({ ...prev, vehicle_type: value as VehicleType }))
+              }
+              compact
+            />
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1.5">Cor</label>
               <Input
@@ -238,29 +273,14 @@ export function VehicleFormModal({
           </div>
 
           {/* Row 4: Combustível */}
-          <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1.5">
-              Tipo de Combustível *
-            </label>
-            <div className="relative">
-              <Fuel
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none z-10"
-                strokeWidth={1.5}
-              />
-              <select
-                name="fuel_type"
-                value={formData.fuel_type}
-                onChange={handleChange}
-                className="w-full h-10 pl-9 pr-3 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 appearance-none cursor-pointer"
-              >
-                {Object.entries(fuelTypeLabels).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
+          <Select
+            label="Tipo de Combustível *"
+            options={fuelTypeSelectOptions}
+            value={formData.fuel_type}
+            onChange={(value) => setFormData((prev) => ({ ...prev, fuel_type: value as FuelType }))}
+            compact
+            position="top"
+          />
 
           {/* Footer */}
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
@@ -276,8 +296,10 @@ export function VehicleFormModal({
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Criando...
+                  {vehicle ? "Atualizando..." : "Criando..."}
                 </>
+              ) : vehicle ? (
+                "Atualizar Veículo"
               ) : (
                 "Criar Veículo"
               )}
