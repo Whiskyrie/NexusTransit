@@ -1,5 +1,5 @@
 import { RouteMetrics } from "../../types/route.types";
-import { Route, MapPin, CheckCircle, Clock, TrendingUp, Navigation } from "lucide-react";
+import { Route, CheckCircle, Clock, TrendingUp, Navigation } from "lucide-react";
 
 interface RouteMetricsCardProps {
   metrics: RouteMetrics;

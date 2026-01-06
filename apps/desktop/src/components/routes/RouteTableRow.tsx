@@ -1,4 +1,4 @@
-import { Route } from "../../types/route.types";
+import { Route, RoutePriority } from "../../types/route.types";
 import { RouteStatusBadge } from "./RouteStatusBadge";
 import { RoutePriorityBadge } from "./RoutePriorityBadge";
 import { MapPin, Truck, Clock, Calendar } from "lucide-react";
@@ -19,6 +19,9 @@ export function RouteTableRow({ route }: RouteTableRowProps) {
     return format(new Date(dateString), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
   };
 
+  // Calcula prioridade baseado no status se não definido
+  const priority = route.priority ?? RoutePriority.MEDIUM;
+
   return (
     <tr className="hover:bg-gray-50 transition-colors cursor-pointer group">
       {/* Route Name */}
@@ -38,17 +41,17 @@ export function RouteTableRow({ route }: RouteTableRowProps) {
 
       {/* Priority */}
       <td className="px-6 py-4">
-        <RoutePriorityBadge priority={route.priority} />
+        <RoutePriorityBadge priority={priority} />
       </td>
 
       {/* Driver */}
       <td className="px-6 py-4">
-        {route.driver_name ? (
+        {route.driver?.full_name ? (
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-[#F5F5F0] flex items-center justify-center">
               <Truck className="w-4 h-4 text-gray-600" strokeWidth={1.5} />
             </div>
-            <span className="text-sm text-[#1A1A1A]">{route.driver_name}</span>
+            <span className="text-sm text-[#1A1A1A]">{route.driver.full_name}</span>
           </div>
         ) : (
           <span className="text-sm text-gray-400">Não atribuído</span>
@@ -57,9 +60,9 @@ export function RouteTableRow({ route }: RouteTableRowProps) {
 
       {/* Vehicle */}
       <td className="px-6 py-4">
-        {route.vehicle_plate ? (
+        {route.vehicle?.license_plate ? (
           <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-gray-100 text-sm font-mono text-[#1A1A1A]">
-            {route.vehicle_plate}
+            {route.vehicle.license_plate}
           </span>
         ) : (
           <span className="text-sm text-gray-400">Não atribuído</span>
@@ -89,12 +92,12 @@ export function RouteTableRow({ route }: RouteTableRowProps) {
         <div className="space-y-1">
           <div className="flex items-center gap-1.5 text-xs text-gray-600">
             <Calendar className="w-3.5 h-3.5" strokeWidth={1.5} />
-            <span>{formatDate(route.start_date)}</span>
+            <span>{formatDate(route.planned_date)}</span>
           </div>
-          {route.estimated_end_date && (
+          {route.planned_end_time && (
             <div className="flex items-center gap-1.5 text-xs text-gray-500">
               <Clock className="w-3.5 h-3.5" strokeWidth={1.5} />
-              <span>Prev: {formatDate(route.estimated_end_date)}</span>
+              <span>Prev: {route.planned_end_time}</span>
             </div>
           )}
         </div>
@@ -102,10 +105,12 @@ export function RouteTableRow({ route }: RouteTableRowProps) {
 
       {/* Distance */}
       <td className="px-6 py-4">
-        {route.total_distance ? (
+        {route.estimated_distance_km ? (
           <div className="flex items-center gap-1.5 text-sm text-[#1A1A1A]">
             <MapPin className="w-4 h-4 text-gray-500" strokeWidth={1.5} />
-            <span className="font-medium">{route.total_distance.toLocaleString("pt-BR")} km</span>
+            <span className="font-medium">
+              {route.estimated_distance_km.toLocaleString("pt-BR")} km
+            </span>
           </div>
         ) : (
           <span className="text-sm text-gray-400">-</span>
