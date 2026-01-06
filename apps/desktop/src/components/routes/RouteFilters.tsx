@@ -2,7 +2,7 @@ import { RouteStatus, RouteType, RouteFilters as RouteFiltersType } from "../../
 import { Input } from "../ui/Input";
 import { DateRangePicker } from "../ui/DateRangePicker";
 import { Button } from "../ui/Button";
-import { Search, SlidersHorizontal, X, ChevronDown, Sparkles } from "lucide-react";
+import { Search, SlidersHorizontal, X, ChevronDown } from "lucide-react";
 import { useState } from "react";
 
 interface RouteFiltersProps {
@@ -126,13 +126,6 @@ export function RouteFilters({ filters, onFiltersChange, onClearFilters }: Route
       >
         <div className="overflow-hidden">
           <div className="px-4 pb-4 pt-2 border-t border-gray-100">
-            <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="w-4 h-4 text-amber-500" strokeWidth={2} />
-              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                Filtros Avançados
-              </span>
-            </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Status */}
               <div className="space-y-2">
