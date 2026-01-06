@@ -1,17 +1,20 @@
 import { useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { DayPicker } from "react-day-picker";
+import { ptBR } from "date-fns/locale";
 import { clsx } from "clsx";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface CalendarProps {
   value?: Date;
-  onChange?: (date: Date) => void;
+  onChange?: (date: Date | undefined) => void;
   minDate?: Date;
   maxDate?: Date;
   events?: Record<string, { type: "deliveries" | "pending" | "overdue"; count?: number }>;
   className?: string;
 }
 
-const DAYS_OF_WEEK = ["D", "S", "T", "Q", "Q", "S", "S"];
+type ViewMode = "days" | "months" | "years";
+
 const MONTHS = [
   "Janeiro",
   "Fevereiro",
@@ -27,199 +30,286 @@ const MONTHS = [
   "Dezembro",
 ];
 
-export function Calendar({
-  value,
-  onChange,
-  minDate,
-  maxDate,
-  events = {},
-  className,
-}: CalendarProps) {
-  const [currentMonth, setCurrentMonth] = useState(value || new Date());
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+export function Calendar({ value, onChange, minDate, maxDate, className }: CalendarProps) {
+  const [viewMode, setViewMode] = useState<ViewMode>("days");
+  const [viewDate, setViewDate] = useState(value || new Date());
 
-  const getDaysInMonth = (date: Date) => {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    return new Date(year, month + 1, 0).getDate();
+  // Gerar anos para seleção (100 anos para trás e 10 para frente)
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 111 }, (_, i) => currentYear - 100 + i);
+
+  // Ano inicial para exibição na grade de anos (mostra 12 anos por vez)
+  const [yearsStartIndex, setYearsStartIndex] = useState(() => {
+    const selectedYear = viewDate.getFullYear();
+    const index = years.indexOf(selectedYear);
+    return Math.max(0, Math.floor(index / 12) * 12);
+  });
+
+  const handleMonthClick = () => {
+    setViewMode("months");
   };
 
-  const getFirstDayOfMonth = (date: Date) => {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    return new Date(year, month, 1).getDay();
+  const handleYearClick = () => {
+    // Centralizar o ano atual na visualização
+    const selectedYear = viewDate.getFullYear();
+    const index = years.indexOf(selectedYear);
+    setYearsStartIndex(Math.max(0, Math.floor(index / 12) * 12));
+    setViewMode("years");
   };
 
-  const previousMonth = () => {
-    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1));
+  const handleMonthSelect = (monthIndex: number) => {
+    const newDate = new Date(viewDate);
+    newDate.setMonth(monthIndex);
+    setViewDate(newDate);
+    setViewMode("days");
   };
 
-  const nextMonth = () => {
-    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1));
+  const handleYearSelect = (year: number) => {
+    const newDate = new Date(viewDate);
+    newDate.setFullYear(year);
+    setViewDate(newDate);
+    setViewMode("months");
   };
 
-  const handleDayClick = (day: number) => {
-    const newDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
-
-    if (minDate && newDate < minDate) return;
-    if (maxDate && newDate > maxDate) return;
-
-    onChange?.(newDate);
+  const handlePrevYears = () => {
+    setYearsStartIndex(Math.max(0, yearsStartIndex - 12));
   };
 
-  const isDateDisabled = (day: number) => {
-    const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
-    if (minDate && date < minDate) return true;
-    if (maxDate && date > maxDate) return true;
-    return false;
+  const handleNextYears = () => {
+    setYearsStartIndex(Math.min(years.length - 12, yearsStartIndex + 12));
   };
 
-  const isToday = (day: number) => {
-    const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
-    return (
-      date.getDate() === today.getDate() &&
-      date.getMonth() === today.getMonth() &&
-      date.getFullYear() === today.getFullYear()
-    );
-  };
-
-  const isSelected = (day: number) => {
-    if (!value) return false;
-    const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
-    return (
-      date.getDate() === value.getDate() &&
-      date.getMonth() === value.getMonth() &&
-      date.getFullYear() === value.getFullYear()
-    );
-  };
-
-  const getEventForDay = (day: number) => {
-    const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
-    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    return events[key];
-  };
-
-  const renderDays = () => {
-    const daysInMonth = getDaysInMonth(currentMonth);
-    const firstDay = getFirstDayOfMonth(currentMonth);
-    const days = [];
-
-    // Previous month days
-    const prevMonthDays = getDaysInMonth(
-      new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1),
-    );
-    for (let i = firstDay - 1; i >= 0; i--) {
-      days.push(
-        <div
-          key={`prev-${i}`}
-          className="h-12 flex flex-col items-center justify-center text-sm text-gray-300 cursor-default"
-        >
-          {prevMonthDays - i}
-        </div>,
-      );
+  const handleDateSelect = (date: Date | undefined) => {
+    if (date) {
+      setViewDate(date);
     }
+    onChange?.(date);
+  };
 
-    // Current month days
-    for (let day = 1; day <= daysInMonth; day++) {
-      const event = getEventForDay(day);
-      const disabled = isDateDisabled(day);
-      const todayDay = isToday(day);
-      const selected = isSelected(day);
+  const displayedYears = years.slice(yearsStartIndex, yearsStartIndex + 12);
 
-      days.push(
-        <button
-          key={day}
-          onClick={() => handleDayClick(day)}
-          disabled={disabled}
-          className={clsx(
-            "h-12 flex flex-col items-center justify-center rounded-xl text-sm font-medium transition-all duration-150 relative",
-            disabled && "text-gray-300 cursor-not-allowed",
-            !disabled && !selected && !todayDay && "text-[#1A1A1A] hover:bg-[#F5F5F0]",
-            todayDay &&
-              !selected &&
-              "bg-[#F5F5F0] text-[#1A1A1A] font-semibold ring-2 ring-[#E5E7EB]",
-            selected && "bg-[#1A1A1A] text-white shadow-md",
-            !disabled && "cursor-pointer",
-          )}
-        >
-          <span className="relative z-10">{day}</span>
-          {event && !selected && (
-            <div className="absolute bottom-1 flex gap-0.5">
-              {event.count ? (
-                <span
-                  className={clsx(
-                    "text-[9px] font-bold",
-                    event.type === "deliveries" && "text-green-600",
-                    event.type === "pending" && "text-amber-600",
-                    event.type === "overdue" && "text-red-600",
-                  )}
-                >
-                  {event.count}
-                </span>
-              ) : (
-                <div
-                  className={clsx(
-                    "w-1 h-1 rounded-full",
-                    event.type === "deliveries" && "bg-green-600",
-                    event.type === "pending" && "bg-amber-600",
-                    event.type === "overdue" && "bg-red-600",
-                  )}
-                />
-              )}
-            </div>
-          )}
-        </button>,
-      );
-    }
+  // Renderizar seleção de anos
+  if (viewMode === "years") {
+    return (
+      <div
+        className={clsx(
+          "bg-white rounded-2xl p-5 shadow-lg border border-gray-100 w-[320px]",
+          className,
+        )}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <button
+            type="button"
+            onClick={handlePrevYears}
+            disabled={yearsStartIndex === 0}
+            className="w-9 h-9 rounded-xl bg-[#F5F5F0] hover:bg-gray-200 flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <ChevronLeft className="w-5 h-5 text-[#4B5563]" strokeWidth={2} />
+          </button>
+          <span className="text-lg font-semibold text-[#1A1A1A]">
+            {displayedYears[0]} - {displayedYears[displayedYears.length - 1]}
+          </span>
+          <button
+            type="button"
+            onClick={handleNextYears}
+            disabled={yearsStartIndex >= years.length - 12}
+            className="w-9 h-9 rounded-xl bg-[#F5F5F0] hover:bg-gray-200 flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <ChevronRight className="w-5 h-5 text-[#4B5563]" strokeWidth={2} />
+          </button>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          {displayedYears.map((year) => {
+            const isSelected = year === viewDate.getFullYear();
+            const isCurrent = year === currentYear;
+            return (
+              <button
+                key={year}
+                type="button"
+                onClick={() => handleYearSelect(year)}
+                className={clsx(
+                  "py-3 px-2 rounded-xl text-sm font-medium transition-all",
+                  isSelected
+                    ? "bg-[#1A1A1A] text-white shadow-md"
+                    : isCurrent
+                      ? "bg-[#F5F5F0] text-[#1A1A1A] font-bold"
+                      : "hover:bg-[#F5F5F0] text-gray-700",
+                )}
+              >
+                {year}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
 
-    return days;
+  // Renderizar seleção de meses
+  if (viewMode === "months") {
+    return (
+      <div
+        className={clsx(
+          "bg-white rounded-2xl p-5 shadow-lg border border-gray-100 w-[320px]",
+          className,
+        )}
+      >
+        <div className="flex items-center justify-center mb-4">
+          <button
+            type="button"
+            onClick={handleYearClick}
+            className="text-lg font-semibold text-[#1A1A1A] hover:bg-[#F5F5F0] transition-colors cursor-pointer px-3 py-1 rounded-lg"
+          >
+            {viewDate.getFullYear()}
+          </button>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          {MONTHS.map((month, index) => {
+            const isSelected =
+              index === viewDate.getMonth() &&
+              viewDate.getFullYear() === (value?.getFullYear() ?? viewDate.getFullYear());
+            const isCurrent =
+              index === new Date().getMonth() && viewDate.getFullYear() === currentYear;
+            return (
+              <button
+                key={month}
+                type="button"
+                onClick={() => handleMonthSelect(index)}
+                className={clsx(
+                  "py-3 px-2 rounded-xl text-sm font-medium transition-all",
+                  isSelected
+                    ? "bg-[#1A1A1A] text-white shadow-md"
+                    : isCurrent
+                      ? "bg-[#F5F5F0] text-[#1A1A1A] font-bold"
+                      : "hover:bg-[#F5F5F0] text-gray-700",
+                )}
+              >
+                {month.slice(0, 3)}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // Renderizar calendário normal de dias
+  const monthName = viewDate.toLocaleDateString("pt-BR", { month: "long" });
+  const year = viewDate.getFullYear();
+
+  const handlePrevMonth = () => {
+    const newDate = new Date(viewDate);
+    newDate.setMonth(newDate.getMonth() - 1);
+    setViewDate(newDate);
+  };
+
+  const handleNextMonth = () => {
+    const newDate = new Date(viewDate);
+    newDate.setMonth(newDate.getMonth() + 1);
+    setViewDate(newDate);
   };
 
   return (
     <div
       className={clsx(
-        "bg-white rounded-2xl p-7 shadow-lg border border-gray-100 w-full min-w-95",
+        "bg-white rounded-2xl p-5 shadow-lg border border-gray-100 w-[320px]",
         className,
       )}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between mb-7">
-        <h3 className="text-base font-semibold text-[#1A1A1A]">
-          {MONTHS[currentMonth.getMonth()]} {currentMonth.getFullYear()}
-        </h3>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={previousMonth}
-            type="button"
-            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#F5F5F0] text-[#6B6B6B] hover:text-[#1A1A1A] transition-all duration-150"
-          >
-            <ChevronLeft className="w-5 h-5" strokeWidth={2} />
-          </button>
-          <button
-            onClick={nextMonth}
-            type="button"
-            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#F5F5F0] text-[#6B6B6B] hover:text-[#1A1A1A] transition-all duration-150"
-          >
-            <ChevronRight className="w-5 h-5" strokeWidth={2} />
-          </button>
-        </div>
+      {/* Navegação customizada */}
+      <div className="flex items-center justify-between mb-4">
+        <button
+          type="button"
+          onClick={handlePrevMonth}
+          className="w-9 h-9 rounded-xl bg-[#F5F5F0] hover:bg-gray-200 flex items-center justify-center transition-colors"
+        >
+          <ChevronLeft className="w-5 h-5 text-[#4B5563]" strokeWidth={2} />
+        </button>
+
+        <button
+          type="button"
+          onClick={handleMonthClick}
+          className="text-lg font-semibold text-[#1A1A1A] capitalize hover:bg-[#F5F5F0] transition-colors cursor-pointer px-3 py-1 rounded-lg"
+        >
+          {monthName} {year}
+        </button>
+
+        <button
+          type="button"
+          onClick={handleNextMonth}
+          className="w-9 h-9 rounded-xl bg-[#F5F5F0] hover:bg-gray-200 flex items-center justify-center transition-colors"
+        >
+          <ChevronRight className="w-5 h-5 text-[#4B5563]" strokeWidth={2} />
+        </button>
       </div>
 
-      {/* Week days */}
-      <div className="grid grid-cols-7 gap-2 mb-3">
-        {DAYS_OF_WEEK.map((day, index) => (
-          <div
-            key={index}
-            className="h-9 flex items-center justify-center text-xs font-medium text-[#9CA3AF] uppercase tracking-wider"
-          >
-            {day}
-          </div>
-        ))}
-      </div>
-
-      {/* Days grid */}
-      <div className="grid grid-cols-7 gap-2">{renderDays()}</div>
+      <style>{`
+        .rdp-root {
+          --rdp-accent-color: #1A1A1A;
+          --rdp-accent-background-color: #1A1A1A;
+          --rdp-day_button-border-radius: 0.75rem;
+          --rdp-day_button-height: 2.5rem;
+          --rdp-day_button-width: 2.5rem;
+          --rdp-selected-font: 500 0.875rem/1.25rem system-ui;
+        }
+        .rdp-today:not(.rdp-selected) .rdp-day_button {
+          background-color: #F5F5F0;
+          font-weight: 700;
+        }
+        .rdp-selected .rdp-day_button {
+          background-color: #1A1A1A !important;
+          color: white !important;
+          border-radius: 0.75rem !important;
+          box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+        .rdp-selected .rdp-day_button:hover {
+          background-color: #333 !important;
+        }
+        .rdp-day_button:hover {
+          background-color: #F5F5F0 !important;
+        }
+        .rdp-selected .rdp-day_button:hover {
+          background-color: #333 !important;
+        }
+        .rdp-outside .rdp-day_button {
+          color: #d1d5db;
+        }
+        .rdp-disabled .rdp-day_button {
+          color: #d1d5db;
+          cursor: not-allowed;
+        }
+        .rdp-disabled .rdp-day_button:hover {
+          background-color: transparent !important;
+        }
+      `}</style>
+      <DayPicker
+        mode="single"
+        locale={ptBR}
+        month={viewDate}
+        onMonthChange={setViewDate}
+        selected={value}
+        onSelect={handleDateSelect}
+        disabled={[
+          ...(minDate ? [{ before: minDate }] : []),
+          ...(maxDate ? [{ after: maxDate }] : []),
+        ]}
+        showOutsideDays
+        fixedWeeks
+        hideNavigation
+        classNames={{
+          root: "rdp-root",
+          months: "flex flex-col",
+          month: "space-y-4",
+          month_caption: "hidden",
+          weekdays: "grid grid-cols-7 gap-1 mb-2",
+          weekday:
+            "text-xs font-semibold text-gray-500 text-center w-10 h-8 flex items-center justify-center uppercase",
+          week: "grid grid-cols-7 gap-1",
+          day: "relative",
+          day_button:
+            "w-10 h-10 text-sm font-medium rounded-xl transition-all duration-150 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[#1A1A1A]/20 hover:bg-[#F5F5F0]",
+        }}
+      />
     </div>
   );
 }
