@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 // Controllers
@@ -55,7 +55,7 @@ import { DeliveriesModule } from '../deliveries/deliveries.module';
     TypeOrmModule.forFeature([Route, RouteStop, RouteHistory]),
 
     // Importar módulos relacionados para validações
-    VehiclesModule,
+    forwardRef(() => VehiclesModule),
     DriversModule,
     DeliveriesModule,
   ],

@@ -1,4 +1,11 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+  forwardRef,
+  Inject,
+} from '@nestjs/common';
 import { InjectRepository, InjectEntityManager } from '@nestjs/typeorm';
 import { Repository, EntityManager } from 'typeorm';
 import { plainToInstance } from 'class-transformer';
@@ -13,6 +20,8 @@ import { PaginatedResponseDto, DistanceCalculatorService } from '@nexus/common';
 import { RouteValidatorService } from './validators/route.validator';
 import { RouteStatus } from './enums/route-status';
 import { RouteType } from './enums/route.type';
+import { VehiclesService } from '../vehicles/vehicles.service';
+import { VehicleStatus } from '../vehicles/enums/vehicle-status.enum';
 import { ROUTE_TYPE_CHARACTERISTICS } from './constants/route-calculation.constants';
 import {
   ROUTE_PAGINATION_DEFAULTS,
@@ -88,6 +97,8 @@ export class RoutesService {
     private readonly entityManager: EntityManager,
     private readonly validatorService: RouteValidatorService,
     private readonly distanceCalculator: DistanceCalculatorService,
+    @Inject(forwardRef(() => VehiclesService))
+    private readonly vehiclesService: VehiclesService,
   ) {}
 
   /**
@@ -606,6 +617,17 @@ export class RoutesService {
 
     await this.routeRepository.save(route);
 
+    // Atualizar status do veículo para IN_ROUTE
+    if (route.vehicle_id) {
+      try {
+        await this.vehiclesService.update(route.vehicle_id, { status: VehicleStatus.IN_ROUTE });
+        this.logger.log(`Veículo ${route.vehicle_id} atualizado para IN_ROUTE`);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        this.logger.warn(`Erro ao atualizar status do veículo: ${errorMessage}`);
+      }
+    }
+
     await this.createHistoryEntry(id, {
       event_type: 'STATUS_CHANGED',
       description: 'Rota iniciada',
@@ -681,6 +703,17 @@ export class RoutesService {
 
     await this.routeRepository.save(route);
 
+    // Restaurar status do veículo para ACTIVE
+    if (route.vehicle_id) {
+      try {
+        await this.vehiclesService.update(route.vehicle_id, { status: VehicleStatus.ACTIVE });
+        this.logger.log(`Veículo ${route.vehicle_id} restaurado para ACTIVE`);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        this.logger.warn(`Erro ao atualizar status do veículo: ${errorMessage}`);
+      }
+    }
+
     await this.createHistoryEntry(id, {
       event_type: 'STATUS_CHANGED',
       description: 'Rota finalizada',
@@ -706,6 +739,17 @@ export class RoutesService {
     route.cancelled_at = new Date();
 
     await this.routeRepository.save(route);
+
+    // Restaurar status do veículo para ACTIVE se estava IN_ROUTE
+    if (route.vehicle_id && previousStatus === RouteStatus.IN_PROGRESS) {
+      try {
+        await this.vehiclesService.update(route.vehicle_id, { status: VehicleStatus.ACTIVE });
+        this.logger.log(`Veículo ${route.vehicle_id} restaurado para ACTIVE`);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        this.logger.warn(`Erro ao atualizar status do veículo: ${errorMessage}`);
+      }
+    }
 
     await this.createHistoryEntry(id, {
       event_type: 'STATUS_CHANGED',
