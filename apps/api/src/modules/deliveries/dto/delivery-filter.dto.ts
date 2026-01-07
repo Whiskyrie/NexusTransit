@@ -12,7 +12,7 @@ import {
   IsArray,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 import { DeliveryStatus } from '../enums/delivery-status.enum';
 import { DeliveryPriority } from '../enums/delivery-priority.enum';
 import { BaseFilterDto } from '@nexus/common';
@@ -269,6 +269,7 @@ export class DeliveryFilterDto extends BaseFilterDto {
     required: false,
   })
   @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   overdue?: boolean;
 
@@ -278,6 +279,7 @@ export class DeliveryFilterDto extends BaseFilterDto {
     required: false,
   })
   @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   today?: boolean;
 
@@ -287,6 +289,7 @@ export class DeliveryFilterDto extends BaseFilterDto {
     required: false,
   })
   @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   this_week?: boolean;
 
@@ -296,6 +299,7 @@ export class DeliveryFilterDto extends BaseFilterDto {
     required: false,
   })
   @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   active_only?: boolean;
 
@@ -305,6 +309,7 @@ export class DeliveryFilterDto extends BaseFilterDto {
     required: false,
   })
   @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   include_cancelled?: boolean;
 
@@ -314,6 +319,7 @@ export class DeliveryFilterDto extends BaseFilterDto {
     required: false,
   })
   @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   unassigned_only?: boolean;
 
@@ -323,6 +329,7 @@ export class DeliveryFilterDto extends BaseFilterDto {
     required: false,
   })
   @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   with_issues?: boolean;
 }

@@ -255,10 +255,9 @@ export class DeliveriesService {
       .createQueryBuilder('delivery')
       .leftJoinAndSelect('delivery.customer', 'customer')
       .leftJoinAndSelect('delivery.driver', 'driver')
-      .leftJoinAndSelect('delivery.vehicle', 'vehicle')
-      .leftJoinAndSelect('delivery.attempts', 'attempts')
-      .leftJoinAndSelect('delivery.proofs', 'proofs')
-      .leftJoinAndSelect('delivery.statusHistory', 'statusHistory');
+      .leftJoinAndSelect('delivery.vehicle', 'vehicle');
+    // Relacionamentos attempts, proofs e statusHistory removidos temporariamente
+    // devido a incompatibilidades entre Entity e tabela do banco
 
     // Aplicar filtros
     if (tracking_code) {
