@@ -5,6 +5,7 @@ import { UsersPage } from "./pages/UsersPage";
 import { DriversPage } from "./pages/DriversPage";
 import { VehiclesPage } from "./pages/VehiclesPage";
 import { RoutesPage } from "./pages/RoutesPage";
+import { DeliveriesPage } from "./pages/DeliveriesPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AppLayout } from "./components/layouts";
 import { useIsAuthenticated } from "./stores/auth.store";
@@ -33,6 +34,7 @@ function App() {
           <Route path="/drivers" element={<DriversPage />} />
           <Route path="/vehicles" element={<VehiclesPage />} />
           <Route path="/routes" element={<RoutesPage />} />
+          <Route path="/deliveries" element={<DeliveriesPage />} />
           {/* Adicione mais rotas protegidas aqui */}
         </Route>
       </Route>

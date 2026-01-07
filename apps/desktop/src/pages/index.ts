@@ -7,3 +7,4 @@ export { UsersPage } from "./UsersPage";
 export { DriversPage } from "./DriversPage";
 export { VehiclesPage } from "./VehiclesPage";
 export { RoutesPage } from "./RoutesPage";
+export { DeliveriesPage } from "./DeliveriesPage";
