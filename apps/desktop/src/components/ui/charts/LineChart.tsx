@@ -32,7 +32,7 @@ export function LineChart<T>({
         {filter}
       </div>
 
-      <div style={{ height }}>
+      <div style={{ height, minHeight: height }}>
         <ResponsiveContainer width="100%" height="100%">
           <RechartsLineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#F5F5F0" />

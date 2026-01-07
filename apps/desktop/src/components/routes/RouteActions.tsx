@@ -87,8 +87,8 @@ export function RouteActions({
 
           {showDropdown && (
             <>
-              <div className="fixed inset-0 z-10" onClick={() => setShowDropdown(false)} />
-              <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl border border-gray-200 shadow-lg py-2 z-20">
+              <div className="fixed inset-0 z-9999" onClick={() => setShowDropdown(false)} />
+              <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl border border-gray-200 shadow-lg py-2 z-9999">
                 {canOptimize && (
                   <button
                     onClick={() => handleAction(() => onOptimize(routeId))}

@@ -69,7 +69,7 @@ export function VehicleFilters({ filters, onFiltersChange, onClearFilters }: Veh
   );
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
       {/* Search Bar Principal */}
       <div className="p-4 flex items-center gap-3">
         <div className="flex-1 relative">
@@ -147,7 +147,7 @@ export function VehicleFilters({ filters, onFiltersChange, onClearFilters }: Veh
           isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
         }`}
       >
-        <div className="overflow-hidden">
+        <div className={isExpanded ? "" : "overflow-hidden"}>
           <div className="px-4 pb-4 pt-2 border-t border-gray-100">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Status */}

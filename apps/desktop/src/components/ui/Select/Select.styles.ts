@@ -77,7 +77,7 @@ export const chevronStyles = {
  */
 export const optionsContainerStyles = {
   base: cn(
-    "absolute z-50 max-h-80 w-full overflow-auto rounded-xl",
+    "absolute z-9999 max-h-80 w-full overflow-auto rounded-xl",
     "bg-white py-1 text-sm shadow-lg border border-gray-100",
     "ring-1 ring-black/5 focus:outline-none",
     // Animações suaves

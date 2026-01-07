@@ -55,7 +55,7 @@ export function DriverFilters({ filters, onFiltersChange, onClearFilters }: Driv
   );
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
       <div className="p-4 flex items-center gap-3">
         <div className="flex-1 relative">
           <Search

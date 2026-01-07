@@ -104,48 +104,54 @@ export function DatePicker({
       )}
 
       {/* Input */}
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className={clsx(
-          "w-full bg-white border outline-none transition-all duration-200 text-left relative",
-          compact ? "pl-9 pr-4 h-10 text-sm rounded-lg" : "pl-12 pr-4 py-3.5 text-sm rounded-xl",
-          error
-            ? compact
-              ? "border-red-300"
-              : "border-[#EF4444] shadow-[0_0_0_3px_rgba(239,68,68,0.1)]"
-            : compact
-              ? "border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              : "border-[#E5E7EB] focus:border-[#1A1A1A] focus:shadow-[0_0_0_3px_rgba(26,26,26,0.1)]",
-          isOpen && !error && !compact && "border-[#1A1A1A] shadow-[0_0_0_3px_rgba(26,26,26,0.1)]",
-        )}
-      >
-        <div
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
           className={clsx(
-            "absolute top-1/2 -translate-y-1/2 text-gray-400 flex items-center justify-center",
-            compact ? "left-3" : "left-4",
+            "w-full bg-white border outline-none transition-all duration-200 text-left relative",
+            compact ? "pl-9 pr-4 h-10 text-sm rounded-lg" : "pl-12 pr-4 py-3.5 text-sm rounded-xl",
+            clearable && value && (compact ? "pr-9" : "pr-12"),
+            error
+              ? compact
+                ? "border-red-300"
+                : "border-[#EF4444] shadow-[0_0_0_3px_rgba(239,68,68,0.1)]"
+              : compact
+                ? "border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                : "border-[#E5E7EB] focus:border-[#1A1A1A] focus:shadow-[0_0_0_3px_rgba(26,26,26,0.1)]",
+            isOpen &&
+              !error &&
+              !compact &&
+              "border-[#1A1A1A] shadow-[0_0_0_3px_rgba(26,26,26,0.1)]",
           )}
         >
-          <CalendarIcon size={compact ? 16 : 18} strokeWidth={1.5} />
-        </div>
+          <div
+            className={clsx(
+              "absolute top-1/2 -translate-y-1/2 text-gray-400 flex items-center justify-center pointer-events-none",
+              compact ? "left-3" : "left-4",
+            )}
+          >
+            <CalendarIcon size={compact ? 16 : 18} strokeWidth={1.5} />
+          </div>
 
-        <span className={clsx(value ? "text-[#1A1A1A] font-medium" : "text-gray-400")}>
-          {value ? formatDate(value) : placeholder}
-        </span>
+          <span className={clsx(value ? "text-[#1A1A1A] font-medium" : "text-gray-400")}>
+            {value ? formatDate(value) : placeholder}
+          </span>
+        </button>
 
         {clearable && value && (
           <button
             onClick={handleClear}
             type="button"
             className={clsx(
-              "absolute top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[#6B6B6B] transition-colors flex items-center justify-center",
+              "absolute top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[#6B6B6B] transition-colors flex items-center justify-center z-10",
               compact ? "right-3" : "right-4",
             )}
           >
             <X size={16} strokeWidth={2} />
           </button>
         )}
-      </button>
+      </div>
 
       {error && <p className="text-xs text-red-500 mt-1.5">{error}</p>}
 

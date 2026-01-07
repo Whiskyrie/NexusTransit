@@ -72,7 +72,7 @@ export function RouteFilters({ filters, onFiltersChange, onClearFilters }: Route
   );
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
       {/* Search Bar Principal */}
       <div className="p-4 flex items-center gap-3">
         <div className="flex-1 relative">
