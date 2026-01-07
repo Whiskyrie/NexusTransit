@@ -113,4 +113,44 @@ export const seedingProviders = [
     },
     inject: ["DATA_SOURCE"],
   },
+  {
+    provide: "DELIVERY_REPOSITORY",
+    useFactory: (dataSource: DataSource) => {
+      if (!dataSource) {
+        throw new Error("DataSource not provided to seeding module");
+      }
+      return dataSource.getRepository("Delivery");
+    },
+    inject: ["DATA_SOURCE"],
+  },
+  {
+    provide: "TRACKING_EVENT_REPOSITORY",
+    useFactory: (dataSource: DataSource) => {
+      if (!dataSource) {
+        throw new Error("DataSource not provided to seeding module");
+      }
+      return dataSource.getRepository("TrackingEvent");
+    },
+    inject: ["DATA_SOURCE"],
+  },
+  {
+    provide: "INCIDENT_REPOSITORY",
+    useFactory: (dataSource: DataSource) => {
+      if (!dataSource) {
+        throw new Error("DataSource not provided to seeding module");
+      }
+      return dataSource.getRepository("Incident");
+    },
+    inject: ["DATA_SOURCE"],
+  },
+  {
+    provide: "INCIDENT_COMMENT_REPOSITORY",
+    useFactory: (dataSource: DataSource) => {
+      if (!dataSource) {
+        throw new Error("DataSource not provided to seeding module");
+      }
+      return dataSource.getRepository("IncidentComment");
+    },
+    inject: ["DATA_SOURCE"],
+  },
 ];

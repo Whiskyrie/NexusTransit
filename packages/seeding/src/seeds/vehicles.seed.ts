@@ -47,7 +47,7 @@ export class VehiclesSeed implements ISeed {
 
     // Verificar se já existem veículos suficientes
     const count = await this.vehicleRepository.count();
-    if (count >= 18) {
+    if (count >= 40) {
       this.logger.log(`Já existem ${count} veículos no sistema. Pulando seed.`);
       return;
     }
@@ -55,6 +55,9 @@ export class VehiclesSeed implements ISeed {
     this.logger.log(`Existem ${count} veículos. Criando mais veículos...`);
 
     const vehiclesData = this.getVehiclesData();
+    // Adicionar veículos gerados dinamicamente
+    const additionalVehicles = this.generateAdditionalVehicles(40 - 18); // 18 é o número de veículos base
+    vehiclesData.push(...additionalVehicles);
 
     for (const vehicleData of vehiclesData) {
       try {
@@ -438,5 +441,68 @@ export class VehiclesSeed implements ISeed {
         has_refrigeration: false,
       },
     ];
+  }
+
+  /**
+   * Gera veículos adicionais dinamicamente
+   */
+  private generateAdditionalVehicles(count: number): Partial<VehicleEntity>[] {
+    const today = new Date();
+    const sixMonthsAgo = new Date(today);
+    sixMonthsAgo.setMonth(today.getMonth() - 6);
+    const nextMonth = new Date(today);
+    nextMonth.setMonth(today.getMonth() + 1);
+
+    const vehicleModels = [
+      { brand: "Mercedes-Benz", model: "Sprinter 415", type: "van", capacity: 1500, volume: 12 },
+      { brand: "Ford", model: "Transit", type: "van", capacity: 1400, volume: 11 },
+      { brand: "Fiat", model: "Ducato Cargo", type: "van", capacity: 1600, volume: 13 },
+      { brand: "Iveco", model: "Daily 35S14", type: "van", capacity: 1800, volume: 14 },
+      { brand: "Volkswagen", model: "Delivery 9.170", type: "truck", capacity: 5500, volume: 25 },
+      { brand: "Ford", model: "Cargo 816", type: "truck", capacity: 4500, volume: 20 },
+      { brand: "Mercedes-Benz", model: "Accelo 815", type: "truck", capacity: 4800, volume: 22 },
+      { brand: "Hyundai", model: "HR", type: "van", capacity: 1200, volume: 8 },
+      { brand: "Kia", model: "Bongo K2500", type: "van", capacity: 1300, volume: 9 },
+      { brand: "Renault", model: "Master L3H2", type: "van", capacity: 1700, volume: 14 },
+    ];
+    const colors = ["Branco", "Prata", "Preto", "Azul", "Vermelho", "Cinza"];
+    const fuelTypes = ["diesel", "diesel", "gasoline", "hybrid"];
+    const statuses = ["active", "active", "active", "maintenance"];
+    const letters = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+
+    const vehicles: Partial<VehicleEntity>[] = [];
+
+    for (let i = 0; i < count; i++) {
+      const vehicleInfo = vehicleModels[i % vehicleModels.length];
+      const letter1 = letters[i % letters.length];
+      const letter2 = letters[(i + 3) % letters.length];
+      const letter3 = letters[(i + 7) % letters.length];
+      const num = String(1000 + i).slice(1);
+      const plate = `${letter1}${letter2}${letter3}${i % 10}${letter1}${num.slice(0, 2)}`;
+
+      vehicles.push({
+        license_plate: plate,
+        license_plate_type: "mercosul",
+        brand: vehicleInfo.brand,
+        model: vehicleInfo.model,
+        year: 2019 + (i % 5),
+        color: colors[i % colors.length],
+        chassis_number: `9BW${String(i).padStart(5, "0")}${String(Math.random()).slice(2, 10)}`,
+        renavam: String(10000000000 + i * 123456).slice(0, 11),
+        vehicle_type: vehicleInfo.type,
+        status: statuses[i % statuses.length],
+        fuel_type: fuelTypes[i % fuelTypes.length],
+        load_capacity: vehicleInfo.capacity,
+        cargo_volume: vehicleInfo.volume,
+        acquisition_date: new Date(2019 + (i % 5), i % 12, (i % 28) + 1),
+        last_maintenance_at: sixMonthsAgo,
+        next_maintenance_at: nextMonth,
+        mileage: 30000 + i * 5000,
+        has_gps: i % 3 !== 0,
+        has_refrigeration: i % 5 === 0,
+      });
+    }
+
+    return vehicles;
   }
 }

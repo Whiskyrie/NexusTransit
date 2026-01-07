@@ -53,7 +53,7 @@ export class DriversSeed implements ISeed {
 
     // Verificar se já existem motoristas suficientes
     const count = await this.driverRepository.count();
-    if (count >= 15) {
+    if (count >= 40) {
       this.logger.log(`Já existem ${count} motoristas no sistema. Pulando seed.`);
       return;
     }
@@ -61,6 +61,9 @@ export class DriversSeed implements ISeed {
     this.logger.log(`Existem ${count} motoristas. Criando mais motoristas...`);
 
     const driversData = this.getDriversData();
+    // Adicionar motoristas gerados dinamicamente
+    const additionalDrivers = this.generateAdditionalDrivers(40 - 16); // 16 é o número de motoristas base
+    driversData.push(...additionalDrivers);
 
     for (const driverData of driversData) {
       try {
@@ -402,5 +405,108 @@ export class DriversSeed implements ISeed {
         },
       },
     ];
+  }
+
+  /**
+   * Gera motoristas adicionais dinamicamente
+   */
+  private generateAdditionalDrivers(count: number): {
+    driver: Partial<DriverEntity>;
+    license?: Partial<DriverLicenseEntity>;
+  }[] {
+    const today = new Date();
+    const oneYearAgo = new Date(today);
+    oneYearAgo.setFullYear(today.getFullYear() - 1);
+    const threeYearsFromNow = new Date(today);
+    threeYearsFromNow.setFullYear(today.getFullYear() + 3);
+
+    const firstNames = [
+      "Anderson",
+      "Bruna",
+      "Cristiano",
+      "Daiane",
+      "Eduardo",
+      "Fabiana",
+      "Gustavo",
+      "Helena",
+      "Igor",
+      "Juliana",
+      "Kleber",
+      "Larissa",
+      "Marcos",
+      "Natália",
+      "Otávio",
+      "Priscila",
+      "Rafael",
+      "Sabrina",
+      "Thiago",
+      "Vanessa",
+      "Wesley",
+      "Yara",
+      "Zilda",
+      "Alexandre",
+      "Barbara",
+      "Caio",
+      "Denise",
+      "Everton",
+      "Flávia",
+      "Gilberto",
+    ];
+    const lastNames = [
+      "Mendes",
+      "Barbosa",
+      "Teixeira",
+      "Moreira",
+      "Correia",
+      "Nunes",
+      "Dias",
+      "Rezende",
+      "Freitas",
+      "Cardoso",
+      "Pinto",
+      "Ramos",
+      "Monteiro",
+      "Castro",
+      "Campos",
+    ];
+    const statuses = ["available", "available", "available", "unavailable"];
+    const availabilities = ["available", "available", "on_route", "unavailable"];
+    const categories = ["d", "d", "e", "c"];
+
+    const drivers: {
+      driver: Partial<DriverEntity>;
+      license?: Partial<DriverLicenseEntity>;
+    }[] = [];
+
+    for (let i = 0; i < count; i++) {
+      const firstName = firstNames[i % firstNames.length];
+      const lastName = lastNames[i % lastNames.length];
+      const cpfBase = String(78900000000 + i * 11111).slice(0, 11);
+      const licenseNum = String(95000000000 + i * 12345).slice(0, 11);
+      const phoneNum = 97650000 + i;
+
+      drivers.push({
+        driver: {
+          full_name: `${firstName} ${lastName} Junior`,
+          cpf: cpfBase,
+          phone: `(11) ${String(phoneNum).slice(0, 5)}-${String(phoneNum).slice(5)}`,
+          email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${i}@nexustransit.com`,
+          status: statuses[i % statuses.length],
+          availability_status: availabilities[i % availabilities.length],
+          birth_date: new Date(1980 + (i % 20), i % 12, (i % 28) + 1),
+          hire_date: oneYearAgo,
+        },
+        license: {
+          license_number: licenseNum,
+          category: categories[i % categories.length],
+          issue_date: new Date(2019 + (i % 3), i % 12, 1),
+          expiration_date: threeYearsFromNow,
+          issuing_authority: "DETRAN-SP",
+          issuing_state: "SP",
+        },
+      });
+    }
+
+    return drivers;
   }
 }

@@ -95,6 +95,15 @@ export class TestUsersSeed implements ISeed {
       },
     ];
 
+    // Gerar mais usuários para atingir volume de 35
+    const additionalUsers = this.generateAdditionalUsers(
+      gestorRole,
+      despachanteRole,
+      motoristaRole,
+      clienteRole,
+    );
+    testUsers.push(...additionalUsers);
+
     const defaultPassword = await bcrypt.hash("Test@123", 10);
 
     for (const userData of testUsers) {
@@ -130,5 +139,107 @@ export class TestUsersSeed implements ISeed {
 
     this.logger.log("Seed de usuários de teste concluído!");
     this.logger.log("Senha padrão para todos: Test@123");
+  }
+
+  /**
+   * Gera usuários adicionais para atingir volume de ~35
+   */
+  private generateAdditionalUsers(
+    gestorRole: RoleEntity,
+    despachanteRole: RoleEntity,
+    motoristaRole: RoleEntity,
+    clienteRole: RoleEntity,
+  ): Array<{
+    email: string;
+    first_name: string;
+    last_name: string;
+    phone: string;
+    user_type: string;
+    role: RoleEntity;
+  }> {
+    const firstNames = [
+      "Ana",
+      "Bruno",
+      "Carla",
+      "Diego",
+      "Elena",
+      "Felipe",
+      "Gabriela",
+      "Hugo",
+      "Isabela",
+      "João",
+      "Karen",
+      "Lucas",
+      "Mariana",
+      "Nicolas",
+      "Olivia",
+      "Pedro",
+      "Renata",
+      "Samuel",
+      "Tatiana",
+      "Victor",
+      "Wanderson",
+      "Ximena",
+      "Yasmin",
+      "Zé",
+      "Amanda",
+      "Bernardo",
+      "Cecília",
+      "Daniel",
+      "Eduarda",
+      "Fernando",
+    ];
+    const lastNames = [
+      "Silva",
+      "Santos",
+      "Oliveira",
+      "Souza",
+      "Rodrigues",
+      "Ferreira",
+      "Alves",
+      "Pereira",
+      "Lima",
+      "Gomes",
+      "Costa",
+      "Ribeiro",
+      "Martins",
+      "Carvalho",
+      "Almeida",
+    ];
+
+    const roles = [
+      { role: gestorRole, type: "manager", prefix: "gestor" },
+      { role: despachanteRole, type: "operator", prefix: "despachante" },
+      { role: motoristaRole, type: "driver", prefix: "motorista" },
+      { role: clienteRole, type: "customer", prefix: "cliente" },
+    ];
+
+    const users: Array<{
+      email: string;
+      first_name: string;
+      last_name: string;
+      phone: string;
+      user_type: string;
+      role: RoleEntity;
+    }> = [];
+
+    // Gerar 30 usuários adicionais (total ~35 com os 5 base)
+    for (let i = 0; i < 30; i++) {
+      const firstName = firstNames[i % firstNames.length];
+      const lastName = lastNames[i % lastNames.length];
+      const roleInfo = roles[i % roles.length];
+      const phoneNum = 911000000 + i;
+
+      users.push({
+        email: `${roleInfo.prefix}.${firstName.toLowerCase()}${i}@nexustransit.com`,
+        first_name: firstName,
+        last_name: lastName,
+        phone: `+5511${phoneNum}`,
+        user_type: roleInfo.type,
+        role: roleInfo.role,
+      });
+    }
+
+    return users;
   }
 }
