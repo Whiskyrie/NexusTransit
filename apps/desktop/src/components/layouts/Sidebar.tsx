@@ -15,6 +15,7 @@ import {
 import { useAuthStore, useUser } from "../../stores/auth.store";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { ConfirmLogoutModal } from "../ui/ConfirmLogoutModal";
 
 // ============================================================================
 // Types
@@ -128,7 +129,7 @@ function NavItem({ item, isCollapsed }: NavItemProps) {
       to={item.path}
       className={({ isActive }) =>
         cn(
-          "flex items-center rounded-xl",
+          "flex items-center rounded-xl cursor-pointer", // Added cursor-pointer
           "transition-all",
           TRANSITION_DURATION,
           TRANSITION_EASING,
@@ -153,7 +154,7 @@ function NavItem({ item, isCollapsed }: NavItemProps) {
             <Tooltip.Trigger render={linkContent} />
             <Tooltip.Portal>
               <Tooltip.Positioner side="right" sideOffset={8}>
-                <Tooltip.Popup className="bg-zinc-900 text-white text-sm px-3 py-1.5 rounded-lg shadow-lg">
+                <Tooltip.Popup className="bg-zinc-900 text-white text-sm px-3 py-1.5 rounded-lg shadow-lg z-50">
                   {item.label}
                   <Tooltip.Arrow className="fill-zinc-900" />
                 </Tooltip.Popup>
@@ -194,18 +195,11 @@ function SidebarNavigation({ isCollapsed }: SidebarNavigationProps) {
 
 interface SidebarFooterProps {
   isCollapsed: boolean;
+  onLogoutClick: () => void;
 }
 
-function SidebarFooter({ isCollapsed }: SidebarFooterProps) {
-  const navigate = useNavigate();
-  const clearAuth = useAuthStore((state) => state.clearAuth);
+function SidebarFooter({ isCollapsed, onLogoutClick }: SidebarFooterProps) {
   const user = useUser();
-
-  const handleLogout = useCallback(() => {
-    clearAuth();
-    navigate("/login", { replace: true });
-  }, [clearAuth, navigate]);
-
   const userInitial = user?.first_name?.charAt(0) || "U";
   const userEmail = user?.email || "admin@nexus.com";
 
@@ -256,8 +250,8 @@ function SidebarFooter({ isCollapsed }: SidebarFooterProps) {
               <Tooltip.Trigger
                 render={
                   <button
-                    onClick={handleLogout}
-                    className="w-10 h-10 flex items-center justify-center rounded-lg bg-white border border-zinc-200 text-zinc-900 hover:bg-zinc-50 transition-colors"
+                    onClick={onLogoutClick}
+                    className="w-10 h-10 flex items-center justify-center rounded-lg bg-white border border-zinc-200 text-zinc-900 hover:bg-zinc-50 transition-colors cursor-pointer"
                   >
                     <LogOut className="w-4 h-4" strokeWidth={1.5} />
                   </button>
@@ -265,7 +259,7 @@ function SidebarFooter({ isCollapsed }: SidebarFooterProps) {
               />
               <Tooltip.Portal>
                 <Tooltip.Positioner side="right" sideOffset={8}>
-                  <Tooltip.Popup className="bg-zinc-900 text-white text-sm px-3 py-1.5 rounded-lg shadow-lg">
+                  <Tooltip.Popup className="bg-zinc-900 text-white text-sm px-3 py-1.5 rounded-lg shadow-lg z-50">
                     Sair da conta
                     <Tooltip.Arrow className="fill-zinc-900" />
                   </Tooltip.Popup>
@@ -279,8 +273,8 @@ function SidebarFooter({ isCollapsed }: SidebarFooterProps) {
       {/* Logout Button - full width when expanded */}
       {!isCollapsed && (
         <button
-          onClick={handleLogout}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white border border-zinc-200 text-zinc-900 text-xs font-medium hover:bg-zinc-50 transition-colors"
+          onClick={onLogoutClick}
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white border border-zinc-200 text-zinc-900 text-xs font-medium hover:bg-zinc-50 transition-colors cursor-pointer"
         >
           <LogOut className="w-4 h-4" strokeWidth={1.5} />
           <span>Sair da conta</span>
@@ -317,7 +311,7 @@ function ToggleButton({ isCollapsed, onToggle }: ToggleButtonProps) {
         "absolute -right-3 top-8 w-6 h-6 bg-white border border-zinc-200 rounded-full",
         "flex items-center justify-center shadow-sm",
         "hover:bg-zinc-50 transition-colors",
-        "z-10",
+        "z-10 cursor-pointer", // Added cursor-pointer
       )}
       aria-label={isCollapsed ? "Expandir sidebar" : "Colapsar sidebar"}
     >
@@ -356,10 +350,14 @@ export function Sidebar({
 }: SidebarProps) {
   // Estado interno para modo não-controlado
   const [internalCollapsed, setInternalCollapsed] = useState(defaultCollapsed);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   // Determina se está em modo controlado
   const isControlled = collapsed !== undefined;
   const isCollapsed = isControlled ? collapsed : internalCollapsed;
+
+  const navigate = useNavigate();
+  const clearAuth = useAuthStore((state) => state.clearAuth);
 
   // Handler para toggle
   const handleToggle = useCallback(() => {
@@ -372,26 +370,40 @@ export function Sidebar({
     }
   }, [isCollapsed, isControlled, onCollapsedChange]);
 
+  const handleLogoutConfirm = useCallback(() => {
+    clearAuth();
+    setIsLogoutModalOpen(false);
+    navigate("/login", { replace: true });
+  }, [clearAuth, navigate]);
+
   return (
-    <aside
-      className={cn(
-        "relative bg-[#F5F5F0] border-r border-zinc-200 rounded-[20px] flex flex-col",
-        "shadow-[0_2px_8px_rgba(0,0,0,0.04)]",
-        "transition-all",
-        TRANSITION_DURATION,
-        TRANSITION_EASING,
-        className,
-      )}
-      style={{
-        width: isCollapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH_EXPANDED,
-        minWidth: isCollapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH_EXPANDED,
-      }}
-    >
-      <ToggleButton isCollapsed={isCollapsed} onToggle={handleToggle} />
-      <SidebarHeader isCollapsed={isCollapsed} />
-      <SidebarNavigation isCollapsed={isCollapsed} />
-      <SidebarFooter isCollapsed={isCollapsed} />
-    </aside>
+    <>
+      <aside
+        className={cn(
+          "relative bg-[#F5F5F0] border-r border-zinc-200 rounded-[20px] flex flex-col",
+          "shadow-[0_2px_8px_rgba(0,0,0,0.04)]",
+          "transition-all",
+          TRANSITION_DURATION,
+          TRANSITION_EASING,
+          className,
+        )}
+        style={{
+          width: isCollapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH_EXPANDED,
+          minWidth: isCollapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH_EXPANDED,
+        }}
+      >
+        <ToggleButton isCollapsed={isCollapsed} onToggle={handleToggle} />
+        <SidebarHeader isCollapsed={isCollapsed} />
+        <SidebarNavigation isCollapsed={isCollapsed} />
+        <SidebarFooter isCollapsed={isCollapsed} onLogoutClick={() => setIsLogoutModalOpen(true)} />
+      </aside>
+
+      <ConfirmLogoutModal
+        isOpen={isLogoutModalOpen}
+        onConfirm={handleLogoutConfirm}
+        onCancel={() => setIsLogoutModalOpen(false)}
+      />
+    </>
   );
 }
 
