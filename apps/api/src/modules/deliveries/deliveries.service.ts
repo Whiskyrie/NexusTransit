@@ -4,6 +4,8 @@ import {
   BadRequestException,
   Logger,
   InternalServerErrorException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, Between, LessThan, MoreThan } from 'typeorm';
@@ -31,6 +33,10 @@ import { DeliveryValidationService } from './services/delivery-validation.servic
 import { AddProofDto } from './dto/add-proof.dto';
 import type { DeliveryCreationData } from './interfaces/delivery-creation-data.interface';
 import { v4 as uuidv4 } from 'uuid';
+import { DriversService } from '../drivers/drivers.service';
+import { VehiclesService } from '../vehicles/vehicles.service';
+import { DriverStatus } from '../drivers/enums/driver-status.enum';
+import { VehicleStatus } from '../vehicles/enums/vehicle-status.enum';
 
 @Injectable()
 export class DeliveriesService {
@@ -53,6 +59,10 @@ export class DeliveriesService {
     private readonly vehicleRepository: Repository<Vehicle>,
     private readonly dataSource: DataSource,
     private readonly deliveryValidationService: DeliveryValidationService,
+    @Inject(forwardRef(() => DriversService))
+    private readonly driversService: DriversService,
+    @Inject(forwardRef(() => VehiclesService))
+    private readonly vehiclesService: VehiclesService,
   ) {}
 
   /**
@@ -185,6 +195,28 @@ export class DeliveriesService {
       };
 
       await queryRunner.manager.save(statusHistory);
+
+      // Atualizar status do motorista para ON_ROUTE se houver motorista atribuído
+      if (driver?.id) {
+        try {
+          await this.driversService.update(driver.id, { status: DriverStatus.ON_ROUTE });
+          this.logger.log(`Motorista ${driver.id} atualizado para ON_ROUTE`);
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          this.logger.warn(`Erro ao atualizar status do motorista: ${errorMessage}`);
+        }
+      }
+
+      // Atualizar status do veículo para IN_ROUTE se houver veículo atribuído
+      if (vehicle?.id) {
+        try {
+          await this.vehiclesService.update(vehicle.id, { status: VehicleStatus.IN_ROUTE });
+          this.logger.log(`Veículo ${vehicle.id} atualizado para IN_ROUTE`);
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          this.logger.warn(`Erro ao atualizar status do veículo: ${errorMessage}`);
+        }
+      }
 
       await queryRunner.commitTransaction();
 
@@ -873,6 +905,37 @@ export class DeliveriesService {
       }
 
       await queryRunner.manager.save(statusHistory);
+
+      // Restaurar status do motorista e veículo quando entrega é finalizada
+      if (
+        newStatus === DeliveryStatus.DELIVERED ||
+        newStatus === DeliveryStatus.FAILED ||
+        newStatus === DeliveryStatus.CANCELLED
+      ) {
+        // Restaurar status do motorista para ACTIVE
+        if (delivery.driver_id) {
+          try {
+            await this.driversService.update(delivery.driver_id, { status: DriverStatus.ACTIVE });
+            this.logger.log(`Motorista ${delivery.driver_id} restaurado para ACTIVE`);
+          } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            this.logger.warn(`Erro ao atualizar status do motorista: ${errorMessage}`);
+          }
+        }
+
+        // Restaurar status do veículo para ACTIVE
+        if (delivery.vehicle_id) {
+          try {
+            await this.vehiclesService.update(delivery.vehicle_id, {
+              status: VehicleStatus.ACTIVE,
+            });
+            this.logger.log(`Veículo ${delivery.vehicle_id} restaurado para ACTIVE`);
+          } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            this.logger.warn(`Erro ao atualizar status do veículo: ${errorMessage}`);
+          }
+        }
+      }
 
       await queryRunner.commitTransaction();
 
