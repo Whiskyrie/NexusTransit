@@ -61,7 +61,7 @@ export interface Route {
   id: string;
   route_code: string;
   name: string;
-  description?: string;
+  description?: string | null;
   status: RouteStatus;
   type: RouteType;
   vehicle: RouteVehicle;
@@ -69,12 +69,12 @@ export interface Route {
   driver: RouteDriver;
   driver_id: string;
   origin_address: string;
-  origin_coordinates?: { x: number; y: number };
-  destination_address: string;
-  destination_coordinates?: { x: number; y: number };
+  origin_coordinates?: { x: number; y: number } | null;
+  destination_address: string | null;
+  destination_coordinates?: { x: number; y: number } | null;
   planned_date: string;
   planned_start_time: string;
-  planned_end_time: string;
+  estimated_end_date: string | null;
   actual_start_time: string | null;
   actual_end_time: string | null;
   estimated_distance_km: number;
@@ -104,7 +104,6 @@ export interface CreateRouteDto {
   type: RouteType;
   planned_date: string;
   planned_start_time: string;
-  planned_end_time?: string;
   origin_address: string;
   destination_address?: string;
   estimated_distance_km?: number;

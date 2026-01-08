@@ -53,21 +53,21 @@ export class CreateRouteStopDto {
   sequence_order!: number;
 
   @ApiPropertyOptional({
-    description: 'Horário planejado de chegada (HH:mm)',
+    description: 'Horário planejado de chegada (HH:mm ou HH:mm:ss)',
     example: '09:00',
   })
   @IsOptional()
   @IsString()
-  @Length(5, 5)
+  @Length(5, 8)
   planned_arrival_time?: string;
 
   @ApiPropertyOptional({
-    description: 'Horário planejado de partida (HH:mm)',
+    description: 'Horário planejado de partida (HH:mm ou HH:mm:ss)',
     example: '09:30',
   })
   @IsOptional()
   @IsString()
-  @Length(5, 5)
+  @Length(5, 8)
   planned_departure_time?: string;
 
   @ApiPropertyOptional({
@@ -233,22 +233,13 @@ export class CreateRouteDto {
   planned_date!: string;
 
   @ApiPropertyOptional({
-    description: 'Horário de início planejado (HH:mm)',
+    description: 'Horário de início planejado (HH:mm ou HH:mm:ss)',
     example: '08:00',
   })
   @IsOptional()
   @IsString()
-  @Length(5, 5)
+  @Length(5, 8)
   planned_start_time?: string;
-
-  @ApiPropertyOptional({
-    description: 'Horário de término planejado (HH:mm)',
-    example: '18:00',
-  })
-  @IsOptional()
-  @IsString()
-  @Length(5, 5)
-  planned_end_time?: string;
 
   @ApiPropertyOptional({
     description: 'Origem da rota (lat, lng)',

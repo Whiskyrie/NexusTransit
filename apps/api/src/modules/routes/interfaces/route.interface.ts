@@ -87,9 +87,10 @@ export interface IRoute {
   planned_start_time?: string;
 
   /**
-   * Horário planejado de término (formato HH:mm)
+   * Data/hora estimada de término (calculada via Google Maps API)
+   * Substitui planned_end_time para suportar rotas de vários dias
    */
-  planned_end_time?: string;
+  estimated_end_date?: Date;
 
   /**
    * Horário real de início

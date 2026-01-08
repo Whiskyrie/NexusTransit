@@ -23,7 +23,8 @@ interface RouteEntity {
   start_location?: string;
   end_location?: string;
   planned_start_time?: string;
-  planned_end_time?: string;
+  estimated_end_date?: Date;
+  estimated_duration_minutes?: number;
   total_distance?: number;
   total_duration?: number;
   optimization_score?: number;
@@ -174,7 +175,14 @@ export class RoutesSeed implements ISeed {
           start_location: "POINT(-46.6558 -23.5632)",
           end_location: "POINT(-46.6558 -23.5632)",
           planned_start_time: "08:00",
-          planned_end_time: "12:00",
+          estimated_duration_minutes: 240,
+          estimated_end_date: new Date(
+            today.getFullYear(),
+            today.getMonth(),
+            today.getDate(),
+            12,
+            0,
+          ),
           total_distance: 35.5,
           total_duration: 180,
           optimization_score: 87.5,
@@ -265,7 +273,14 @@ export class RoutesSeed implements ISeed {
           start_location: "POINT(-46.6250 -23.5150)",
           end_location: "POINT(-46.6250 -23.5150)",
           planned_start_time: "13:00",
-          planned_end_time: "18:00",
+          estimated_duration_minutes: 240,
+          estimated_end_date: new Date(
+            today.getFullYear(),
+            today.getMonth(),
+            today.getDate(),
+            18,
+            0,
+          ),
           total_distance: 42.8,
           total_duration: 240,
           optimization_score: 82.3,
@@ -345,7 +360,14 @@ export class RoutesSeed implements ISeed {
           start_location: "POINT(-46.6800 -23.5850)",
           end_location: "POINT(-46.6800 -23.5850)",
           planned_start_time: "07:30",
-          planned_end_time: "11:30",
+          estimated_duration_minutes: 150,
+          estimated_end_date: new Date(
+            tomorrow.getFullYear(),
+            tomorrow.getMonth(),
+            tomorrow.getDate(),
+            11,
+            30,
+          ),
           total_distance: 28.3,
           total_duration: 150,
           optimization_score: 91.2,
@@ -535,7 +557,14 @@ export class RoutesSeed implements ISeed {
           destination_address: stops[stops.length - 1].address,
           destination_coordinates: stops[stops.length - 1].coordinates,
           planned_start_time: "08:00",
-          planned_end_time: `${String(8 + numStops).padStart(2, "0")}:00`,
+          estimated_duration_minutes: numStops * 60,
+          estimated_end_date: new Date(
+            routeDate.getFullYear(),
+            routeDate.getMonth(),
+            routeDate.getDate(),
+            8 + numStops,
+            0,
+          ),
           total_distance: 15 + (i % 30),
           total_duration: 60 + numStops * 20,
           optimization_score: 70 + (i % 30),
