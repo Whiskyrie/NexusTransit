@@ -1,5 +1,4 @@
 import { RouteStatus, RouteType, RouteFilters as RouteFiltersType } from "../../types/route.types";
-import { Input } from "../ui/Input";
 import { DateRangePicker } from "../ui/DateRangePicker";
 import { Button } from "../ui/Button";
 import { Select, type SelectOption } from "../ui/Select";
@@ -11,6 +10,8 @@ interface RouteFiltersProps {
   filters: RouteFiltersType;
   onFiltersChange: (filters: RouteFiltersType) => void;
   onClearFilters: () => void;
+  drivers: SelectOption<string>[];
+  vehicles: SelectOption<string>[];
 }
 
 const statusLabels: Record<RouteStatus, string> = {
@@ -29,7 +30,13 @@ const typeLabels: Record<RouteType, string> = {
   [RouteType.LOCAL]: "Local",
 };
 
-export function RouteFilters({ filters, onFiltersChange, onClearFilters }: RouteFiltersProps) {
+export function RouteFilters({
+  filters,
+  onFiltersChange,
+  onClearFilters,
+  drivers,
+  vehicles,
+}: RouteFiltersProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const activeFiltersCount = [
@@ -99,11 +106,10 @@ export function RouteFilters({ filters, onFiltersChange, onClearFilters }: Route
                 onClick={() =>
                   handleFilterChange("status", filters.status === status ? undefined : status)
                 }
-                className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-                  filters.status === status
+                className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${filters.status === status
                     ? "bg-[#1A1A1A] text-white shadow-md"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
+                  }`}
               >
                 {statusLabels[status]}
               </button>
@@ -120,9 +126,8 @@ export function RouteFilters({ filters, onFiltersChange, onClearFilters }: Route
           <span className="hidden sm:inline">Filtros</span>
           {activeFiltersCount > 0 && (
             <span
-              className={`min-w-5 h-5 flex items-center justify-center rounded-full text-xs font-bold ${
-                isExpanded ? "bg-white text-[#1A1A1A]" : "bg-[#1A1A1A] text-white"
-              }`}
+              className={`min-w-5 h-5 flex items-center justify-center rounded-full text-xs font-bold ${isExpanded ? "bg-white text-[#1A1A1A]" : "bg-[#1A1A1A] text-white"
+                }`}
             >
               {activeFiltersCount}
             </span>
@@ -146,11 +151,10 @@ export function RouteFilters({ filters, onFiltersChange, onClearFilters }: Route
 
       {/* Advanced Filters Panel */}
       <div
-        className={`grid transition-all duration-300 ease-out ${
-          isExpanded
+        className={`grid transition-all duration-300 ease-out ${isExpanded
             ? "grid-rows-[1fr] opacity-100"
             : "grid-rows-[0fr] opacity-0 pointer-events-none"
-        }`}
+          }`}
       >
         <div className={isExpanded ? "" : "overflow-hidden"}>
           <div className="px-4 pb-4 pt-2 border-t border-gray-100">
@@ -178,59 +182,53 @@ export function RouteFilters({ filters, onFiltersChange, onClearFilters }: Route
               />
 
               {/* Driver ID */}
-              <div className="space-y-2">
-                <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                  Motorista
-                </label>
-                <Input
-                  placeholder="Buscar motorista..."
-                  value={filters.driver_id || ""}
-                  onChange={(e) => handleFilterChange("driver_id", e.target.value)}
-                  className="h-11"
-                />
-              </div>
+              <Select
+                label="Motorista"
+                options={[{ value: "", label: "Todos os motoristas" }, ...drivers]}
+                value={filters.driver_id || ""}
+                onChange={(value) => handleFilterChange("driver_id", value)}
+                placeholder="Selecione um motorista"
+              />
 
               {/* Vehicle ID */}
-              <div className="space-y-2">
-                <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                  Veículo
-                </label>
-                <Input
-                  placeholder="Buscar veículo..."
-                  value={filters.vehicle_id || ""}
-                  onChange={(e) => handleFilterChange("vehicle_id", e.target.value)}
-                  className="h-11"
-                />
-              </div>
+              <Select
+                label="Veículo"
+                options={[{ value: "", label: "Todos os veículos" }, ...vehicles]}
+                value={filters.vehicle_id || ""}
+                onChange={(value) => handleFilterChange("vehicle_id", value)}
+                placeholder="Selecione um veículo"
+              />
 
               {/* Date Range */}
-              <div className="lg:col-span-2 space-y-2">
+              <div className="lg:col-span-4 space-y-2">
                 <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
                   Período
                 </label>
-                <DateRangePicker
-                  value={{
-                    start: filters.route_date_from
-                      ? new Date(filters.route_date_from + "T12:00:00")
-                      : undefined,
-                    end: filters.route_date_to
-                      ? new Date(filters.route_date_to + "T12:00:00")
-                      : undefined,
-                  }}
-                  onChange={(range) => {
-                    // Formatar datas como YYYY-MM-DD usando date-fns para preservar timezone local
-                    const formatLocalDate = (date: Date | undefined) => {
-                      if (!date) return undefined;
-                      return format(date, "yyyy-MM-dd");
-                    };
-                    onFiltersChange({
-                      ...filters,
-                      route_date_from: formatLocalDate(range.start),
-                      route_date_to: formatLocalDate(range.end),
-                      page: 1,
-                    });
-                  }}
-                />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <DateRangePicker
+                    value={{
+                      start: filters.route_date_from
+                        ? new Date(filters.route_date_from + "T12:00:00")
+                        : undefined,
+                      end: filters.route_date_to
+                        ? new Date(filters.route_date_to + "T12:00:00")
+                        : undefined,
+                    }}
+                    onChange={(range) => {
+                      // Formatar datas como YYYY-MM-DD usando date-fns para preservar timezone local
+                      const formatLocalDate = (date: Date | undefined) => {
+                        if (!date) return undefined;
+                        return format(date, "yyyy-MM-dd");
+                      };
+                      onFiltersChange({
+                        ...filters,
+                        route_date_from: formatLocalDate(range.start),
+                        route_date_to: formatLocalDate(range.end),
+                        page: 1,
+                      });
+                    }}
+                  />
+                </div>
               </div>
             </div>
           </div>
