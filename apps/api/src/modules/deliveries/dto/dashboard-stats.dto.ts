@@ -1,4 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IsOptional, IsString, IsNumber, IsEnum, IsDateString } from 'class-validator';
+import { Type } from 'class-transformer';
 
 /**
  * DTO para Top Estados por volume de entregas
@@ -67,6 +69,8 @@ export class DeliveryDashboardFilterDto {
     required: false,
     example: '2024-01-01',
   })
+  @IsOptional()
+  @IsDateString()
   start_date?: string;
 
   @ApiProperty({
@@ -74,6 +78,8 @@ export class DeliveryDashboardFilterDto {
     required: false,
     example: '2024-12-31',
   })
+  @IsOptional()
+  @IsDateString()
   end_date?: string;
 
   @ApiProperty({
@@ -81,6 +87,9 @@ export class DeliveryDashboardFilterDto {
     required: false,
     enum: ['PENDING', 'IN_TRANSIT', 'DELIVERED', 'CANCELLED', 'FAILED'],
   })
+  @IsOptional()
+  @IsString()
+  @IsEnum(['PENDING', 'IN_TRANSIT', 'DELIVERED', 'CANCELLED', 'FAILED'])
   status?: string;
 
   @ApiProperty({
@@ -89,5 +98,8 @@ export class DeliveryDashboardFilterDto {
     default: 5,
     example: 10,
   })
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
   limit?: number;
 }

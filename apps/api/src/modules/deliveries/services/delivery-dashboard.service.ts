@@ -40,7 +40,8 @@ export class DeliveryDashboardService {
       // Criar query builder
       const queryBuilder = this.deliveryRepository
         .createQueryBuilder('delivery')
-        .select(["delivery.delivery_address->>'state' as estado", 'COUNT(delivery.id) as entregas'])
+        .select("delivery.delivery_address->>'state'", 'estado')
+        .addSelect('COUNT(delivery.id)', 'entregas')
         .where('delivery.deleted_at IS NULL');
 
       // Aplicar filtro de período
@@ -102,12 +103,10 @@ export class DeliveryDashboardService {
       // Criar query builder com join na tabela de clientes
       const queryBuilder = this.deliveryRepository
         .createQueryBuilder('delivery')
-        .select([
-          'customer.id as id',
-          'customer.name as nome',
-          'customer.category as categoria',
-          'COUNT(delivery.id) as entregas',
-        ])
+        .select('customer.id', 'id')
+        .addSelect('customer.name', 'nome')
+        .addSelect('customer.category', 'categoria')
+        .addSelect('COUNT(delivery.id)', 'entregas')
         .leftJoin('delivery.customer', 'customer')
         .where('delivery.deleted_at IS NULL')
         .andWhere('customer.deleted_at IS NULL');
@@ -172,14 +171,15 @@ export class DeliveryDashboardService {
       // Criar query builder
       const queryBuilder = this.deliveryRepository
         .createQueryBuilder('delivery')
-        .select([
-          'COUNT(delivery.id) as total',
-          'SUM(CASE WHEN DATE(delivery.created_at) = CURRENT_DATE THEN 1 ELSE 0 END) as today',
-          'SUM(CASE WHEN delivery.status = :inTransit THEN 1 ELSE 0 END) as inTransit',
-          'SUM(CASE WHEN delivery.status = :delivered THEN 1 ELSE 0 END) as delivered',
-          'SUM(CASE WHEN delivery.status = :pending THEN 1 ELSE 0 END) as pending',
-          'SUM(CASE WHEN delivery.status = :failed THEN 1 ELSE 0 END) as failed',
-        ])
+        .select('COUNT(delivery.id)', 'total')
+        .addSelect(
+          'SUM(CASE WHEN DATE(delivery.created_at) = CURRENT_DATE THEN 1 ELSE 0 END)',
+          'today',
+        )
+        .addSelect('SUM(CASE WHEN delivery.status = :inTransit THEN 1 ELSE 0 END)', 'inTransit')
+        .addSelect('SUM(CASE WHEN delivery.status = :delivered THEN 1 ELSE 0 END)', 'delivered')
+        .addSelect('SUM(CASE WHEN delivery.status = :pending THEN 1 ELSE 0 END)', 'pending')
+        .addSelect('SUM(CASE WHEN delivery.status = :failed THEN 1 ELSE 0 END)', 'failed')
         .where('delivery.deleted_at IS NULL')
         .setParameter('inTransit', 'IN_TRANSIT')
         .setParameter('delivered', 'DELIVERED')
