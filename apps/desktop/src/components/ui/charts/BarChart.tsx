@@ -30,8 +30,8 @@ export function BarChart<T>({ title, data, series, xAxisKey, height = 300 }: Bar
         <h3 className="text-lg font-semibold text-[#1A1A1A]">{title}</h3>
       </div>
 
-      <div style={{ height, minHeight: height }}>
-        <ResponsiveContainer width="100%" height="100%">
+      <div style={{ height, minHeight: height, minWidth: 0 }}>
+        <ResponsiveContainer width="100%" height="100%" aspect={undefined}>
           <RechartsBarChart
             data={data}
             margin={{ top: 10, right: 10, left: -20, bottom: 0 }}

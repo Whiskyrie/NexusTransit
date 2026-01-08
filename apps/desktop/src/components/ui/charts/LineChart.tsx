@@ -32,8 +32,8 @@ export function LineChart<T>({
         {filter}
       </div>
 
-      <div style={{ height, minHeight: height }}>
-        <ResponsiveContainer width="100%" height="100%">
+      <div style={{ height, minHeight: height, minWidth: 0 }}>
+        <ResponsiveContainer width="100%" height="100%" aspect={undefined}>
           <RechartsLineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#F5F5F0" />
             <XAxis
