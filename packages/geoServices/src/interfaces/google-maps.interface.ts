@@ -106,6 +106,49 @@ export interface RouteStep {
   travel_mode: string;
 }
 
+export interface PlaceAutocompletePrediction {
+  description: string;
+  place_id: string;
+  structured_formatting: {
+    main_text: string;
+    secondary_text: string;
+    main_text_matched_substrings: Array<{
+      offset: number;
+      length: number;
+    }>;
+  };
+  types: string[];
+  terms: Array<{
+    offset: number;
+    value: string;
+  }>;
+}
+
+export interface PlaceAutocompleteResponse {
+  predictions: PlaceAutocompletePrediction[];
+  status: string;
+}
+
+export interface PlaceDetailsResponse {
+  result: {
+    address_components: Array<{
+      long_name: string;
+      short_name: string;
+      types: string[];
+    }>;
+    formatted_address: string;
+    geometry: {
+      location: {
+        lat: number;
+        lng: number;
+      };
+    };
+    place_id: string;
+    types: string[];
+  };
+  status: string;
+}
+
 export interface GoogleMapsServiceInterface {
   geocode(address: string): Promise<GeocodeResponse>;
   reverseGeocode(lat: number, lng: number): Promise<GeocodeResponse>;
@@ -120,4 +163,14 @@ export interface GoogleMapsServiceInterface {
     mode?: string,
     waypoints?: string[],
   ): Promise<RouteResponse>;
+  placeAutocomplete(
+    input: string,
+    options?: {
+      types?: string[];
+      componentRestrictions?: { country: string };
+      location?: { lat: number; lng: number };
+      radius?: number;
+    },
+  ): Promise<PlaceAutocompleteResponse>;
+  placeDetails(placeId: string): Promise<PlaceDetailsResponse>;
 }

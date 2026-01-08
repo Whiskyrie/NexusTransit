@@ -5,6 +5,8 @@ import type {
   GeocodeResponse,
   DistanceMatrixResponse,
   RouteResponse,
+  PlaceAutocompleteResponse,
+  PlaceDetailsResponse,
 } from "../interfaces/google-maps.interface";
 
 @Injectable()
@@ -250,6 +252,110 @@ export class GoogleMapsService implements GoogleMapsServiceInterface {
 
       throw new NotFoundException(
         "Não foi possível calcular a rota com waypoints. Tente novamente mais tarde.",
+      );
+    }
+  }
+
+  async placeAutocomplete(
+    input: string,
+    options?: {
+      types?: string[];
+      componentRestrictions?: { country: string };
+      location?: { lat: number; lng: number };
+      radius?: number;
+    },
+  ): Promise<PlaceAutocompleteResponse> {
+    if (!input || input.trim().length === 0) {
+      throw new BadRequestException("Entrada de busca não pode ser vazia");
+    }
+
+    try {
+      this.logger.log(`Place autocomplete for: ${input}`);
+
+      const params: any = {
+        input: input.trim(),
+        key: this.apiKey,
+      };
+
+      if (options?.types && options.types.length > 0) {
+        params.types = options.types.join("|");
+      }
+
+      if (options?.componentRestrictions?.country) {
+        params.components = `country:${options.componentRestrictions.country}`;
+      }
+
+      if (options?.location) {
+        params.location = `${options.location.lat},${options.location.lng}`;
+      }
+
+      if (options?.radius) {
+        params.radius = options.radius;
+      }
+
+      const response = await this.client.placeAutocomplete({
+        params,
+        timeout: this.timeout,
+      });
+
+      if (response.data.status !== "OK" && response.data.status !== "ZERO_RESULTS") {
+        this.logger.error(`Place autocomplete failed: ${response.data.status}`);
+        throw new NotFoundException(
+          `Autocomplete falhou: ${response.data.error_message ?? response.data.status}`,
+        );
+      }
+
+      this.logger.log(`Place autocomplete successful: ${response.data.predictions.length} results`);
+      return response.data as PlaceAutocompleteResponse;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
+      this.logger.error(`Error in placeAutocomplete: ${errorMessage}`);
+
+      if (error instanceof BadRequestException || error instanceof NotFoundException) {
+        throw error;
+      }
+
+      throw new NotFoundException(
+        "Não foi possível realizar o autocomplete. Tente novamente mais tarde.",
+      );
+    }
+  }
+
+  async placeDetails(placeId: string): Promise<PlaceDetailsResponse> {
+    if (!placeId || placeId.trim().length === 0) {
+      throw new BadRequestException("Place ID não pode ser vazio");
+    }
+
+    try {
+      this.logger.log(`Getting place details for: ${placeId}`);
+
+      const response = await this.client.placeDetails({
+        params: {
+          place_id: placeId,
+          key: this.apiKey,
+        },
+        timeout: this.timeout,
+      });
+
+      if (response.data.status !== "OK") {
+        this.logger.error(`Place details failed: ${response.data.status}`);
+        throw new NotFoundException(
+          `Detalhes do local falharam: ${response.data.error_message ?? response.data.status}`,
+        );
+      }
+
+      this.logger.log(`Place details successful for: ${placeId}`);
+      return response.data as PlaceDetailsResponse;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
+      this.logger.error(`Error in placeDetails: ${errorMessage}`);
+
+      if (error instanceof BadRequestException || error instanceof NotFoundException) {
+        throw error;
+      }
+
+      throw new NotFoundException(
+        "Não foi possível obter os detalhes do local. Tente novamente mais tarde.",
       );
     }
   }
