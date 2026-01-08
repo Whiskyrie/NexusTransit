@@ -1,83 +1,108 @@
-import { X, AlertTriangle } from "lucide-react";
-import { Button } from "./Button";
+import { Fragment } from "react";
+import { Dialog, Transition } from "@headlessui/react";
+import { AlertTriangle } from "lucide-react";
 
 interface ConfirmDeleteModalProps {
   isOpen: boolean;
-  title: string;
-  itemName: string;
+  title?: string;
+  itemName?: string;
   isDeleting: boolean;
   onConfirm: () => void;
   onCancel: () => void;
-  description?: string;
+  // Legacy prop support (optional, but we will fix usage)
+  routeName?: string;
 }
 
 export function ConfirmDeleteModal({
   isOpen,
-  title,
+  title = "Excluir item",
   itemName,
+  routeName, // Support for legacy prop until refactored
   isDeleting,
   onConfirm,
   onCancel,
-  description,
 }: ConfirmDeleteModalProps) {
-  if (!isOpen) return null;
+  const displayItemName = itemName || routeName;
 
   return (
-    <div className="fixed inset-0 z-9000 flex items-center justify-center">
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onCancel} />
-
-      {/* Modal */}
-      <div className="relative bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl animate-in fade-in zoom-in duration-200">
-        {/* Close button */}
-        <button
-          onClick={onCancel}
-          disabled={isDeleting}
-          className="absolute top-4 right-4 w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors disabled:opacity-50"
+    <Transition.Root show={isOpen} as={Fragment}>
+      <Dialog as="div" className="relative z-50" onClose={onCancel}>
+        <Transition.Child
+          as={Fragment}
+          enter="ease-out duration-300"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leave="ease-in duration-200"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
         >
-          <X className="w-4 h-4 text-gray-600" strokeWidth={1.5} />
-        </button>
+          <div className="fixed inset-0 bg-gray-500/75 transition-opacity backdrop-blur-sm" />
+        </Transition.Child>
 
-        {/* Icon */}
-        <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
-          <AlertTriangle className="w-6 h-6 text-red-600" strokeWidth={2} />
-        </div>
+        <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
+          <div className="flex min-h-full items-center justify-center p-4 text-center">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+              enterTo="opacity-100 translate-y-0 sm:scale-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100 translate-y-0 sm:scale-100"
+              leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            >
+              <Dialog.Panel className="relative transform overflow-hidden rounded-2xl bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-md sm:p-6">
+                <div className="flex flex-col items-center text-center">
+                  <div className="mx-auto flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-red-50 mb-4 ring-8 ring-red-50/50">
+                    <AlertTriangle className="h-6 w-6 text-red-600" aria-hidden="true" strokeWidth={2} />
+                  </div>
 
-        {/* Content */}
-        <div className="text-center mb-6">
-          <h3 className="text-lg font-bold text-[#1A1A1A] mb-2">{title}</h3>
-          <p className="text-sm text-gray-600">
-            {description || (
-              <>
-                Tem certeza que deseja excluir{" "}
-                <span className="font-semibold text-[#1A1A1A]">"{itemName}"</span>?
-              </>
-            )}
-          </p>
-          <p className="text-xs text-gray-500 mt-2">Esta ação não pode ser desfeita.</p>
-        </div>
+                  <Dialog.Title
+                    as="h3"
+                    className="text-xl font-bold leading-6 text-gray-900 mb-2"
+                  >
+                    {title}
+                  </Dialog.Title>
 
-        {/* Actions */}
-        <div className="flex items-center justify-center gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            disabled={isDeleting}
-            className="px-4! py-2! text-sm"
-          >
-            Cancelar
-          </Button>
-          <Button
-            type="button"
-            onClick={onConfirm}
-            isLoading={isDeleting}
-            className="px-4! py-2! text-sm bg-red-600 hover:bg-red-700"
-          >
-            {isDeleting ? "Excluindo..." : "Excluir"}
-          </Button>
+                  <div className="mt-2 text-center">
+                    <p className="text-sm text-gray-500">
+                      Tem certeza que deseja excluir
+                      {displayItemName ? (
+                        <>
+                          {" "}
+                          <span className="font-medium text-gray-900">{displayItemName}</span>
+                        </>
+                      ) : (
+                        " este item"
+                      )}
+                      ? <br />
+                      Esta ação não pode ser desfeita.
+                    </p>
+                  </div>
+
+                  <div className="mt-8 flex gap-3 w-full sm:w-auto min-w-[300px]">
+                    <button
+                      type="button"
+                      className="flex-1 justify-center rounded-xl bg-gray-100 px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-500 transition-colors cursor-pointer"
+                      onClick={onCancel}
+                      disabled={isDeleting}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      className="flex-1 justify-center rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      onClick={onConfirm}
+                      disabled={isDeleting}
+                    >
+                      {isDeleting ? "Excluindo..." : "Sim, excluir"}
+                    </button>
+                  </div>
+                </div>
+              </Dialog.Panel>
+            </Transition.Child>
+          </div>
         </div>
-      </div>
-    </div>
+      </Dialog>
+    </Transition.Root>
   );
 }
