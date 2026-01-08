@@ -38,6 +38,10 @@ import {
   ReverseGeocodeResponseDto,
   GeocodeRequestDto,
   GeocodeResponseDto,
+  PlaceAutocompleteRequestDto,
+  PlaceAutocompleteResponseDto,
+  PlaceDetailsRequestDto,
+  PlaceDetailsResponseDto,
 } from './dto';
 import { PaginatedResponseDto } from '@nexus/common';
 import type { DistanceMatrixResponse, RouteResponse } from '@nexus/geo-services';
@@ -198,6 +202,85 @@ export class AddressController {
       calculateDistanceDto.destination,
       calculateDistanceDto.mode,
     );
+  }
+
+  @Post('autocomplete')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Autocomplete de endereços',
+    description: 'Retorna sugestões de endereços enquanto o usuário digita',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Sugestões retornadas com sucesso',
+    type: PlaceAutocompleteResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Parâmetros de busca inválidos',
+  })
+  @ApiNotFoundResponse({
+    description: 'Nenhuma sugestão encontrada',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Token de autenticação inválido ou ausente',
+  })
+  async placeAutocomplete(
+    @Body() autocompleteDto: PlaceAutocompleteRequestDto,
+  ): Promise<PlaceAutocompleteResponseDto> {
+    const options: any = {};
+
+    if (autocompleteDto.types) {
+      options.types = autocompleteDto.types;
+    }
+
+    if (autocompleteDto.country) {
+      options.componentRestrictions = { country: autocompleteDto.country };
+    }
+
+    if (autocompleteDto.lat && autocompleteDto.lng) {
+      options.location = {
+        lat: autocompleteDto.lat,
+        lng: autocompleteDto.lng,
+      };
+    }
+
+    if (autocompleteDto.radius) {
+      options.radius = autocompleteDto.radius;
+    }
+
+    return this.geocodingService.placeAutocomplete(autocompleteDto.input, options);
+  }
+
+  @Post('place-details')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Obter detalhes de um lugar',
+    description: 'Retorna detalhes completos de um lugar através do place_id',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Detalhes retornados com sucesso',
+    type: PlaceDetailsResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Place ID inválido',
+  })
+  @ApiNotFoundResponse({
+    description: 'Lugar não encontrado',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Token de autenticação inválido ou ausente',
+  })
+  async placeDetails(@Body() detailsDto: PlaceDetailsRequestDto): Promise<PlaceDetailsResponseDto> {
+    const result = await this.geocodingService.placeDetails(detailsDto.placeId);
+
+    return {
+      formatted_address: result.result.formatted_address,
+      geometry: result.result.geometry,
+      address_components: result.result.address_components,
+      place_id: result.result.place_id,
+      types: result.result.types,
+    };
   }
 
   @Post()

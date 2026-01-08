@@ -9,6 +9,7 @@ export * from './calculate-distance.dto';
 export * from './create-address.dto';
 export * from './geocode.dto';
 export * from './geocode-request.dto';
+export * from './place-autocomplete.dto';
 export * from './reverse-geocode.dto';
 export * from './search-cep.dto';
 export * from './update-address.dto';
