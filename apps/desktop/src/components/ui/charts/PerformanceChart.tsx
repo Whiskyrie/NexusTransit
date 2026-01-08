@@ -153,11 +153,10 @@ export function PerformanceChart({
                         onPeriodChange?.(option.value);
                         setIsDropdownOpen(false);
                       }}
-                      className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors ${
-                        option.value === selectedPeriod
-                          ? "text-blue-600 font-medium bg-blue-50"
-                          : "text-gray-700"
-                      }`}
+                      className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors ${option.value === selectedPeriod
+                        ? "text-blue-600 font-medium bg-blue-50"
+                        : "text-gray-700"
+                        }`}
                     >
                       {option.label}
                     </button>
@@ -203,7 +202,7 @@ export function PerformanceChart({
               strokeOpacity={0.8}
             />
 
-            <XAxis dataKey="day" hide />
+            <XAxis hide />
 
             <YAxis
               axisLine={false}
