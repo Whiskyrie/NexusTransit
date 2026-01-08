@@ -21,6 +21,9 @@ import { routeService } from "../services/route.service";
 import type { Route, RouteFilters as RouteFiltersType, CreateRouteDto } from "../types/route.types";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import type { SelectOption } from "../components/ui/Select";
+import { driverService } from "../services/driver.service";
+import { vehicleService } from "../services/vehicle.service";
 
 // Simple toast notification component
 interface ToastProps {
@@ -37,9 +40,8 @@ function Toast({ message, type, onClose }: ToastProps) {
 
   return (
     <div
-      className={`fixed bottom-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-lg shadow-lg animate-in slide-in-from-bottom-2 duration-200 ${
-        type === "success" ? "bg-emerald-500 text-white" : "bg-red-500 text-white"
-      }`}
+      className={`fixed bottom-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-lg shadow-lg animate-in slide-in-from-bottom-2 duration-200 ${type === "success" ? "bg-emerald-500 text-white" : "bg-red-500 text-white"
+        }`}
     >
       {type === "success" ? <CheckCircle className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
       <span className="text-sm font-medium">{message}</span>
@@ -131,6 +133,8 @@ function ConfirmDeleteModal({
   );
 }
 
+
+
 export function RoutesPage() {
   const [routes, setRoutes] = useState<Route[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -154,6 +158,39 @@ export function RoutesPage() {
     has_previous: false,
     has_next: false,
   });
+
+  const [driversOptions, setDriversOptions] = useState<SelectOption<string>[]>([]);
+  const [vehiclesOptions, setVehiclesOptions] = useState<SelectOption<string>[]>([]);
+
+  // Fetch filters data (drivers and vehicles)
+  useEffect(() => {
+    const fetchFiltersData = async () => {
+      try {
+        const [driversResponse, vehiclesResponse] = await Promise.all([
+          driverService.list({ limit: 100 }), // Fetch first 100 drivers
+          vehicleService.list({ limit: 100 }), // Fetch first 100 vehicles
+        ]);
+
+        setDriversOptions(
+          driversResponse.data.map((driver) => ({
+            value: driver.id,
+            label: driver.full_name,
+          }))
+        );
+
+        setVehiclesOptions(
+          vehiclesResponse.data.map((vehicle) => ({
+            value: vehicle.id,
+            label: `${vehicle.model} - ${vehicle.license_plate}`,
+          }))
+        );
+      } catch (error) {
+        console.error("Failed to fetch filters data:", error);
+      }
+    };
+
+    fetchFiltersData();
+  }, []);
 
   // Fetch routes
   const fetchRoutes = async () => {
@@ -359,29 +396,15 @@ export function RoutesPage() {
       header: "Data",
       width: "16%",
       render: (route) => (
-        <div className="space-y-1">
-          <div className="flex items-center gap-1.5">
-            <Calendar className="w-3.5 h-3.5 text-gray-400" strokeWidth={1.5} />
-            <span className="text-xs font-medium text-[#1A1A1A]">
-              {format(
-                new Date(`${route.planned_date}T${route.planned_start_time}`),
-                "dd/MM/yy HH:mm",
-                { locale: ptBR },
-              )}
-            </span>
-          </div>
-          {route.planned_end_time && (
-            <div className="flex items-center gap-1.5">
-              <RefreshCw className="w-3.5 h-3.5 text-blue-500" strokeWidth={1.5} />
-              <span className="text-xs text-blue-600">
-                {format(
-                  new Date(`${route.planned_date}T${route.planned_end_time}`),
-                  "dd/MM/yy HH:mm",
-                  { locale: ptBR },
-                )}
-              </span>
-            </div>
-          )}
+        <div className="flex items-center gap-1.5">
+          <Calendar className="w-3.5 h-3.5 text-gray-400" strokeWidth={1.5} />
+          <span className="text-xs font-medium text-[#1A1A1A]">
+            {format(
+              new Date(`${route.planned_date}T${route.planned_start_time}`),
+              "dd/MM/yy HH:mm",
+              { locale: ptBR },
+            )}
+          </span>
         </div>
       ),
     },
@@ -459,6 +482,8 @@ export function RoutesPage() {
           filters={filters}
           onFiltersChange={handleFilterChange}
           onClearFilters={handleClearFilters}
+          drivers={driversOptions}
+          vehicles={vehiclesOptions}
         />
 
         {/* Table */}
