@@ -1,4 +1,4 @@
-import { ArrowRight, Package, Truck, CheckCircle, Clock } from "lucide-react";
+import { Package, Truck, CheckCircle, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { memo } from "react";
 import type { Delivery } from "../../types/delivery.types";
@@ -111,14 +111,13 @@ export const ShipmentsOverview = memo(function ShipmentsOverview({
 
         <button
           onClick={() => navigate("/deliveries")}
-          className="flex items-center gap-2 px-4 py-2.5 bg-[#1A1A1A] text-white rounded-xl text-sm font-medium hover:bg-[#2A2A2A] transition-colors"
+          className="px-4 py-2.5 bg-[#1A1A1A] text-white rounded-xl text-sm font-medium hover:bg-[#2A2A2A] transition-colors"
           style={{
             fontSize: "13px",
             fontWeight: 500,
           }}
         >
           Ver todas
-          <ArrowRight className="w-4 h-4" strokeWidth={2} />
         </button>
       </div>
 
