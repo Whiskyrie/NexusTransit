@@ -9,9 +9,16 @@ import {
   DeliveryPriorityBadge,
   DeliveryFilters,
   DeliveryActions,
+  DeliveryFormModal,
+  DeliveryDetailsModal,
 } from "../components/deliveries";
 import { deliveryService } from "../services/delivery.service";
-import type { Delivery, DeliveryFilters as DeliveryFiltersType } from "../types/delivery.types";
+import type {
+  Delivery,
+  DeliveryFilters as DeliveryFiltersType,
+  CreateDeliveryDto,
+  UpdateDeliveryDto,
+} from "../types/delivery.types";
 
 export function DeliveriesPage() {
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
@@ -40,6 +47,25 @@ export function DeliveriesPage() {
     trackingCode: "",
   });
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Form Modal (Create/Edit)
+  const [formModal, setFormModal] = useState<{
+    isOpen: boolean;
+    delivery: Delivery | null;
+  }>({
+    isOpen: false,
+    delivery: null,
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Details Modal
+  const [detailsModal, setDetailsModal] = useState<{
+    isOpen: boolean;
+    delivery: Delivery | null;
+  }>({
+    isOpen: false,
+    delivery: null,
+  });
 
   // Toast
   const [toast, setToast] = useState<{
@@ -113,20 +139,15 @@ export function DeliveriesPage() {
   };
 
   const handleCreateDelivery = () => {
-    // TODO: Abrir modal de criação
-    showToast("Funcionalidade de criação em desenvolvimento", "info");
+    setFormModal({ isOpen: true, delivery: null });
   };
 
   const handleViewDelivery = (delivery: Delivery) => {
-    // TODO: Abrir modal de detalhes
-    console.warn("Ver entrega:", delivery.tracking_code);
-    showToast(`Detalhes de ${delivery.tracking_code}`, "info");
+    setDetailsModal({ isOpen: true, delivery });
   };
 
   const handleEditDelivery = (delivery: Delivery) => {
-    // TODO: Abrir modal de edição
-    console.warn("Editar entrega:", delivery.tracking_code);
-    showToast("Funcionalidade de edição em desenvolvimento", "info");
+    setFormModal({ isOpen: true, delivery });
   };
 
   const handleDeleteClick = (delivery: Delivery) => {
@@ -156,6 +177,52 @@ export function DeliveriesPage() {
 
   const handleDeleteCancel = () => {
     setDeleteModal({ isOpen: false, deliveryId: null, trackingCode: "" });
+  };
+
+  const handleFormSubmit = async (data: CreateDeliveryDto | UpdateDeliveryDto) => {
+    try {
+      setIsSubmitting(true);
+      if (formModal.delivery) {
+        // Edição
+        await deliveryService.update(formModal.delivery.id, data as UpdateDeliveryDto);
+        showToast("Entrega atualizada com sucesso!", "success");
+      } else {
+        // Criação
+        await deliveryService.create(data as CreateDeliveryDto);
+        showToast("Entrega criada com sucesso!", "success");
+      }
+      setFormModal({ isOpen: false, delivery: null });
+      fetchDeliveries();
+    } catch (error) {
+      console.error("Failed to save delivery:", error);
+      showToast(
+        formModal.delivery ? "Erro ao atualizar entrega" : "Erro ao criar entrega",
+        "error",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleFormClose = () => {
+    setFormModal({ isOpen: false, delivery: null });
+  };
+
+  const handleDetailsClose = () => {
+    setDetailsModal({ isOpen: false, delivery: null });
+  };
+
+  const formatShortTrackingCode = (trackingCode: string) => {
+    // Pega os 2 últimos dígitos numéricos antes das letras finais
+    // Exemplo: NEX00000000500BR -> NEX0BR
+    const match = trackingCode.match(/NEX(\d+)([A-Z]+)$/);
+    if (match) {
+      const numbers = match[1];
+      const letters = match[2];
+      const lastTwoDigits = numbers.slice(-2);
+      return `NEX${lastTwoDigits}${letters}`;
+    }
+    return trackingCode;
   };
 
   const formatAddress = (address: Delivery["pickup_address"] | Delivery["delivery_address"]) => {
@@ -193,7 +260,9 @@ export function DeliveriesPage() {
             <Package className="w-4 h-4" strokeWidth={2} />
           </div>
           <div className="whitespace-nowrap">
-            <div className="font-semibold text-[#1A1A1A] text-sm">{delivery.tracking_code}</div>
+            <div className="font-semibold text-[#1A1A1A] text-sm" title={delivery.tracking_code}>
+              {formatShortTrackingCode(delivery.tracking_code)}
+            </div>
             <div className="text-xs text-gray-500">{formatDate(delivery.created_at)}</div>
           </div>
         </div>
@@ -365,6 +434,22 @@ export function DeliveriesPage() {
           isDeleting={isDeleting}
           onConfirm={handleDeleteConfirm}
           onCancel={handleDeleteCancel}
+        />
+
+        {/* Form Modal (Create/Edit) */}
+        <DeliveryFormModal
+          isOpen={formModal.isOpen}
+          onClose={handleFormClose}
+          onSubmit={handleFormSubmit}
+          isLoading={isSubmitting}
+          delivery={formModal.delivery}
+        />
+
+        {/* Details Modal */}
+        <DeliveryDetailsModal
+          isOpen={detailsModal.isOpen}
+          onClose={handleDetailsClose}
+          delivery={detailsModal.delivery}
         />
 
         {/* Toast */}

@@ -1,10 +1,16 @@
 import axios, { AxiosInstance, AxiosError } from "axios";
+import { useAuthStore } from "../stores/auth.store";
 
 /**
  * Configuração base da API
  * Obtém URL do ambiente (VITE_API_URL)
  */
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3033";
+
+/**
+ * Flag para evitar múltiplos redirecionamentos
+ */
+let isRedirecting = false;
 
 /**
  * Instância do Axios configurada
@@ -39,10 +45,18 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
-    if (error.response?.status === 401) {
-      // Token expirado - tentar refresh ou redirecionar para login
+    if (error.response?.status === 401 && !isRedirecting) {
+      isRedirecting = true;
+
+      // Limpar tokens do localStorage
       localStorage.removeItem("access_token");
       localStorage.removeItem("refresh_token");
+
+      // Limpar estado do Zustand
+      const { clearAuth } = useAuthStore.getState();
+      clearAuth();
+
+      // Redirecionar para login
       window.location.href = "/login";
     }
     return Promise.reject(error);

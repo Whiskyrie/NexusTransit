@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { CreateRouteDto, RouteType, Route } from "../../types/route.types";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
+import { AddressAutocomplete } from "../ui/AddressAutocomplete";
 import { DatePicker } from "../ui/DatePicker";
 import { Select, type SelectOption } from "../ui/Select";
 import { X, MapPin, Clock, Route as RouteIcon, FileText, Loader2 } from "lucide-react";
@@ -47,12 +48,17 @@ export function RouteFormModal({
     destination_address: "",
     planned_date: format(new Date(), "yyyy-MM-dd"),
     planned_start_time: "08:00",
-    planned_end_time: "18:00",
     estimated_distance_km: 0,
     notes: "",
   });
 
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+
+  // Coordenadas para cálculo de distância
+  const [originCoords, setOriginCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [destinationCoords, setDestinationCoords] = useState<{ lat: number; lng: number } | null>(
+    null,
+  );
 
   // Data loading state
   const [drivers, setDrivers] = useState<Driver[]>([]);
@@ -68,24 +74,46 @@ export function RouteFormModal({
       fetchVehicles();
 
       if (route) {
-        // Populate form with route data for editing
-        const routeDate = parse(route.planned_date, "yyyy-MM-dd", new Date());
-        setSelectedDate(routeDate);
-        setFormData({
-          route_code: route.route_code,
-          name: route.name,
-          description: route.description || "",
-          driver_id: route.driver_id,
-          vehicle_id: route.vehicle_id,
-          type: route.type,
-          origin_address: route.origin_address,
-          destination_address: route.destination_address,
-          planned_date: route.planned_date,
-          planned_start_time: route.planned_start_time,
-          planned_end_time: route.planned_end_time,
-          estimated_distance_km: route.estimated_distance_km || 0,
-          notes: route.notes || "",
-        });
+        try {
+          // Populate form with route data for editing
+          const routeDate = route.planned_date
+            ? parse(route.planned_date, "yyyy-MM-dd", new Date())
+            : new Date();
+
+          setSelectedDate(routeDate);
+          setFormData({
+            route_code: route.route_code || generateRouteCode(),
+            name: route.name || "",
+            description: route.description || "",
+            driver_id: route.driver_id || "",
+            vehicle_id: route.vehicle_id || "",
+            type: route.type || RouteType.URBAN,
+            origin_address: route.origin_address || "",
+            destination_address: route.destination_address || "",
+            planned_date: route.planned_date || format(new Date(), "yyyy-MM-dd"),
+            planned_start_time: route.planned_start_time || "08:00",
+            estimated_distance_km: route.estimated_distance_km || 0,
+            notes: route.notes || "",
+          });
+        } catch (error) {
+          console.error("Erro ao carregar dados da rota:", error);
+          // Fallback para valores padrão em caso de erro
+          setSelectedDate(new Date());
+          setFormData({
+            route_code: generateRouteCode(),
+            name: "",
+            description: "",
+            driver_id: "",
+            vehicle_id: "",
+            type: RouteType.URBAN,
+            origin_address: "",
+            destination_address: "",
+            planned_date: format(new Date(), "yyyy-MM-dd"),
+            planned_start_time: "08:00",
+            estimated_distance_km: 0,
+            notes: "",
+          });
+        }
       } else {
         // Reset form for new route
         const now = new Date();
@@ -101,10 +129,11 @@ export function RouteFormModal({
           destination_address: "",
           planned_date: format(now, "yyyy-MM-dd"),
           planned_start_time: "08:00",
-          planned_end_time: "18:00",
           estimated_distance_km: 0,
           notes: "",
         });
+        setOriginCoords(null);
+        setDestinationCoords(null);
       }
       setErrors({});
     }
@@ -170,6 +199,37 @@ export function RouteFormModal({
     [vehicles, isLoadingVehicles],
   );
 
+  // Função para calcular distância usando fórmula de Haversine
+  const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+    const R = 6371; // Raio da Terra em km
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLng = ((lng2 - lng1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLng / 2) *
+        Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
+  // Atualizar distância quando origem ou destino mudarem
+  useEffect(() => {
+    if (originCoords && destinationCoords) {
+      const distance = calculateDistance(
+        originCoords.lat,
+        originCoords.lng,
+        destinationCoords.lat,
+        destinationCoords.lng,
+      );
+      setFormData((prev) => ({
+        ...prev,
+        estimated_distance_km: Math.round(distance * 10) / 10, // Arredondar para 1 casa decimal
+      }));
+    }
+  }, [originCoords, destinationCoords]);
+
   // Early return AFTER all hooks
   if (!isOpen) return null;
 
@@ -212,7 +272,6 @@ export function RouteFormModal({
       type: formData.type,
       planned_date: formData.planned_date,
       planned_start_time: formData.planned_start_time,
-      planned_end_time: formData.planned_end_time || undefined,
       origin_address: formData.origin_address,
       destination_address: formData.destination_address || undefined,
       estimated_distance_km: formData.estimated_distance_km || undefined,
@@ -344,34 +403,42 @@ export function RouteFormModal({
 
           {/* Row 3: Endereços */}
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1.5">Origem *</label>
-              <Input
-                name="origin_address"
-                value={formData.origin_address}
-                onChange={handleChange}
-                placeholder="Av. Paulista, 1000 - São Paulo"
-                icon={<MapPin className="w-4 h-4 text-green-500" strokeWidth={1.5} />}
-                error={errors.origin_address}
-                className="h-10! text-sm!"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1.5">Destino *</label>
-              <Input
-                name="destination_address"
-                value={formData.destination_address}
-                onChange={handleChange}
-                placeholder="Rua Augusta, 500 - São Paulo"
-                icon={<MapPin className="w-4 h-4 text-red-500" strokeWidth={1.5} />}
-                error={errors.destination_address}
-                className="h-10! text-sm!"
-              />
-            </div>
+            <AddressAutocomplete
+              label="Origem *"
+              name="origin_address"
+              value={formData.origin_address}
+              onChange={(value) => {
+                setFormData((prev) => ({ ...prev, origin_address: value }));
+                if (errors.origin_address) {
+                  setErrors((prev) => ({ ...prev, origin_address: "" }));
+                }
+              }}
+              onSelectAddress={(address) => {
+                setOriginCoords({ lat: address.lat, lng: address.lng });
+              }}
+              placeholder="Digite o endereço de origem..."
+              error={errors.origin_address}
+            />
+            <AddressAutocomplete
+              label="Destino *"
+              name="destination_address"
+              value={formData.destination_address}
+              onChange={(value) => {
+                setFormData((prev) => ({ ...prev, destination_address: value }));
+                if (errors.destination_address) {
+                  setErrors((prev) => ({ ...prev, destination_address: "" }));
+                }
+              }}
+              onSelectAddress={(address) => {
+                setDestinationCoords({ lat: address.lat, lng: address.lng });
+              }}
+              placeholder="Digite o endereço de destino..."
+              error={errors.destination_address}
+            />
           </div>
 
-          {/* Row 4: Data e Horários */}
-          <div className="grid grid-cols-3 gap-4">
+          {/* Row 4: Data e Horário de Início */}
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <DatePicker
                 label="Data *"
@@ -402,25 +469,9 @@ export function RouteFormModal({
                 />
               </div>
             </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1.5">Horário Fim</label>
-              <div className="relative">
-                <Clock
-                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
-                  strokeWidth={1.5}
-                />
-                <input
-                  type="time"
-                  name="planned_end_time"
-                  value={formData.planned_end_time}
-                  onChange={handleChange}
-                  className="w-full h-10 pl-9 pr-3 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                />
-              </div>
-            </div>
           </div>
 
-          {/* Row 5: Distância */}
+          {/* Row 5: Distância Estimada (read-only, calculada automaticamente) */}
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-1.5">
               Distância Estimada (km)
@@ -429,12 +480,14 @@ export function RouteFormModal({
               type="number"
               name="estimated_distance_km"
               value={formData.estimated_distance_km || ""}
-              onChange={handleChange}
-              placeholder="0"
-              min="0"
-              step="0.1"
-              className="w-full h-10 px-3 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              readOnly
+              placeholder="Será calculada automaticamente"
+              className="w-full h-10 px-3 text-sm border border-gray-200 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
             />
+            <p className="text-xs text-gray-500 mt-1">
+              A distância e duração serão calculadas automaticamente via Google Maps ao selecionar
+              origem e destino
+            </p>
           </div>
 
           {/* Row 6: Descrição */}
