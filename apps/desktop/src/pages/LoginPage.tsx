@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -40,6 +40,7 @@ export function LoginPage() {
   const [activeTab, setActiveTab] = useState<TabType>("login");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [shakeError, setShakeError] = useState(false);
 
   const {
     register,
@@ -49,6 +50,14 @@ export function LoginPage() {
     resolver: zodResolver(loginSchema),
     mode: "onBlur",
   });
+
+  // Limpa shake animation após 400ms
+  useEffect(() => {
+    if (shakeError) {
+      const timer = setTimeout(() => setShakeError(false), 400);
+      return () => clearTimeout(timer);
+    }
+  }, [shakeError]);
 
   /**
    * Handler de submit do formulário
@@ -73,11 +82,7 @@ export function LoginPage() {
       const message =
         error instanceof Error ? error.message : "Invalid credentials. Please try again.";
       setErrorMessage(message);
-
-      // Aplica animação de shake no card (CSS)
-      const card = document.getElementById("auth-card");
-      card?.classList.add("shake");
-      setTimeout(() => card?.classList.remove("shake"), 400);
+      setShakeError(true);
     } finally {
       setIsSubmitting(false);
       setLoading(false);
@@ -90,100 +95,102 @@ export function LoginPage() {
   ];
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F5F5F0] relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 relative overflow-hidden">
       {/* Grid Pattern Background */}
       <div
-        className="absolute inset-0 opacity-50"
+        className="absolute inset-0 opacity-40 pointer-events-none"
         style={{
           backgroundImage: `
-            linear-gradient(to right, #E8E8E0 1px, transparent 1px),
-            linear-gradient(to bottom, #E8E8E0 1px, transparent 1px)
+            linear-gradient(to right, #E5E7EB 1px, transparent 1px),
+            linear-gradient(to bottom, #E5E7EB 1px, transparent 1px)
           `,
-          backgroundSize: "60px 60px",
+          backgroundSize: "40px 40px",
         }}
       />
 
-      <AuthCard id="auth-card">
-        <TabSwitcher
-          options={tabOptions}
-          activeTab={activeTab}
-          onChange={(id) => setActiveTab(id as TabType)}
-          className="mb-8"
-        />
+      <div className={shakeError ? "animate-shake" : ""}>
+        <AuthCard>
+          <TabSwitcher
+            options={tabOptions}
+            activeTab={activeTab}
+            onChange={(id) => setActiveTab(id as TabType)}
+            className="mb-8"
+          />
 
-        {/* Login Form */}
-        {activeTab === "login" && (
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-            <Input
-              id="email"
-              type="email"
-              label="Email"
-              placeholder="your@email.com"
-              icon={<Mail size={18} />}
-              error={errors.email?.message}
-              {...register("email")}
-            />
+          {/* Login Form */}
+          {activeTab === "login" && (
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+              <Input
+                id="email"
+                type="email"
+                label="Email"
+                placeholder="your@email.com"
+                icon={<Mail size={18} />}
+                error={errors.email?.message}
+                {...register("email")}
+              />
 
-            <Input
-              id="password"
-              type="password"
-              label="Password"
-              placeholder="••••••••"
-              icon={<Lock size={18} />}
-              error={errors.password?.message}
-              rightElement={
-                <button
-                  type="button"
-                  className="text-[13px] font-medium text-[#1A1A1A] hover:underline absolute right-0 -top-8"
-                  aria-label="Reset your password"
-                >
-                  Forgot password?
-                </button>
-              }
-              {...register("password")}
-            />
+              <Input
+                id="password"
+                type="password"
+                label="Password"
+                placeholder="••••••••"
+                icon={<Lock size={18} />}
+                error={errors.password?.message}
+                rightElement={
+                  <button
+                    type="button"
+                    className="text-[13px] font-medium text-gray-900 hover:underline absolute right-0 -top-8"
+                    aria-label="Reset your password"
+                  >
+                    Forgot password?
+                  </button>
+                }
+                {...register("password")}
+              />
 
-            {/* Error Message */}
-            {errorMessage && (
-              <div className="bg-[#FEE2E2] border border-[#EF4444] text-[#EF4444] px-4 py-3 rounded-xl text-sm">
-                {errorMessage}
-              </div>
-            )}
+              {/* Error Message */}
+              {errorMessage && (
+                <div className="bg-red-50 border border-red-500 text-red-600 px-4 py-3 rounded-xl text-sm">
+                  {errorMessage}
+                </div>
+              )}
 
-            <Button
-              type="submit"
-              fullWidth
-              isLoading={isSubmitting}
-              aria-label="Log in to your account"
-            >
-              Log In
-            </Button>
-          </form>
-        )}
+              <Button
+                type="submit"
+                fullWidth
+                isLoading={isSubmitting}
+                aria-label="Log in to your account"
+              >
+                Log In
+              </Button>
+            </form>
+          )}
 
-        {/* Sign Up Form (Placeholder) */}
-        {activeTab === "signup" && (
-          <div className="text-center py-12 text-[#6B6B6B]">
-            <UserPlus size={48} className="mx-auto mb-4 opacity-30" />
-            <p className="text-sm">Sign up form coming soon...</p>
-          </div>
-        )}
+          {/* Sign Up Form (Placeholder) */}
+          {activeTab === "signup" && (
+            <div className="text-center py-12 text-gray-500">
+              <UserPlus size={48} className="mx-auto mb-4 opacity-30" />
+              <p className="text-sm">Sign up form coming soon...</p>
+            </div>
+          )}
 
-        {/* Footer */}
-        {activeTab === "login" && (
-          <div className="text-center mt-8">
-            <span className="text-sm text-[#6B6B6B]">Don&apos;t have an account? </span>
-            <button
-              type="button"
-              onClick={() => setActiveTab("signup")}
-              className="text-sm font-semibold text-[#1A1A1A] underline hover:text-black cursor-pointer bg-transparent border-none p-0"
-              aria-label="Create a new account"
-            >
-              Sign up
-            </button>
-          </div>
-        )}
-      </AuthCard>
+          {/* Footer */}
+          {activeTab === "login" && (
+            <div className="text-center mt-8">
+              <span className="text-sm text-gray-500">Don&apos;t have an account? </span>
+              <button
+                type="button"
+                onClick={() => setActiveTab("signup")}
+                className="text-sm font-semibold text-gray-900 underline hover:text-black cursor-pointer bg-transparent border-none p-0"
+                aria-label="Create a new account"
+              >
+                Sign up
+              </button>
+            </div>
+          )}
+        </AuthCard>
+      </div>
     </div>
   );
 }
