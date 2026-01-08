@@ -122,6 +122,7 @@ export interface RouteFilters {
   vehicle_id?: string;
   route_date_from?: string;
   route_date_to?: string;
+  priority?: RoutePriority;
 }
 
 export interface RouteMetrics {

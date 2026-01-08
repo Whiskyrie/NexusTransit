@@ -21,6 +21,7 @@ export const routeService = {
     if (filters?.vehicle_id) params.append("vehicle_id", filters.vehicle_id);
     if (filters?.route_date_from) params.append("route_date_from", filters.route_date_from);
     if (filters?.route_date_to) params.append("route_date_to", filters.route_date_to);
+    if (filters?.priority) params.append("priority", filters.priority);
 
     const response = await api.get<PaginatedResponse<Route>>(`/routes?${params.toString()}`);
     return response.data;
