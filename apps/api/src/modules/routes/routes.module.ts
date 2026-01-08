@@ -33,6 +33,7 @@ import { RouteSubscriber, RouteStopSubscriber } from './subscribers';
 import { VehiclesModule } from '../vehicles/vehicles.module';
 import { DriversModule } from '../drivers/drivers.module';
 import { DeliveriesModule } from '../deliveries/deliveries.module';
+import { GeoServicesModule } from '@nexus/geo-services';
 
 /**
  * Módulo de Rotas
@@ -56,8 +57,9 @@ import { DeliveriesModule } from '../deliveries/deliveries.module';
 
     // Importar módulos relacionados para validações
     forwardRef(() => VehiclesModule),
-    DriversModule,
+    forwardRef(() => DriversModule),
     DeliveriesModule,
+    GeoServicesModule,
   ],
 
   controllers: [RoutesController],
