@@ -1,7 +1,7 @@
 import { Route, RoutePriority } from "../../types/route.types";
 import { RouteStatusBadge } from "./RouteStatusBadge";
 import { RoutePriorityBadge } from "./RoutePriorityBadge";
-import { MapPin, Truck, Clock, Calendar } from "lucide-react";
+import { MapPin, Truck, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -94,12 +94,6 @@ export function RouteTableRow({ route }: RouteTableRowProps) {
             <Calendar className="w-3.5 h-3.5" strokeWidth={1.5} />
             <span>{formatDate(route.planned_date)}</span>
           </div>
-          {route.planned_end_time && (
-            <div className="flex items-center gap-1.5 text-xs text-gray-500">
-              <Clock className="w-3.5 h-3.5" strokeWidth={1.5} />
-              <span>Prev: {route.planned_end_time}</span>
-            </div>
-          )}
         </div>
       </td>
 
