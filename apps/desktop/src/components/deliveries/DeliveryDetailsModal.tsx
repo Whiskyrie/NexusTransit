@@ -1,4 +1,18 @@
-import { X, Package, User, MapPin, Calendar, FileText, Truck, Phone, Mail, Clock, CheckCircle2, ChevronRight, Share2 } from "lucide-react";
+import {
+  X,
+  Package,
+  User,
+  MapPin,
+  Calendar,
+  FileText,
+  Truck,
+  Phone,
+  Mail,
+  Clock,
+  CheckCircle2,
+  ChevronRight,
+  Share2,
+} from "lucide-react";
 import { Button } from "../ui/Button";
 import { Delivery } from "../../types/delivery.types";
 import { DeliveryStatusBadge, DeliveryPriorityBadge } from "./";
@@ -32,7 +46,7 @@ export function DeliveryDetailsModal({ isOpen, onClose, delivery }: DeliveryDeta
 
     return {
       title: street + complement,
-      subtitle: `${district}, ${city} - ${zip}`
+      subtitle: `${district}, ${city} - ${zip}`,
     };
   };
 
@@ -83,7 +97,6 @@ export function DeliveryDetailsModal({ isOpen, onClose, delivery }: DeliveryDeta
 
       {/* Modal Container */}
       <div className="relative bg-[#F8F9FC] w-full max-w-5xl h-[90vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden m-4 animate-in fade-in zoom-in-95 duration-200">
-
         {/* Header */}
         <div className="bg-white px-8 py-5 border-b border-gray-100 flex items-center justify-between sticky top-0 z-10">
           <div className="flex items-center gap-4">
@@ -120,10 +133,8 @@ export function DeliveryDetailsModal({ isOpen, onClose, delivery }: DeliveryDeta
         {/* Content - Scrollable */}
         <div className="flex-1 overflow-y-auto p-8">
           <div className="grid grid-cols-12 gap-8">
-
             {/* Left Column - Main Info (8 cols) */}
             <div className="col-span-12 lg:col-span-8 space-y-8">
-
               {/* Route Card */}
               <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100/50">
                 <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
@@ -133,15 +144,21 @@ export function DeliveryDetailsModal({ isOpen, onClose, delivery }: DeliveryDeta
 
                 <div className="relative pl-4">
                   {/* Connecting Line */}
-                  <div className="absolute left-[27px] top-4 bottom-10 w-0.5 bg-gray-100" />
+                  <div className="absolute left-6.75 top-4 bottom-10 w-0.5 bg-gray-100" />
 
                   {/* Pickup */}
                   <div className="relative flex gap-6 mb-8 group">
                     <div className="relative z-10 w-6 h-6 rounded-full border-[3px] border-white bg-emerald-500 shadow-md ring-4 ring-emerald-50 mt-1" />
                     <div className="flex-1 p-4 rounded-2xl bg-gray-50 border border-gray-100 group-hover:border-emerald-200 transition-colors">
-                      <div className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-1">Coleta</div>
-                      <div className="font-semibold text-gray-900 mb-1">{typeof pickup !== 'string' ? pickup.title : pickup}</div>
-                      <div className="text-sm text-gray-500">{typeof pickup !== 'string' ? pickup.subtitle : ''}</div>
+                      <div className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-1">
+                        Coleta
+                      </div>
+                      <div className="font-semibold text-gray-900 mb-1">
+                        {typeof pickup !== "string" ? pickup.title : pickup}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {typeof pickup !== "string" ? pickup.subtitle : ""}
+                      </div>
                     </div>
                   </div>
 
@@ -149,9 +166,15 @@ export function DeliveryDetailsModal({ isOpen, onClose, delivery }: DeliveryDeta
                   <div className="relative flex gap-6 group">
                     <div className="relative z-10 w-6 h-6 rounded-full border-[3px] border-white bg-indigo-600 shadow-md ring-4 ring-indigo-50 mt-1" />
                     <div className="flex-1 p-4 rounded-2xl bg-gray-50 border border-gray-100 group-hover:border-indigo-200 transition-colors">
-                      <div className="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-1">Entrega</div>
-                      <div className="font-semibold text-gray-900 mb-1">{typeof dropoff !== 'string' ? dropoff.title : dropoff}</div>
-                      <div className="text-sm text-gray-500">{typeof dropoff !== 'string' ? dropoff.subtitle : ''}</div>
+                      <div className="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-1">
+                        Entrega
+                      </div>
+                      <div className="font-semibold text-gray-900 mb-1">
+                        {typeof dropoff !== "string" ? dropoff.title : dropoff}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {typeof dropoff !== "string" ? dropoff.subtitle : ""}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -166,7 +189,7 @@ export function DeliveryDetailsModal({ isOpen, onClose, delivery }: DeliveryDeta
 
                 <div className="relative flex justify-between items-start px-4">
                   {/* Horizontal Line Background */}
-                  <div className="absolute top-5 left-8 right-8 h-0.5 bg-gray-100 -z-0" />
+                  <div className="absolute top-5 left-8 right-8 h-0.5 bg-gray-100 z-0" />
 
                   {timelineEvents.map((event, index) => {
                     const isCompleted = event.completed;
@@ -174,15 +197,18 @@ export function DeliveryDetailsModal({ isOpen, onClose, delivery }: DeliveryDeta
                     return (
                       <div key={index} className="flex flex-col items-center relative z-10 group">
                         <div
-                          className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-all duration-300 shadow-sm border-2 ${isCompleted
-                            ? "bg-indigo-600 border-indigo-600 text-white"
-                            : "bg-white border-gray-200 text-gray-300"
-                            }`}
+                          className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-all duration-300 shadow-sm border-2 ${
+                            isCompleted
+                              ? "bg-indigo-600 border-indigo-600 text-white"
+                              : "bg-white border-gray-200 text-gray-300"
+                          }`}
                         >
                           <Icon className="w-5 h-5" strokeWidth={2} />
                         </div>
                         <div className="text-center space-y-1">
-                          <div className={`text-sm font-bold ${isCompleted ? "text-gray-900" : "text-gray-400"}`}>
+                          <div
+                            className={`text-sm font-bold ${isCompleted ? "text-gray-900" : "text-gray-400"}`}
+                          >
                             {event.label}
                           </div>
                           {event.date && (
@@ -197,16 +223,16 @@ export function DeliveryDetailsModal({ isOpen, onClose, delivery }: DeliveryDeta
                   })}
                 </div>
               </div>
-
             </div>
 
             {/* Right Column - Side Info (4 cols) */}
             <div className="col-span-12 lg:col-span-4 space-y-6">
-
               {/* Priority & Metrics */}
               <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100/50">
                 <div className="mb-4">
-                  <label className="text-xs font-medium text-gray-400 uppercase tracking-widest">Prioridade</label>
+                  <label className="text-xs font-medium text-gray-400 uppercase tracking-widest">
+                    Prioridade
+                  </label>
                   <div className="mt-2">
                     <DeliveryPriorityBadge priority={delivery.priority} />
                   </div>
@@ -225,7 +251,9 @@ export function DeliveryDetailsModal({ isOpen, onClose, delivery }: DeliveryDeta
                     {delivery.customer?.name?.[0] || "?"}
                   </div>
                   <div>
-                    <div className="font-bold text-gray-900">{delivery.customer?.name || "N/A"}</div>
+                    <div className="font-bold text-gray-900">
+                      {delivery.customer?.name || "N/A"}
+                    </div>
                     <div className="text-xs text-green-600 font-medium bg-green-50 px-2 py-0.5 rounded-full inline-block mt-1">
                       Cliente Ativo
                     </div>
@@ -260,7 +288,9 @@ export function DeliveryDetailsModal({ isOpen, onClose, delivery }: DeliveryDeta
                         </div>
                         <div>
                           <div className="text-xs text-gray-400 font-medium">Motorista</div>
-                          <div className="text-sm font-bold text-gray-900">{delivery.driver.full_name}</div>
+                          <div className="text-sm font-bold text-gray-900">
+                            {delivery.driver.full_name}
+                          </div>
                         </div>
                       </div>
                       <Button variant="ghost" className="h-8 w-8 p-0 rounded-full">
@@ -276,8 +306,12 @@ export function DeliveryDetailsModal({ isOpen, onClose, delivery }: DeliveryDeta
                           </div>
                           <div>
                             <div className="text-xs text-gray-400 font-medium">Veículo</div>
-                            <div className="text-sm font-bold text-gray-900">{delivery.vehicle.model}</div>
-                            <div className="text-xs text-gray-500 font-mono">{delivery.vehicle.license_plate}</div>
+                            <div className="text-sm font-bold text-gray-900">
+                              {delivery.vehicle.model}
+                            </div>
+                            <div className="text-xs text-gray-500 font-mono">
+                              {delivery.vehicle.license_plate}
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -297,26 +331,26 @@ export function DeliveryDetailsModal({ isOpen, onClose, delivery }: DeliveryDeta
                     <FileText className="w-4 h-4 text-yellow-600" />
                     Observações
                   </h3>
-                  <p className="text-sm text-yellow-800 leading-relaxed">
-                    {delivery.notes}
-                  </p>
+                  <p className="text-sm text-yellow-800 leading-relaxed">{delivery.notes}</p>
                 </div>
               )}
-
             </div>
           </div>
         </div>
 
         {/* Footer Actions */}
         <div className="bg-white p-6 border-t border-gray-100 flex justify-end gap-3">
-          <Button variant="outline" onClick={onClose} className="h-11 px-6 rounded-xl border-gray-200 hover:bg-gray-50 font-medium">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            className="h-11 px-6 rounded-xl border-gray-200 hover:bg-gray-50 font-medium"
+          >
             Fechar
           </Button>
           <Button className="h-11 px-6 rounded-xl bg-[#1A1A1A] hover:bg-[#2A2A2A] text-white font-medium shadow-lg shadow-gray-200">
             Editar Entrega
           </Button>
         </div>
-
       </div>
     </div>
   );

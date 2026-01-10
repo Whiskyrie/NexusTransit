@@ -52,14 +52,15 @@ export function ConfirmDeleteModal({
             >
               <Dialog.Panel className="relative transform overflow-hidden rounded-2xl bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-md sm:p-6">
                 <div className="flex flex-col items-center text-center">
-                  <div className="mx-auto flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-red-50 mb-4 ring-8 ring-red-50/50">
-                    <AlertTriangle className="h-6 w-6 text-red-600" aria-hidden="true" strokeWidth={2} />
+                  <div className="mx-auto flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-red-50 mb-4 ring-8 ring-red-50/50">
+                    <AlertTriangle
+                      className="h-6 w-6 text-red-600"
+                      aria-hidden="true"
+                      strokeWidth={2}
+                    />
                   </div>
 
-                  <Dialog.Title
-                    as="h3"
-                    className="text-xl font-bold leading-6 text-gray-900 mb-2"
-                  >
+                  <Dialog.Title as="h3" className="text-xl font-bold leading-6 text-gray-900 mb-2">
                     {title}
                   </Dialog.Title>
 
@@ -79,10 +80,10 @@ export function ConfirmDeleteModal({
                     </p>
                   </div>
 
-                  <div className="mt-8 flex gap-3 w-full sm:w-auto min-w-[300px]">
+                  <div className="mt-8 flex gap-3 w-full sm:w-auto min-w-75">
                     <button
                       type="button"
-                      className="flex-1 justify-center rounded-xl bg-gray-100 px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-500 transition-colors cursor-pointer"
+                      className="flex-1 justify-center rounded-xl bg-gray-100 px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-200 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-gray-500 transition-colors cursor-pointer"
                       onClick={onCancel}
                       disabled={isDeleting}
                     >
@@ -90,7 +91,7 @@ export function ConfirmDeleteModal({
                     </button>
                     <button
                       type="button"
-                      className="flex-1 justify-center rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 justify-center rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-red-600 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                       onClick={onConfirm}
                       disabled={isDeleting}
                     >
