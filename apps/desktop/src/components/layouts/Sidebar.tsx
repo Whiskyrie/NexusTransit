@@ -8,6 +8,7 @@ import {
   Truck,
   Route,
   Package,
+  UserCheck,
   LogOut,
   ChevronLeft,
   ChevronRight,
@@ -54,6 +55,7 @@ const menuItems: MenuItem[] = [
   { path: "/vehicles", icon: Truck, label: "Veículos" },
   { path: "/routes", icon: Route, label: "Rotas" },
   { path: "/deliveries", icon: Package, label: "Entregas" },
+  { path: "/customers", icon: UserCheck, label: "Clientes" },
 ];
 
 // ============================================================================
