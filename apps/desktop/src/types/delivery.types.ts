@@ -151,8 +151,8 @@ export interface CreateDeliveryDto {
   delivery_address: DeliveryAddress;
   pickup_contact?: DeliveryContact;
   delivery_contact?: DeliveryContact;
-  scheduled_pickup_at?: string;
-  scheduled_delivery_at?: string;
+  scheduled_pickup_at: string;
+  scheduled_delivery_at: string;
   dimensions?: DeliveryDimensions;
   product_info?: DeliveryProductInfo;
   notes?: string;
