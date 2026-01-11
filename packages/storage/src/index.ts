@@ -14,6 +14,7 @@ export { StorageService } from "./services/storage.service";
 // Providers
 export { LocalStorageProvider } from "./providers/local-storage.provider";
 export { S3StorageProvider } from "./providers/s3-storage.provider";
+export { BackblazeStorageProvider } from "./providers/backblaze-storage.provider";
 
 // Pipes
 export { FileValidationPipe } from "./pipes/file-validation.pipe";

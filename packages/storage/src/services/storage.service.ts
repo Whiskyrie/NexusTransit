@@ -21,13 +21,14 @@ import { LocalStorageProvider } from "../providers/local-storage.provider";
 import { S3StorageProvider } from "../providers/s3-storage.provider";
 import { FileUtil } from "../utils/file.util";
 import { StorageType } from "../enums/storage-type.enum";
+import { BackblazeStorageProvider } from "../providers/backblaze-storage.provider";
 
 @Injectable()
 export class StorageService {
   private readonly logger = new Logger(StorageService.name);
   private readonly s3Client: S3Client;
   private readonly storageConfig: StorageConfig;
-  private storageProvider: LocalStorageProvider | S3StorageProvider;
+  private storageProvider: LocalStorageProvider | S3StorageProvider | BackblazeStorageProvider;
 
   constructor(private readonly configService: ConfigService) {
     this.storageConfig = this.configService.getOrThrow<StorageConfig>("storage");
@@ -55,15 +56,24 @@ export class StorageService {
   private initializeStorageProvider(): void {
     const storageType = this.storageConfig.provider.type;
 
+    this.logger.log(`Storage provider type from config: "${storageType}"`);
+    this.logger.log(`Comparing with StorageType.BACKBLAZE: "${StorageType.BACKBLAZE}"`);
+
     if (storageType === StorageType.LOCAL) {
       this.storageProvider = new LocalStorageProvider(this.configService);
       this.logger.log("Using local storage provider");
     } else if (storageType === StorageType.S3) {
       this.storageProvider = new S3StorageProvider(this.configService);
       this.logger.log("Using S3 storage provider");
+    } else if (storageType === StorageType.BACKBLAZE) {
+      this.storageProvider = new BackblazeStorageProvider(this.configService);
+      this.logger.log("Using Backblaze B2 storage provider");
     } else {
-      this.storageProvider = new LocalStorageProvider(this.configService);
-      this.logger.log("Defaulting to local storage provider");
+      // Default para Backblaze se nenhum tipo específico for configurado
+      this.storageProvider = new BackblazeStorageProvider(this.configService);
+      this.logger.log(
+        `Defaulting to Backblaze B2 storage provider (unknown type: "${storageType}")`,
+      );
     }
   }
 
