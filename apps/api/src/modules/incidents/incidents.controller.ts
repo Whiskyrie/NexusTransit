@@ -47,6 +47,7 @@ import { IncidentStatus } from './enums/incident.enums';
 import { IncidentStatusHistory } from './entities/incident-status-history.entity';
 import { IncidentAttachment } from './entities/incident-attachment.entity';
 import { IncidentComment } from './entities/incident-comment.entity';
+import { CurrentUser } from '../users/decorators/current-user.decorator';
 
 /**
  * Interface para o retorno de transições possíveis
@@ -247,8 +248,29 @@ export class IncidentsController {
     return this.incidentsService.remove(id);
   }
 
+  @Get(':id/attachments')
+  @ApiOperation({
+    summary: 'Listar anexos do incidente',
+    description: 'Retorna todos os anexos associados ao incidente',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID único do incidente',
+    type: String,
+    format: 'uuid',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Lista de anexos do incidente',
+    type: [IncidentAttachment],
+  })
+  @ApiNotFoundResponse({ description: 'Incidente não encontrado' })
+  async getAttachments(@Param('id', ParseUUIDPipe) id: string): Promise<IncidentAttachment[]> {
+    return this.incidentsService.getAttachments(id);
+  }
+
   @Post(':id/attachments')
-  @UseInterceptors(FilesInterceptor('file'))
+  @UseInterceptors(FilesInterceptor('files', 10))
   @ApiOperation({
     summary: 'Adicionar anexo a incidente',
     description: 'Faz upload de um arquivo e associa ao incidente',
@@ -267,10 +289,32 @@ export class IncidentsController {
   @ApiNotFoundResponse({ description: 'Incidente não encontrado' })
   async addAttachment(
     @Param('id', ParseUUIDPipe) id: string,
-    @UploadedFiles() file: Express.Multer.File,
+    @UploadedFiles() files: Express.Multer.File[],
     @Body('description') description?: string,
-  ): Promise<IncidentAttachment> {
-    return this.incidentsService.addAttachment(id, file, description);
+    @CurrentUser('id') userId?: string,
+  ): Promise<IncidentAttachment[]> {
+    return this.incidentsService.addAttachments(id, files, description, userId);
+  }
+
+  @Get(':id/comments')
+  @ApiOperation({
+    summary: 'Listar comentários do incidente',
+    description: 'Retorna todos os comentários associados ao incidente',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID único do incidente',
+    type: String,
+    format: 'uuid',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Lista de comentários do incidente',
+    type: [IncidentComment],
+  })
+  @ApiNotFoundResponse({ description: 'Incidente não encontrado' })
+  async getComments(@Param('id', ParseUUIDPipe) id: string): Promise<IncidentComment[]> {
+    return this.incidentsService.getComments(id);
   }
 
   @Post(':id/comments')
@@ -293,8 +337,9 @@ export class IncidentsController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body('comment_text') commentText: string,
     @Body('is_internal') isInternal = false,
+    @CurrentUser('id') userId?: string,
   ): Promise<IncidentComment> {
-    return this.incidentsService.addComment(id, commentText, isInternal);
+    return this.incidentsService.addComment(id, commentText, isInternal, userId);
   }
 
   @Patch(':id/status')

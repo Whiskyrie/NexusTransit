@@ -241,7 +241,7 @@ export class IncidentsService {
     // Executar query com paginação
     const [incidents, total] = await this.incidentRepository.findAndCount({
       where,
-      relations: ['attachments', 'comments'],
+      relations: ['attachments', 'comments', 'driver', 'vehicle'],
       take: limit,
       skip: (page - 1) * limit,
       order: { reported_at: 'DESC' },
@@ -268,7 +268,7 @@ export class IncidentsService {
   async findOne(id: string): Promise<IncidentResponseDto> {
     const incident = await this.incidentRepository.findOne({
       where: { id },
-      relations: ['attachments', 'comments'],
+      relations: ['attachments', 'comments', 'driver', 'vehicle'],
     });
 
     if (!incident) {
@@ -331,6 +331,18 @@ export class IncidentsService {
   }
 
   /**
+   * Listar anexos de um incidente
+   */
+  async getAttachments(incidentId: string): Promise<IncidentAttachment[]> {
+    await this.findIncidentOrFail(incidentId);
+
+    return this.attachmentRepository.find({
+      where: { incident_id: incidentId },
+      order: { created_at: 'DESC' },
+    });
+  }
+
+  /**
    * Adicionar anexo a incidente existente
    */
   async addAttachment(
@@ -358,18 +370,70 @@ export class IncidentsService {
   }
 
   /**
+   * Adicionar múltiplos anexos a incidente existente
+   */
+  async addAttachments(
+    incidentId: string,
+    files: Express.Multer.File[],
+    description?: string,
+    userId?: string,
+  ): Promise<IncidentAttachment[]> {
+    await this.findIncidentOrFail(incidentId);
+
+    if (!files || files.length === 0) {
+      throw new BadRequestException('Nenhum arquivo fornecido');
+    }
+
+    const attachments: IncidentAttachment[] = [];
+
+    for (const file of files) {
+      const uploadResult = await this.storageService.uploadFile(file, { fileType: 'proofs' });
+
+      const attachment = new IncidentAttachment();
+      attachment.incident_id = incidentId;
+      attachment.file_type = this.getAttachmentType(uploadResult.filePath);
+      attachment.file_url = uploadResult.url;
+      attachment.file_name = uploadResult.filePath.split('/').pop() ?? '';
+      attachment.file_size = file.size;
+      attachment.mime_type = file.mimetype;
+      attachment.description = description;
+      attachment.uploaded_by_user_id = userId ?? null;
+
+      const savedAttachment = await this.attachmentRepository.save(attachment);
+      attachments.push(savedAttachment);
+
+      this.logger.log(`Anexo adicionado ao incidente ${incidentId}: ${savedAttachment.id}`);
+    }
+
+    return attachments;
+  }
+
+  /**
+   * Listar comentários de um incidente
+   */
+  async getComments(incidentId: string): Promise<IncidentComment[]> {
+    await this.findIncidentOrFail(incidentId);
+
+    return this.commentRepository.find({
+      where: { incident_id: incidentId },
+      order: { created_at: 'ASC' },
+    });
+  }
+
+  /**
    * Adicionar comentário a incidente existente
    */
   async addComment(
     incidentId: string,
     commentText: string,
     isInternal = false,
+    userId?: string,
   ): Promise<IncidentComment> {
     const comment = new IncidentComment();
     comment.incident_id = incidentId;
     comment.comment_text = commentText;
     comment.is_internal = isInternal;
-    comment.user_id = 'system'; // Será substituído pelo usuário autenticado
+    comment.user_id = userId ?? null;
 
     const savedComment = await this.commentRepository.save(comment);
 
@@ -486,7 +550,7 @@ export class IncidentsService {
   private async findIncidentOrFail(id: string): Promise<Incident> {
     const incident = await this.incidentRepository.findOne({
       where: { id },
-      relations: ['attachments', 'comments'],
+      relations: ['attachments', 'comments', 'driver', 'vehicle'],
     });
 
     if (!incident) {
