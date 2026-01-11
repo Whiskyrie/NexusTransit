@@ -218,17 +218,21 @@ export class DeliveriesService {
         }
       }
 
+      // Buscar entrega completa com relacionamentos antes de commitar
+      const completeDelivery = await this.findOneWithRelations(savedDelivery.id);
+
       await queryRunner.commitTransaction();
 
       this.logger.log(
         `Entrega criada: ${trackingCode} (${savedDelivery.id}) - Session: ${sessionId}`,
       );
 
-      // Buscar entrega completa com relacionamentos
-      const completeDelivery = await this.findOneWithRelations(savedDelivery.id);
       return DeliveryResponseDto.fromEntity(completeDelivery);
     } catch (error) {
-      await queryRunner.rollbackTransaction();
+      // Só fazer rollback se a transação ainda estiver ativa
+      if (queryRunner.isTransactionActive) {
+        await queryRunner.rollbackTransaction();
+      }
       this.logger.error('Erro ao criar entrega:', error);
 
       // Lançar erro interno do servidor se for um erro inesperado
