@@ -1,5 +1,15 @@
-import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
-import { BaseEntity } from '@nexus/common';
+import {
+  Entity,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  Index,
+  PrimaryColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  DeleteDateColumn,
+  BaseEntity as TypeOrmBaseEntity,
+} from 'typeorm';
 import { Auditable } from '@nexus/audit';
 import { Delivery } from '../../deliveries/entities/delivery.entity';
 import { Driver } from '../../drivers/entities/driver.entity';
@@ -12,6 +22,9 @@ import { EventStatus } from '../enums/event-status.enum';
  *
  * Registra eventos individuais durante o processo de entrega
  * com suporte a geolocalização PostGIS
+ *
+ * Nota: Esta entidade usa chave primária composta (event_id, timestamp)
+ * e não herda de BaseEntity devido ao particionamento da tabela
  */
 @Entity('tracking_events')
 @Auditable({
@@ -26,11 +39,10 @@ import { EventStatus } from '../enums/event-status.enum';
 @Index(['route_id', 'timestamp'])
 @Index(['event_type'])
 @Index(['event_status'])
-export class TrackingEvent extends BaseEntity {
-  @Column({
+export class TrackingEvent extends TypeOrmBaseEntity {
+  @PrimaryColumn({
     type: 'uuid',
-    unique: true,
-    comment: 'ID único do evento',
+    comment: 'ID único do evento (parte da chave primária composta)',
   })
   event_id!: string;
 
@@ -79,9 +91,9 @@ export class TrackingEvent extends BaseEntity {
   })
   event_status!: EventStatus;
 
-  @Column({
+  @PrimaryColumn({
     type: 'timestamp with time zone',
-    comment: 'Data/hora do evento',
+    comment: 'Data/hora do evento (parte da chave primária composta)',
   })
   timestamp!: Date;
 
@@ -150,6 +162,27 @@ export class TrackingEvent extends BaseEntity {
     comment: 'Usuário que criou evento manual',
   })
   created_by_user_id?: string;
+
+  @CreateDateColumn({
+    type: 'timestamp with time zone',
+    default: () => 'CURRENT_TIMESTAMP',
+    comment: 'Data de criação do registro',
+  })
+  created_at!: Date;
+
+  @UpdateDateColumn({
+    type: 'timestamp with time zone',
+    default: () => 'CURRENT_TIMESTAMP',
+    comment: 'Data da última atualização',
+  })
+  updated_at!: Date;
+
+  @DeleteDateColumn({
+    type: 'timestamp with time zone',
+    nullable: true,
+    comment: 'Data de exclusão lógica (soft delete)',
+  })
+  deleted_at?: Date | null;
 
   /**
    * Obtém as coordenadas de latitude e longitude do evento
