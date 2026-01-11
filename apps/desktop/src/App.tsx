@@ -8,6 +8,7 @@ import { RoutesPage } from "./pages/RoutesPage";
 import { DeliveriesPage } from "./pages/DeliveriesPage";
 import { CustomersPage } from "./pages/CustomersPage";
 import { TrackingPage } from "./pages/TrackingPage";
+import { IncidentsPage } from "./pages/IncidentsPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AppLayout } from "./components/layouts";
 import { useIsAuthenticated } from "./stores/auth.store";
@@ -40,6 +41,7 @@ function App() {
           <Route path="/customers" element={<CustomersPage />} />
           <Route path="/tracking" element={<TrackingPage />} />
           <Route path="/tracking/:trackingCode" element={<TrackingPage />} />
+          <Route path="/incidents" element={<IncidentsPage />} />
           {/* Adicione mais rotas protegidas aqui */}
         </Route>
       </Route>

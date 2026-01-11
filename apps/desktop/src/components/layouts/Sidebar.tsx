@@ -10,6 +10,7 @@ import {
   Package,
   UserCheck,
   MapPin,
+  AlertTriangle,
   LogOut,
   ChevronLeft,
   ChevronRight,
@@ -58,6 +59,7 @@ const menuItems: MenuItem[] = [
   { path: "/deliveries", icon: Package, label: "Entregas" },
   { path: "/customers", icon: UserCheck, label: "Clientes" },
   { path: "/tracking", icon: MapPin, label: "Rastreamento" },
+  { path: "/incidents", icon: AlertTriangle, label: "Incidentes" },
 ];
 
 // ============================================================================
@@ -128,34 +130,31 @@ interface NavItemProps {
 }
 
 function NavItem({ item, isCollapsed }: NavItemProps) {
-  const linkContent = (
-    <NavLink
-      to={item.path}
-      className={({ isActive }) =>
-        cn(
-          "flex items-center rounded-xl cursor-pointer", // Added cursor-pointer
-          "transition-all",
-          TRANSITION_DURATION,
-          TRANSITION_EASING,
-          isActive
-            ? "bg-zinc-900 text-white shadow-md"
-            : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900",
-          isCollapsed ? "w-11 h-11 justify-center" : "gap-3 px-4 h-12",
-        )
-      }
-    >
-      <item.icon className="w-5 h-5 shrink-0" strokeWidth={1.5} />
-      {!isCollapsed && <span className="font-medium text-sm whitespace-nowrap">{item.label}</span>}
-    </NavLink>
-  );
-
   // Quando colapsado, envolve com Tooltip
   if (isCollapsed) {
     return (
       <li>
         <Tooltip.Provider>
           <Tooltip.Root>
-            <Tooltip.Trigger render={linkContent} />
+            <Tooltip.Trigger asChild>
+              <NavLink
+                to={item.path}
+                className={({ isActive }) =>
+                  cn(
+                    "flex items-center rounded-xl cursor-pointer",
+                    "transition-all",
+                    TRANSITION_DURATION,
+                    TRANSITION_EASING,
+                    isActive
+                      ? "bg-zinc-900 text-white shadow-md"
+                      : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900",
+                    "w-11 h-11 justify-center",
+                  )
+                }
+              >
+                <item.icon className="w-5 h-5 shrink-0" strokeWidth={1.5} />
+              </NavLink>
+            </Tooltip.Trigger>
             <Tooltip.Portal>
               <Tooltip.Positioner side="right" sideOffset={8}>
                 <Tooltip.Popup className="bg-zinc-900 text-white text-sm px-3 py-1.5 rounded-lg shadow-lg z-50">
@@ -170,7 +169,28 @@ function NavItem({ item, isCollapsed }: NavItemProps) {
     );
   }
 
-  return <li>{linkContent}</li>;
+  return (
+    <li>
+      <NavLink
+        to={item.path}
+        className={({ isActive }) =>
+          cn(
+            "flex items-center rounded-xl cursor-pointer",
+            "transition-all",
+            TRANSITION_DURATION,
+            TRANSITION_EASING,
+            isActive
+              ? "bg-zinc-900 text-white shadow-md"
+              : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900",
+            "gap-3 px-4 h-12",
+          )
+        }
+      >
+        <item.icon className="w-5 h-5 shrink-0" strokeWidth={1.5} />
+        <span className="font-medium text-sm whitespace-nowrap">{item.label}</span>
+      </NavLink>
+    </li>
+  );
 }
 
 interface SidebarNavigationProps {

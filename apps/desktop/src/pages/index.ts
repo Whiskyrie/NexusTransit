@@ -9,3 +9,5 @@ export { VehiclesPage } from "./VehiclesPage";
 export { RoutesPage } from "./RoutesPage";
 export { DeliveriesPage } from "./DeliveriesPage";
 export { CustomersPage } from "./CustomersPage";
+export { TrackingPage } from "./TrackingPage";
+export { IncidentsPage } from "./IncidentsPage";
