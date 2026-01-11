@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, RefreshCw, Download, Package } from "lucide-react";
+import { Plus, RefreshCw, Download, Package, Copy } from "lucide-react";
 import { Table, TableColumn } from "../components/ui/Table";
 import { Button } from "../components/ui/Button";
 import { Toast } from "../components/ui/Toast";
@@ -260,8 +260,21 @@ export function DeliveriesPage() {
             <Package className="w-4 h-4" strokeWidth={2} />
           </div>
           <div className="whitespace-nowrap">
-            <div className="font-semibold text-[#1A1A1A] text-sm" title={delivery.tracking_code}>
-              {formatShortTrackingCode(delivery.tracking_code)}
+            <div className="flex items-center gap-2">
+              <div className="font-semibold text-[#1A1A1A] text-sm" title={delivery.tracking_code}>
+                {formatShortTrackingCode(delivery.tracking_code)}
+              </div>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigator.clipboard.writeText(delivery.tracking_code);
+                  setToast({ show: true, message: "Código copiado!", type: "success" });
+                }}
+                className="p-1 hover:bg-gray-100 rounded transition-colors group cursor-pointer"
+                title="Copiar código completo"
+              >
+                <Copy className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-600" />
+              </button>
             </div>
             <div className="text-xs text-gray-500">{formatDate(delivery.created_at)}</div>
           </div>

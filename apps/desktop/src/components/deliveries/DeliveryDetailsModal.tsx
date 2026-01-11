@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   ChevronRight,
   Share2,
+  Copy,
 } from "lucide-react";
 import { Button } from "../ui/Button";
 import { Delivery } from "../../types/delivery.types";
@@ -105,9 +106,20 @@ export function DeliveryDetailsModal({ isOpen, onClose, delivery }: DeliveryDeta
             </div>
             <div>
               <div className="flex items-center gap-3">
-                <h2 className="text-xl font-bold text-gray-900 tracking-tight">
-                  {delivery.tracking_code}
-                </h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xl font-bold text-gray-900 tracking-tight">
+                    {delivery.tracking_code}
+                  </h2>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(delivery.tracking_code);
+                    }}
+                    className="p-1.5 hover:bg-gray-100 rounded-md transition-colors group cursor-pointer"
+                    title="Copiar código"
+                  >
+                    <Copy className="w-4 h-4 text-gray-400 group-hover:text-gray-600" />
+                  </button>
+                </div>
                 <DeliveryStatusBadge status={delivery.status} />
               </div>
               <p className="text-sm text-gray-500 mt-0.5 font-medium">
