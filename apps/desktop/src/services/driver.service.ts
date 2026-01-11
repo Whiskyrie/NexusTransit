@@ -1,5 +1,10 @@
 import { api, PaginatedResponse } from "./api";
-import type { Driver, CreateDriverDto, UpdateDriverDto, DriverFilters } from "../types/driver.types";
+import type {
+  Driver,
+  CreateDriverDto,
+  UpdateDriverDto,
+  DriverFilters,
+} from "../types/driver.types";
 
 export const driverService = {
   async list(filters?: DriverFilters): Promise<PaginatedResponse<Driver>> {
