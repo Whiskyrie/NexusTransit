@@ -194,7 +194,7 @@ export function TrackingPage() {
               className="w-full h-12 pl-12 pr-4 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition-all text-sm font-medium"
             />
           </div>
-          <Button type="submit" variant="primary" disabled={isLoading}>
+          <Button type="submit" variant="primary" disabled={isLoading} className="h-12 px-6">
             {isLoading ? "Buscando..." : "Buscar"}
           </Button>
         </form>
