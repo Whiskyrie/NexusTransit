@@ -9,6 +9,7 @@ import {
   Route,
   Package,
   UserCheck,
+  MapPin,
   LogOut,
   ChevronLeft,
   ChevronRight,
@@ -56,6 +57,7 @@ const menuItems: MenuItem[] = [
   { path: "/routes", icon: Route, label: "Rotas" },
   { path: "/deliveries", icon: Package, label: "Entregas" },
   { path: "/customers", icon: UserCheck, label: "Clientes" },
+  { path: "/tracking", icon: MapPin, label: "Rastreamento" },
 ];
 
 // ============================================================================
