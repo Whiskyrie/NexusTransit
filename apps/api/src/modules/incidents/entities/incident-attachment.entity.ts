@@ -72,13 +72,13 @@ export class IncidentAttachment extends BaseEntity {
   description?: string;
 
   @ManyToOne(() => User, {
-    nullable: false,
+    nullable: true,
   })
   @JoinColumn({ name: 'uploaded_by_user_id' })
-  uploaded_by!: User;
+  uploaded_by?: User;
 
-  @Column({ type: 'uuid' })
-  uploaded_by_user_id!: string;
+  @Column({ type: 'uuid', nullable: true })
+  uploaded_by_user_id?: string | null;
 
   @CreateDateColumn({
     type: 'timestamp with time zone',

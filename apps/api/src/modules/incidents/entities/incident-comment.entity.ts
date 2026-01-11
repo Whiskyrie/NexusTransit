@@ -24,13 +24,13 @@ export class IncidentComment extends BaseEntity {
   incident_id!: string;
 
   @ManyToOne(() => User, {
-    nullable: false,
+    nullable: true,
   })
   @JoinColumn({ name: 'user_id' })
-  user!: User;
+  user?: User;
 
-  @Column({ type: 'uuid' })
-  user_id!: string;
+  @Column({ type: 'uuid', nullable: true })
+  user_id?: string | null;
 
   @Column({
     type: 'text',

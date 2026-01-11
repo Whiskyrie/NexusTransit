@@ -46,7 +46,7 @@ interface StatusUpdatedData {
 interface CommentData {
   id: string;
   comment_text: string;
-  user_id: string;
+  user_id?: string | null;
   created_at: Date;
   is_internal: boolean;
 }
@@ -59,7 +59,7 @@ interface AttachmentData {
   file_name: string;
   file_size: number;
   file_type: string;
-  uploaded_by_user_id: string;
+  uploaded_by_user_id?: string | null;
   created_at: Date;
 }
 
@@ -324,7 +324,7 @@ export class IncidentGateway implements OnGatewayInit, OnGatewayConnection, OnGa
       event_type: 'comment_added',
       data: comment,
       timestamp: new Date(),
-      user_id: comment.user_id,
+      user_id: comment.user_id ?? undefined,
     };
 
     // Enviar para sala geral
@@ -349,7 +349,7 @@ export class IncidentGateway implements OnGatewayInit, OnGatewayConnection, OnGa
       event_type: 'attachment_added',
       data: attachment,
       timestamp: new Date(),
-      user_id: attachment.uploaded_by_user_id,
+      user_id: attachment.uploaded_by_user_id ?? undefined,
     };
 
     // Enviar para sala geral
