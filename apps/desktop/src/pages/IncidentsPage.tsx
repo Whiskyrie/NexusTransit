@@ -231,24 +231,6 @@ export function IncidentsPage() {
       ),
     },
     {
-      key: "driver",
-      header: "Motorista",
-      width: "180px",
-      render: (incident) => (
-        <span className="text-sm text-gray-900">
-          {incident.driver?.full_name || <span className="text-gray-400">Não informado</span>}
-        </span>
-      ),
-    },
-    {
-      key: "vehicle",
-      header: "Veículo",
-      width: "120px",
-      render: (incident) => (
-        <span className="text-sm text-gray-600">{incident.vehicle?.license_plate || "-"}</span>
-      ),
-    },
-    {
       key: "reported_at",
       header: "Reportado em",
       width: "140px",
@@ -261,7 +243,7 @@ export function IncidentsPage() {
     {
       key: "actions",
       header: "Ações",
-      width: "80px",
+      width: "120px",
       render: (incident) => (
         <IncidentActions
           incident={incident}

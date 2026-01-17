@@ -6,7 +6,6 @@ import { Toast } from "../components/ui/Toast";
 import { ConfirmDeleteModal } from "../components/ui/ConfirmDeleteModal";
 import {
   DeliveryStatusBadge,
-  DeliveryPriorityBadge,
   DeliveryFilters,
   DeliveryActions,
   DeliveryFormModal,
@@ -306,16 +305,6 @@ export function DeliveriesPage() {
       render: (delivery) => (
         <div className="flex justify-center">
           <DeliveryStatusBadge status={delivery.status} size="sm" />
-        </div>
-      ),
-    },
-    {
-      key: "priority",
-      header: "Prioridade",
-      width: "9%",
-      render: (delivery) => (
-        <div className="flex justify-center">
-          <DeliveryPriorityBadge priority={delivery.priority} size="sm" />
         </div>
       ),
     },
