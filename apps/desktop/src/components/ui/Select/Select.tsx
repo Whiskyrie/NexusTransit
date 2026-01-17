@@ -120,14 +120,7 @@ export function Select<T extends string | number = string>({
 
   return (
     <div className={cn(containerStyles, className)}>
-      <Listbox
-        as="div"
-        value={value}
-        onChange={onChange}
-        disabled={disabled}
-        name={name}
-        modal={false}
-      >
+      <Listbox as="div" value={value} onChange={onChange} disabled={disabled} name={name}>
         {({ open }) => (
           <>
             {label && (
