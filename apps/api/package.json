@@ -38,6 +38,7 @@
     "seed:dev": "pnpm seed",
     "seed:test": "pnpm seed -- --env=test",
     "seed:prod": "pnpm seed -- --env=prod",
+    "script:geocode-events": "ts-node --project tsconfig.migration.json -r tsconfig-paths/register scripts/geocode-tracking-events.ts",
     "seed:list": "pnpm seed -- --list",
     "seed:roles": "pnpm seed -- roles",
     "seed:admin": "pnpm seed -- admin",
