@@ -35,8 +35,8 @@ import {
 import { IncidentsService } from './incidents.service';
 import { IncidentGeoService } from './services/incident-geo.service';
 import { IncidentExportService } from './services/incident-export.service';
-import { CreateIncidentDto } from './dto/create-incident.dto';
-import { UpdateIncidentDto } from './dto/update-incident.dto';
+import { CreateIncidentDto, CreateIncidentCommentDto } from './dto/create-incident.dto';
+import { UpdateIncidentDto, UpdateIncidentStatusDto } from './dto/update-incident.dto';
 import { IncidentFilterDto } from './dto/incident-filter.dto';
 import { IncidentResponseDto } from './dto/incident-response.dto';
 import { NearbyIncidentsDto } from './dto/nearby-incidents.dto';
@@ -328,18 +328,28 @@ export class IncidentsController {
     type: String,
     format: 'uuid',
   })
+  @ApiBody({
+    type: CreateIncidentCommentDto,
+    description: 'Dados do comentário',
+  })
   @ApiResponse({
     status: HttpStatus.CREATED,
     description: 'Comentário adicionado com sucesso',
+    type: IncidentComment,
   })
+  @ApiBadRequestResponse({ description: 'Dados inválidos' })
   @ApiNotFoundResponse({ description: 'Incidente não encontrado' })
   async addComment(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body('comment_text') commentText: string,
-    @Body('is_internal') isInternal = false,
+    @Body() createCommentDto: CreateIncidentCommentDto,
     @CurrentUser('id') userId?: string,
   ): Promise<IncidentComment> {
-    return this.incidentsService.addComment(id, commentText, isInternal, userId);
+    return this.incidentsService.addComment(
+      id,
+      createCommentDto.comment_text,
+      createCommentDto.is_internal ?? false,
+      userId,
+    );
   }
 
   @Patch(':id/status')
@@ -353,18 +363,26 @@ export class IncidentsController {
     type: String,
     format: 'uuid',
   })
+  @ApiBody({
+    type: UpdateIncidentStatusDto,
+    description: 'Dados para atualização de status',
+  })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Status atualizado com sucesso',
     type: IncidentResponseDto,
   })
+  @ApiBadRequestResponse({ description: 'Dados inválidos' })
   @ApiNotFoundResponse({ description: 'Incidente não encontrado' })
   async updateStatus(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body('status') status: IncidentStatus,
-    @Body('resolution_notes') resolutionNotes?: string,
+    @Body() updateStatusDto: UpdateIncidentStatusDto,
   ): Promise<IncidentResponseDto> {
-    return this.incidentsService.updateStatus(id, status, resolutionNotes);
+    return this.incidentsService.updateStatus(
+      id,
+      updateStatusDto.status,
+      updateStatusDto.resolution_notes,
+    );
   }
 
   @Patch(':id/assign')

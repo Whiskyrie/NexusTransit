@@ -187,38 +187,17 @@ export class IncidentStateMachineService {
       );
     }
 
-    // Criar um ator com o estado atual
-    const actor = createActor(this.machine, {} as never);
+    // Simplesmente logar e retornar o novo status
+    // A validação já foi feita acima, não precisamos da máquina de estados XState para executar
+    this.logger.log(
+      `Incidente ${incidentId}: ${currentStatus} -> ${newStatus} por usuário ${userId}`,
+    );
 
-    actor.start();
-
-    // Tentar a transição
-    try {
-      actor.send({ type: event } as IncidentEvent);
-      const snapshot = actor.getSnapshot() as { value?: unknown };
-
-      this.logger.log(
-        `Incidente ${incidentId}: ${currentStatus} -> ${newStatus} por usuário ${userId}`,
-      );
-
-      actor.stop();
-
-      const snapshotValue = snapshot.value ?? newStatus;
-      const finalStatus =
-        typeof snapshotValue === 'string' ? (snapshotValue as IncidentStatus) : newStatus;
-
-      return {
-        success: true,
-        status: finalStatus,
-        message: `Status atualizado de ${currentStatus} para ${newStatus}`,
-      };
-    } catch (error) {
-      actor.stop();
-      this.logger.error(`Erro ao executar transição para incidente ${incidentId}`, error);
-      throw new BadRequestException(
-        `Erro ao executar transição: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
-      );
-    }
+    return {
+      success: true,
+      status: newStatus,
+      message: `Status atualizado de ${currentStatus} para ${newStatus}`,
+    };
   }
 
   /**
