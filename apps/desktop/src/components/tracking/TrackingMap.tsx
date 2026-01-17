@@ -15,15 +15,18 @@ export function TrackingMap({ mapData }: TrackingMapProps) {
   const mapRef = useRef<MapRef>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
 
-  // Criar GeoJSON da rota
-  const routeGeoJSON = {
-    type: "Feature" as const,
-    geometry: {
-      type: "LineString" as const,
-      coordinates: mapData.route.map((point) => [point.longitude, point.latitude]),
-    },
-    properties: {},
-  };
+  // Criar GeoJSON da rota apenas se houver pontos
+  const routeGeoJSON =
+    mapData.route.length > 0
+      ? {
+          type: "Feature" as const,
+          geometry: {
+            type: "LineString" as const,
+            coordinates: mapData.route.map((point) => [point.longitude, point.latitude]),
+          },
+          properties: {},
+        }
+      : null;
 
   // Ajustar bounds quando o mapa carregar ou dados mudarem
   useEffect(() => {
@@ -69,8 +72,8 @@ export function TrackingMap({ mapData }: TrackingMapProps) {
         onLoad={() => setMapLoaded(true)}
         style={{ width: "100%", height: "100%" }}
       >
-        {/* Linha da rota */}
-        {mapData.route.length > 0 && (
+        {/* Linha da rota - apenas se houver dados */}
+        {routeGeoJSON && (
           <Source type="geojson" data={routeGeoJSON}>
             <Layer
               id="route-line"
