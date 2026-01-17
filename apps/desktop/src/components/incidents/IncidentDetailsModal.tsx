@@ -173,7 +173,7 @@ export function IncidentDetailsModal({ isOpen, onClose, incident }: IncidentDeta
             <button
               onClick={() => refetch()}
               disabled={isLoading}
-              className="p-2.5 text-gray-400 hover:text-gray-700 hover:bg-gray-50 rounded-xl transition-colors disabled:opacity-50"
+              className="p-2.5 text-gray-400 hover:text-gray-700 hover:bg-gray-50 rounded-xl transition-all disabled:opacity-50 cursor-pointer active:scale-95 disabled:cursor-not-allowed"
               title="Atualizar"
             >
               <RefreshCw className={`w-5 h-5 ${isLoading ? "animate-spin" : ""}`} />
@@ -181,7 +181,7 @@ export function IncidentDetailsModal({ isOpen, onClose, incident }: IncidentDeta
             <div className="h-6 w-px bg-gray-200" />
             <button
               onClick={onClose}
-              className="p-2.5 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-colors"
+              className="p-2.5 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all cursor-pointer active:scale-95"
             >
               <X className="w-5 h-5" />
             </button>
@@ -195,7 +195,7 @@ export function IncidentDetailsModal({ isOpen, onClose, incident }: IncidentDeta
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-1 py-3 text-sm font-semibold border-b-2 transition-colors ${
+                className={`px-1 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer active:opacity-70 ${
                   activeTab === tab.id
                     ? "border-indigo-600 text-indigo-600"
                     : "border-transparent text-gray-500 hover:text-gray-700"

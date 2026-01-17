@@ -12,7 +12,7 @@ export function DeliveryActions({ onView, onEdit, onDelete }: DeliveryActionsPro
       {onView && (
         <button
           onClick={onView}
-          className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-indigo-600 transition-colors"
+          className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-indigo-600 transition-all cursor-pointer active:scale-95"
           title="Ver detalhes"
         >
           <Eye className="w-4 h-4" strokeWidth={1.5} />
@@ -21,7 +21,7 @@ export function DeliveryActions({ onView, onEdit, onDelete }: DeliveryActionsPro
       {onEdit && (
         <button
           onClick={onEdit}
-          className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-blue-600 transition-colors"
+          className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-blue-600 transition-all cursor-pointer active:scale-95"
           title="Editar entrega"
         >
           <Edit2 className="w-4 h-4" strokeWidth={1.5} />
@@ -30,7 +30,7 @@ export function DeliveryActions({ onView, onEdit, onDelete }: DeliveryActionsPro
       {onDelete && (
         <button
           onClick={onDelete}
-          className="p-2 rounded-lg hover:bg-red-50 text-gray-500 hover:text-red-600 transition-colors"
+          className="p-2 rounded-lg hover:bg-red-50 text-gray-500 hover:text-red-600 transition-all cursor-pointer active:scale-95"
           title="Excluir entrega"
         >
           <Trash2 className="w-4 h-4" strokeWidth={1.5} />

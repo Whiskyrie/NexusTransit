@@ -203,7 +203,7 @@ export function IncidentFormModal({
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
+            className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-all cursor-pointer active:scale-95"
           >
             <X className="w-4 h-4 text-gray-600" strokeWidth={1.5} />
           </button>

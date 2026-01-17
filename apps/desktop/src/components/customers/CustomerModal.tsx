@@ -183,7 +183,10 @@ export function CustomerModal({
                 : "Preencha os dados para cadastrar um novo cliente"}
             </p>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-xl transition-all cursor-pointer active:scale-95"
+          >
             <X className="w-5 h-5 text-gray-500" />
           </button>
         </div>

@@ -11,7 +11,7 @@ export function VehicleActions({ onEdit, onDelete }: VehicleActionsProps) {
       {onEdit && (
         <button
           onClick={onEdit}
-          className="p-2 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-colors"
+          className="p-2 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-all cursor-pointer active:scale-95"
           title="Editar veículo"
         >
           <Edit2 className="w-4 h-4" strokeWidth={1.5} />
@@ -20,7 +20,7 @@ export function VehicleActions({ onEdit, onDelete }: VehicleActionsProps) {
       {onDelete && (
         <button
           onClick={onDelete}
-          className="p-2 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-600 transition-colors"
+          className="p-2 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-600 transition-all cursor-pointer active:scale-95"
           title="Excluir veículo"
         >
           <Trash2 className="w-4 h-4" strokeWidth={1.5} />

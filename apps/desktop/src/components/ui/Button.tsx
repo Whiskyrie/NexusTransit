@@ -19,7 +19,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref,
   ) => {
     const baseStyles =
-      "inline-flex items-center justify-center rounded-xl text-[15px] font-semibold transition-all duration-200 focus:outline-none disabled:cursor-not-allowed disabled:opacity-70";
+      "inline-flex items-center justify-center rounded-xl text-[15px] font-semibold transition-all duration-200 focus:outline-none disabled:cursor-not-allowed disabled:opacity-70 cursor-pointer";
 
     const variants = {
       primary:
