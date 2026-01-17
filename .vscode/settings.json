@@ -1,0 +1,10 @@
+{
+  "rust-analyzer.linkedProjects": [
+    "./apps/desktop/src-tauri/Cargo.toml"
+  ],
+  "rust-analyzer.cargo.allTargets": false,
+  "rust-analyzer.checkOnSave": true,
+  "rust-analyzer.workspace.discoverConfig": {
+    "projects": ["./apps/desktop/src-tauri"]
+  }
+}
