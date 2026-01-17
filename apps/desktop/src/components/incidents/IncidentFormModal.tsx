@@ -119,6 +119,35 @@ export function IncidentFormModal({
     }
   }, [isOpen, reset]);
 
+  // Resetar formulário quando o incident mudar
+  useEffect(() => {
+    if (incident && isOpen) {
+      reset({
+        incident_type: incident.incident_type,
+        severity: incident.severity,
+        title: incident.title,
+        description: incident.description,
+        driver_id: incident.driver_id,
+        vehicle_id: incident.vehicle_id || "",
+        delivery_id: incident.delivery_id || "",
+        route_id: incident.route_id || "",
+        location_address: incident.location_address || "",
+      });
+    } else if (!incident && isOpen) {
+      reset({
+        incident_type: "",
+        severity: "",
+        title: "",
+        description: "",
+        driver_id: "",
+        vehicle_id: "",
+        delivery_id: "",
+        route_id: "",
+        location_address: "",
+      });
+    }
+  }, [incident, isOpen, reset]);
+
   const handleFormSubmit = async (data: FormData) => {
     if (!user?.id) {
       console.error("Usuário não autenticado");
