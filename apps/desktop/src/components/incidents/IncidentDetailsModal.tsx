@@ -10,8 +10,10 @@ import { IncidentAttachments } from "./IncidentAttachments";
 import { IncidentCommentThread } from "./IncidentCommentThread";
 import { IncidentStatusTimeline } from "./IncidentStatusTimeline";
 import { IncidentLocationMap } from "./IncidentLocationMap";
+import { Select } from "../ui/Select";
 import { incidentService } from "../../services/incident.service";
 import type { Incident } from "../../types/incident.types";
+import { IncidentStatus, IncidentStatusLabels } from "../../types/incident.types";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -25,6 +27,7 @@ type TabType = "details" | "attachments" | "comments" | "history";
 
 export function IncidentDetailsModal({ isOpen, onClose, incident }: IncidentDetailsModalProps) {
   const [activeTab, setActiveTab] = useState<TabType>("details");
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   // Buscar detalhes completos do incidente
   const {
@@ -67,7 +70,7 @@ export function IncidentDetailsModal({ isOpen, onClose, incident }: IncidentDeta
   if (!isOpen || !incident) return null;
 
   const handleAddComment = async (content: string) => {
-    await incidentService.addComment(incident.id, { content });
+    await incidentService.addComment(incident.id, { comment_text: content });
     refetchComments();
   };
 
@@ -76,7 +79,53 @@ export function IncidentDetailsModal({ isOpen, onClose, incident }: IncidentDeta
     refetchAttachments();
   };
 
+  const handleStatusChange = async (newStatus: string) => {
+    try {
+      setIsUpdatingStatus(true);
+      await incidentService.updateStatus(incident.id, { status: newStatus as IncidentStatus });
+      refetch();
+    } catch (error) {
+      console.error("Failed to update status:", error);
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
+
   const displayIncident = fullIncident || incident;
+
+  // Mapa de transições válidas de status (deve refletir o backend)
+  const STATUS_TRANSITIONS: Record<IncidentStatus, IncidentStatus[]> = {
+    [IncidentStatus.REPORTED]: [IncidentStatus.INVESTIGATING, IncidentStatus.CLOSED],
+    [IncidentStatus.INVESTIGATING]: [
+      IncidentStatus.IN_PROGRESS,
+      IncidentStatus.ESCALATED,
+      IncidentStatus.CLOSED,
+    ],
+    [IncidentStatus.IN_PROGRESS]: [
+      IncidentStatus.RESOLVED,
+      IncidentStatus.ESCALATED,
+      IncidentStatus.INVESTIGATING,
+    ],
+    [IncidentStatus.RESOLVED]: [IncidentStatus.CLOSED, IncidentStatus.IN_PROGRESS],
+    [IncidentStatus.ESCALATED]: [
+      IncidentStatus.IN_PROGRESS,
+      IncidentStatus.RESOLVED,
+      IncidentStatus.CLOSED,
+    ],
+    [IncidentStatus.CLOSED]: [IncidentStatus.INVESTIGATING],
+  };
+
+  const currentStatus = displayIncident.status as IncidentStatus;
+  const allowedStatuses = STATUS_TRANSITIONS[currentStatus] || [];
+
+  // Mostrar status atual + transições válidas
+  const statusOptions = [
+    { value: currentStatus, label: IncidentStatusLabels[currentStatus] },
+    ...allowedStatuses.map((status) => ({
+      value: status,
+      label: IncidentStatusLabels[status],
+    })),
+  ];
 
   const tabs: { id: TabType; label: string }[] = [
     { id: "details", label: "Detalhes" },
@@ -101,12 +150,20 @@ export function IncidentDetailsModal({ isOpen, onClose, incident }: IncidentDeta
             <div className="w-12 h-12 rounded-2xl bg-red-50 flex items-center justify-center border border-red-100">
               <AlertTriangle className="w-6 h-6 text-red-600" strokeWidth={1.5} />
             </div>
-            <div>
+            <div className="flex-1">
               <div className="flex items-center gap-3">
                 <h2 className="text-xl font-bold text-gray-900 tracking-tight">
                   {displayIncident.incident_number}
                 </h2>
-                <IncidentStatusBadge status={displayIncident.status} />
+                <div className="w-48">
+                  <Select
+                    value={displayIncident.status}
+                    onChange={handleStatusChange}
+                    options={statusOptions}
+                    disabled={isUpdatingStatus}
+                    compact
+                  />
+                </div>
               </div>
               <p className="text-sm text-gray-500 mt-0.5 font-medium">{displayIncident.title}</p>
             </div>

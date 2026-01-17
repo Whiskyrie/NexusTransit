@@ -172,7 +172,8 @@ export interface UpdateIncidentStatusDto {
 }
 
 export interface CreateIncidentCommentDto {
-  content: string;
+  comment_text: string;
+  is_internal?: boolean;
 }
 
 export interface CreateWebhookDto {
