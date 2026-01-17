@@ -1,6 +1,13 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+  forwardRef,
+  Inject,
+} from '@nestjs/common';
 import { InjectRepository, InjectEntityManager } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere, ILike, Between, EntityManager } from 'typeorm';
+import { Repository, EntityManager } from 'typeorm';
 import { plainToInstance } from 'class-transformer';
 import { Route } from './entities/route.entity';
 import { RouteStop } from './entities/route_stop.entity';
@@ -13,6 +20,11 @@ import { PaginatedResponseDto, DistanceCalculatorService } from '@nexus/common';
 import { RouteValidatorService } from './validators/route.validator';
 import { RouteStatus } from './enums/route-status';
 import { RouteType } from './enums/route.type';
+import { VehiclesService } from '../vehicles/vehicles.service';
+import { VehicleStatus } from '../vehicles/enums/vehicle-status.enum';
+import { DriversService } from '../drivers/drivers.service';
+import { DriverStatus } from '../drivers/enums/driver-status.enum';
+import { GoogleMapsService } from '@nexus/geo-services';
 import { ROUTE_TYPE_CHARACTERISTICS } from './constants/route-calculation.constants';
 import {
   ROUTE_PAGINATION_DEFAULTS,
@@ -88,6 +100,11 @@ export class RoutesService {
     private readonly entityManager: EntityManager,
     private readonly validatorService: RouteValidatorService,
     private readonly distanceCalculator: DistanceCalculatorService,
+    @Inject(forwardRef(() => VehiclesService))
+    private readonly vehiclesService: VehiclesService,
+    @Inject(forwardRef(() => DriversService))
+    private readonly driversService: DriversService,
+    private readonly googleMapsService: GoogleMapsService,
   ) {}
 
   /**
@@ -215,6 +232,42 @@ export class RoutesService {
   }
 
   /**
+   * Calcula distância e duração reais usando Google Maps API
+   */
+  private async calculateRealDistanceAndDuration(
+    originAddress: string,
+    destinationAddress: string,
+  ): Promise<{ distance_km: number; duration_minutes: number } | null> {
+    try {
+      const response = await this.googleMapsService.getDistanceMatrix(
+        [originAddress],
+        [destinationAddress],
+        'driving',
+      );
+
+      if (
+        response?.rows?.[0]?.elements?.[0]?.status === 'OK' &&
+        response.rows[0].elements[0].distance &&
+        response.rows[0].elements[0].duration
+      ) {
+        const distanceMeters = response.rows[0].elements[0].distance.value;
+        const durationSeconds = response.rows[0].elements[0].duration.value;
+
+        return {
+          distance_km: distanceMeters / 1000,
+          duration_minutes: durationSeconds / 60,
+        };
+      }
+
+      return null;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      this.logger.warn(`Erro ao calcular distância via Google Maps: ${errorMessage}`);
+      return null;
+    }
+  }
+
+  /**
    * Wrapper para calculateEstimatedDuration com tipagem explícita
    */
   private calcDuration(distanceKm: number, avgSpeed?: number, delayFactor?: number): number {
@@ -243,11 +296,8 @@ export class RoutesService {
     await this.validatorService.validateVehicleExists(createDto.vehicle_id);
     await this.validatorService.validateVehicleAssignment(createDto.vehicle_id, plannedDateValue);
 
-    this.validatorService.validateRouteDates(
-      plannedDateValue,
-      createDto.planned_start_time,
-      createDto.planned_end_time,
-    );
+    // Validação de datas removida - planned_end_time foi substituído por estimated_end_date
+    // que é calculado automaticamente usando Google Maps API
 
     if (createDto.total_load_kg || createDto.total_volume_m3) {
       await this.validatorService.validateRouteCapacity(
@@ -260,7 +310,22 @@ export class RoutesService {
     let calculatedDistance: number | undefined;
     let calculatedDuration: number | undefined;
 
-    if (createDto.origin_coordinates && createDto.destination_coordinates) {
+    // Tentar calcular distância real usando Google Maps API se endereços fornecidos
+    if (createDto.origin_address && createDto.destination_address) {
+      const realDistance = await this.calculateRealDistanceAndDuration(
+        createDto.origin_address,
+        createDto.destination_address,
+      );
+
+      if (realDistance) {
+        calculatedDistance = realDistance.distance_km;
+        calculatedDuration = realDistance.duration_minutes;
+        this.logger.log('Usando distância real calculada via Google Maps API');
+      }
+    }
+
+    // Fallback: calcular por coordenadas se não conseguiu via endereços
+    if (!calculatedDistance && createDto.origin_coordinates && createDto.destination_coordinates) {
       calculatedDistance = this.calcDistance(
         createDto.origin_coordinates,
         createDto.destination_coordinates,
@@ -272,6 +337,7 @@ export class RoutesService {
         characteristics.avgSpeed,
         characteristics.delayFactor,
       );
+      this.logger.log('Usando distância estimada via coordenadas (Haversine)');
     }
 
     const { stops, ...routeData } = createDto;
@@ -307,9 +373,6 @@ export class RoutesService {
     if (routeData.planned_start_time) {
       preparedData.planned_start_time = routeData.planned_start_time;
     }
-    if (routeData.planned_end_time) {
-      preparedData.planned_end_time = routeData.planned_end_time;
-    }
     if (routeData.total_load_kg) {
       preparedData.total_load_kg = routeData.total_load_kg;
     }
@@ -341,6 +404,30 @@ export class RoutesService {
       await this.createRouteStops(savedRoute.id, stops);
     }
 
+    // Atualizar status do motorista para ON_ROUTE
+    if (savedRoute.driver_id) {
+      try {
+        await this.driversService.update(savedRoute.driver_id, { status: DriverStatus.ON_ROUTE });
+        this.logger.log(`Motorista ${savedRoute.driver_id} atualizado para ON_ROUTE`);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        this.logger.warn(`Erro ao atualizar status do motorista: ${errorMessage}`);
+      }
+    }
+
+    // Atualizar status do veículo para IN_ROUTE
+    if (savedRoute.vehicle_id) {
+      try {
+        await this.vehiclesService.update(savedRoute.vehicle_id, {
+          status: VehicleStatus.IN_ROUTE,
+        });
+        this.logger.log(`Veículo ${savedRoute.vehicle_id} atualizado para IN_ROUTE`);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        this.logger.warn(`Erro ao atualizar status do veículo: ${errorMessage}`);
+      }
+    }
+
     await this.createHistoryEntry(savedRoute.id, {
       event_type: 'ROUTE_CREATED',
       description: `Rota ${savedRoute.route_code} criada`,
@@ -360,26 +447,35 @@ export class RoutesService {
       ...filters
     } = filterDto;
 
-    const where: FindOptionsWhere<Route> = {};
+    // Usar QueryBuilder para busca mais flexível
+    const queryBuilder = this.routeRepository
+      .createQueryBuilder('route')
+      .leftJoinAndSelect('route.vehicle', 'vehicle')
+      .leftJoinAndSelect('route.driver', 'driver')
+      .leftJoinAndSelect('route.stops', 'stops');
 
+    // Busca por texto (nome da rota, código, nome do motorista, placa do veículo)
     if (search) {
-      where.name = ILike(`%${search}%`);
+      queryBuilder.andWhere(
+        '(route.name ILIKE :search OR route.route_code ILIKE :search OR driver.full_name ILIKE :search OR vehicle.license_plate ILIKE :search)',
+        { search: `%${search}%` },
+      );
     }
 
     if (filters.status) {
-      where.status = filters.status;
+      queryBuilder.andWhere('route.status = :status', { status: filters.status });
     }
 
     if (filters.type) {
-      where.type = filters.type;
+      queryBuilder.andWhere('route.type = :type', { type: filters.type });
     }
 
     if (filters.vehicle_id) {
-      where.vehicle_id = filters.vehicle_id;
+      queryBuilder.andWhere('route.vehicle_id = :vehicle_id', { vehicle_id: filters.vehicle_id });
     }
 
     if (filters.driver_id) {
-      where.driver_id = filters.driver_id;
+      queryBuilder.andWhere('route.driver_id = :driver_id', { driver_id: filters.driver_id });
     }
 
     if (filters.route_date_from || filters.route_date_to) {
@@ -396,16 +492,20 @@ export class RoutesService {
           ? new Date(endDateInput)
           : new Date(ROUTE_DATE_DEFAULTS.MAX_DATE);
 
-      where.planned_date = Between(startDate, endDate);
+      queryBuilder.andWhere('route.planned_date BETWEEN :startDate AND :endDate', {
+        startDate,
+        endDate,
+      });
     }
 
-    const [routes, total] = await this.routeRepository.findAndCount({
-      where,
-      relations: ['vehicle', 'driver', 'stops'],
-      take: limit,
-      skip: (page - 1) * limit,
-      order: { planned_date: 'DESC', created_at: 'DESC' },
-    });
+    // Ordenação e paginação
+    queryBuilder
+      .orderBy('route.planned_date', 'DESC')
+      .addOrderBy('route.created_at', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    const [routes, total] = await queryBuilder.getManyAndCount();
 
     const totalPages = Math.ceil(total / limit);
 
@@ -471,17 +571,8 @@ export class RoutesService {
       );
     }
 
-    if (updateDto.planned_date || updateDto.planned_start_time || updateDto.planned_end_time) {
-      const plannedDateForValidation: Date = updateDto.planned_date
-        ? this.toSafeDate(updateDto.planned_date)
-        : route.planned_date;
-
-      this.validatorService.validateRouteDates(
-        plannedDateForValidation,
-        updateDto.planned_start_time ?? route.planned_start_time,
-        updateDto.planned_end_time ?? route.planned_end_time,
-      );
-    }
+    // Validação de datas removida - planned_end_time foi substituído por estimated_end_date
+    // que é calculado automaticamente usando Google Maps API
 
     const changedFields = this.getChangedFields(route, updateDto);
 
@@ -527,9 +618,6 @@ export class RoutesService {
     if (updateDto.planned_start_time !== undefined) {
       route.planned_start_time = updateDto.planned_start_time;
     }
-    if (updateDto.planned_end_time !== undefined) {
-      route.planned_end_time = updateDto.planned_end_time;
-    }
     if (updateDto.estimated_distance_km !== undefined) {
       route.estimated_distance_km = updateDto.estimated_distance_km;
     }
@@ -547,6 +635,35 @@ export class RoutesService {
     }
     if (updateDto.notes !== undefined) {
       route.notes = updateDto.notes;
+    }
+
+    // Recalcular distância e duração se endereços mudaram
+    const addressesChanged =
+      (updateDto.origin_address && updateDto.origin_address !== route.origin_address) ??
+      (updateDto.destination_address &&
+        updateDto.destination_address !== route.destination_address);
+
+    if (addressesChanged && route.origin_address && route.destination_address) {
+      this.logger.log('Endereços alterados - recalculando distância via Google Maps API');
+
+      const realDistance = await this.calculateRealDistanceAndDuration(
+        route.origin_address,
+        route.destination_address,
+      );
+
+      if (realDistance) {
+        // Só atualizar se não foram fornecidos valores manuais
+        if (updateDto.estimated_distance_km === undefined) {
+          route.estimated_distance_km = realDistance.distance_km;
+          this.logger.log(`Distância atualizada automaticamente: ${realDistance.distance_km} km`);
+        }
+        if (updateDto.estimated_duration_minutes === undefined) {
+          route.estimated_duration_minutes = realDistance.duration_minutes;
+          this.logger.log(
+            `Duração atualizada automaticamente: ${realDistance.duration_minutes} min`,
+          );
+        }
+      }
     }
 
     await this.routeRepository.save(route);
@@ -592,6 +709,8 @@ export class RoutesService {
     route.actual_start_time = new Date();
 
     await this.routeRepository.save(route);
+
+    // Nota: Status do motorista e veículo já foram atualizados na criação da rota
 
     await this.createHistoryEntry(id, {
       event_type: 'STATUS_CHANGED',
@@ -668,6 +787,28 @@ export class RoutesService {
 
     await this.routeRepository.save(route);
 
+    // Restaurar status do motorista para ACTIVE
+    if (route.driver_id) {
+      try {
+        await this.driversService.update(route.driver_id, { status: DriverStatus.ACTIVE });
+        this.logger.log(`Motorista ${route.driver_id} restaurado para ACTIVE`);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        this.logger.warn(`Erro ao atualizar status do motorista: ${errorMessage}`);
+      }
+    }
+
+    // Restaurar status do veículo para ACTIVE
+    if (route.vehicle_id) {
+      try {
+        await this.vehiclesService.update(route.vehicle_id, { status: VehicleStatus.ACTIVE });
+        this.logger.log(`Veículo ${route.vehicle_id} restaurado para ACTIVE`);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        this.logger.warn(`Erro ao atualizar status do veículo: ${errorMessage}`);
+      }
+    }
+
     await this.createHistoryEntry(id, {
       event_type: 'STATUS_CHANGED',
       description: 'Rota finalizada',
@@ -693,6 +834,28 @@ export class RoutesService {
     route.cancelled_at = new Date();
 
     await this.routeRepository.save(route);
+
+    // Restaurar status do motorista para ACTIVE
+    if (route.driver_id) {
+      try {
+        await this.driversService.update(route.driver_id, { status: DriverStatus.ACTIVE });
+        this.logger.log(`Motorista ${route.driver_id} restaurado para ACTIVE`);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        this.logger.warn(`Erro ao atualizar status do motorista: ${errorMessage}`);
+      }
+    }
+
+    // Restaurar status do veículo para ACTIVE
+    if (route.vehicle_id) {
+      try {
+        await this.vehiclesService.update(route.vehicle_id, { status: VehicleStatus.ACTIVE });
+        this.logger.log(`Veículo ${route.vehicle_id} restaurado para ACTIVE`);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        this.logger.warn(`Erro ao atualizar status do veículo: ${errorMessage}`);
+      }
+    }
 
     await this.createHistoryEntry(id, {
       event_type: 'STATUS_CHANGED',
@@ -863,7 +1026,7 @@ export class RoutesService {
       longitude: number | null;
       status: string;
       address: string;
-      customer_address_id: string;
+      customer_address_id: string | undefined;
       planned_arrival_time: string | null;
       actual_arrival_time: Date | null;
     }[];

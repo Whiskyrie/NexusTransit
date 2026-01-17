@@ -195,23 +195,27 @@ export class RouteValidationInterceptor implements NestInterceptor {
    */
   private validatePlannedDate(dateString: string): void {
     const plannedDate = new Date(dateString);
-    const now = new Date();
-
-    // Remove as horas para comparar apenas datas
-    plannedDate.setHours(0, 0, 0, 0);
-    now.setHours(0, 0, 0, 0);
 
     if (Number.isNaN(plannedDate.getTime())) {
       throw new BadRequestException('Data planejada inválida');
     }
 
-    // Permite rotas planejadas para o mesmo dia
-    if (plannedDate < now) {
+    // Obtém a data atual no timezone local do servidor
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const plannedStart = new Date(
+      plannedDate.getFullYear(),
+      plannedDate.getMonth(),
+      plannedDate.getDate(),
+    );
+
+    // Permite rotas planejadas para hoje ou futuro
+    if (plannedStart < todayStart) {
       throw new BadRequestException('Data planejada não pode ser anterior à data atual');
     }
 
     // Limite de 1 ano no futuro
-    const oneYearFromNow = new Date();
+    const oneYearFromNow = new Date(now);
     oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
     if (plannedDate > oneYearFromNow) {
       throw new BadRequestException('Data planejada não pode ser superior a 1 ano no futuro');

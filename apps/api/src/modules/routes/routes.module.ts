@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 // Controllers
@@ -33,6 +33,7 @@ import { RouteSubscriber, RouteStopSubscriber } from './subscribers';
 import { VehiclesModule } from '../vehicles/vehicles.module';
 import { DriversModule } from '../drivers/drivers.module';
 import { DeliveriesModule } from '../deliveries/deliveries.module';
+import { GeoServicesModule } from '@nexus/geo-services';
 
 /**
  * Módulo de Rotas
@@ -55,9 +56,10 @@ import { DeliveriesModule } from '../deliveries/deliveries.module';
     TypeOrmModule.forFeature([Route, RouteStop, RouteHistory]),
 
     // Importar módulos relacionados para validações
-    VehiclesModule,
-    DriversModule,
+    forwardRef(() => VehiclesModule),
+    forwardRef(() => DriversModule),
     DeliveriesModule,
+    GeoServicesModule,
   ],
 
   controllers: [RoutesController],

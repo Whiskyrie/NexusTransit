@@ -15,6 +15,7 @@ interface RouteEntity {
   status: string;
   type: string;
   route_date: Date;
+  planned_date: Date;
   origin_address: string;
   origin_coordinates?: string;
   destination_address: string;
@@ -22,7 +23,8 @@ interface RouteEntity {
   start_location?: string;
   end_location?: string;
   planned_start_time?: string;
-  planned_end_time?: string;
+  estimated_end_date?: Date;
+  estimated_duration_minutes?: number;
   total_distance?: number;
   total_duration?: number;
   optimization_score?: number;
@@ -88,16 +90,16 @@ export class RoutesSeed implements ISeed {
   async run(): Promise<void> {
     this.logger.log("Iniciando seed de rotas...");
 
-    // Verificar se já existem rotas
+    // Verificar se já existem rotas suficientes
     const count = await this.routeRepository.count();
-    if (count > 0) {
+    if (count >= 75) {
       this.logger.log(`Já existem ${count} rotas no sistema. Pulando seed.`);
       return;
     }
 
     // Buscar motoristas e veículos disponíveis
-    const drivers = await this.driverRepository.find({ take: 3 });
-    const vehicles = await this.vehicleRepository.find({ take: 3 });
+    const drivers = await this.driverRepository.find({ take: 40 });
+    const vehicles = await this.vehicleRepository.find({ take: 40 });
 
     if (drivers.length === 0) {
       this.logger.warn("Nenhum motorista encontrado. Execute o seed de motoristas primeiro.");
@@ -111,6 +113,9 @@ export class RoutesSeed implements ISeed {
 
     // Dados de rotas de exemplo (São Paulo)
     const routesData = this.getRoutesData(drivers, vehicles);
+    // Adicionar rotas geradas dinamicamente
+    const additionalRoutes = this.generateAdditionalRoutes(drivers, vehicles, 75 - 3); // 3 é o número base
+    routesData.push(...additionalRoutes);
 
     for (const routeData of routesData) {
       try {
@@ -160,8 +165,9 @@ export class RoutesSeed implements ISeed {
           vehicle_id: vehicles[0]?.id ?? "",
           driver_id: drivers[0]?.id ?? "",
           status: "PLANNED",
-          type: "DELIVERY",
+          type: "URBAN",
           route_date: today,
+          planned_date: today,
           origin_address: "Av. Paulista, 1000, São Paulo - SP",
           origin_coordinates: "POINT(-46.6558 -23.5632)",
           destination_address: "Av. Paulista, 1000, São Paulo - SP",
@@ -169,7 +175,14 @@ export class RoutesSeed implements ISeed {
           start_location: "POINT(-46.6558 -23.5632)",
           end_location: "POINT(-46.6558 -23.5632)",
           planned_start_time: "08:00",
-          planned_end_time: "12:00",
+          estimated_duration_minutes: 240,
+          estimated_end_date: new Date(
+            today.getFullYear(),
+            today.getMonth(),
+            today.getDate(),
+            12,
+            0,
+          ),
           total_distance: 35.5,
           total_duration: 180,
           optimization_score: 87.5,
@@ -250,8 +263,9 @@ export class RoutesSeed implements ISeed {
           vehicle_id: vehicles[1]?.id ?? vehicles[0]?.id ?? "",
           driver_id: drivers[1]?.id ?? drivers[0]?.id ?? "",
           status: "IN_PROGRESS",
-          type: "DELIVERY",
+          type: "URBAN",
           route_date: today,
+          planned_date: today,
           origin_address: "Terminal Tietê, São Paulo - SP",
           origin_coordinates: "POINT(-46.6250 -23.5150)",
           destination_address: "Terminal Tietê, São Paulo - SP",
@@ -259,7 +273,14 @@ export class RoutesSeed implements ISeed {
           start_location: "POINT(-46.6250 -23.5150)",
           end_location: "POINT(-46.6250 -23.5150)",
           planned_start_time: "13:00",
-          planned_end_time: "18:00",
+          estimated_duration_minutes: 240,
+          estimated_end_date: new Date(
+            today.getFullYear(),
+            today.getMonth(),
+            today.getDate(),
+            18,
+            0,
+          ),
           total_distance: 42.8,
           total_duration: 240,
           optimization_score: 82.3,
@@ -329,8 +350,9 @@ export class RoutesSeed implements ISeed {
           vehicle_id: vehicles[2]?.id ?? vehicles[0]?.id ?? "",
           driver_id: drivers[2]?.id ?? drivers[0]?.id ?? "",
           status: "PLANNED",
-          type: "DELIVERY",
+          type: "URBAN",
           route_date: tomorrow,
+          planned_date: tomorrow,
           origin_address: "Av. Brigadeiro Faria Lima, 3000, São Paulo - SP",
           origin_coordinates: "POINT(-46.6800 -23.5850)",
           destination_address: "Av. Brigadeiro Faria Lima, 3000, São Paulo - SP",
@@ -338,7 +360,14 @@ export class RoutesSeed implements ISeed {
           start_location: "POINT(-46.6800 -23.5850)",
           end_location: "POINT(-46.6800 -23.5850)",
           planned_start_time: "07:30",
-          planned_end_time: "11:30",
+          estimated_duration_minutes: 150,
+          estimated_end_date: new Date(
+            tomorrow.getFullYear(),
+            tomorrow.getMonth(),
+            tomorrow.getDate(),
+            11,
+            30,
+          ),
           total_distance: 28.3,
           total_duration: 150,
           optimization_score: 91.2,
@@ -390,6 +419,169 @@ export class RoutesSeed implements ISeed {
         ],
       },
     ];
+  }
+
+  /**
+   * Gera rotas adicionais dinamicamente
+   */
+  private generateAdditionalRoutes(
+    drivers: DriverEntity[],
+    vehicles: VehicleEntity[],
+    count: number,
+  ): { route: Partial<RouteEntity>; stops: Partial<RouteStopEntity>[] }[] {
+    const routes: { route: Partial<RouteEntity>; stops: Partial<RouteStopEntity>[] }[] = [];
+
+    const zones = [
+      {
+        name: "Zona Sul",
+        streets: ["Av. Santo Amaro", "Rua Verbo Divino", "Av. Morumbi", "Rua Dr. Chucri Zaidan"],
+        lat: -23.62,
+        lng: -46.7,
+      },
+      {
+        name: "Zona Norte",
+        streets: [
+          "Av. Eng. Caetano Álvares",
+          "Rua Voluntários da Pátria",
+          "Av. Imirim",
+          "Rua Guapira",
+        ],
+        lat: -23.48,
+        lng: -46.62,
+      },
+      {
+        name: "Zona Leste",
+        streets: ["Av. Aricanduva", "Rua Tuiuti", "Av. Sapopemba", "Rua Serra de Bragança"],
+        lat: -23.55,
+        lng: -46.52,
+      },
+      {
+        name: "Zona Oeste",
+        streets: [
+          "Av. Corifeu de Azevedo Marques",
+          "Rua Pio XI",
+          "Av. Prof. Francisco Morato",
+          "Rua Clélia",
+        ],
+        lat: -23.55,
+        lng: -46.75,
+      },
+      {
+        name: "Centro",
+        streets: ["Av. Ipiranga", "Rua Augusta", "Av. São João", "Rua Direita"],
+        lat: -23.54,
+        lng: -46.64,
+      },
+      {
+        name: "ABC",
+        streets: ["Av. Industrial", "Rua Amazonas", "Av. Lucas Nogueira Garcez", "Rua Catequese"],
+        lat: -23.67,
+        lng: -46.55,
+      },
+      {
+        name: "Guarulhos",
+        streets: ["Av. Tiradentes", "Rua Dom Pedro II", "Av. Paulo Faccini", "Rua Galvão Bueno"],
+        lat: -23.45,
+        lng: -46.52,
+      },
+      {
+        name: "Osasco",
+        streets: [
+          "Av. dos Autonomistas",
+          "Rua Presidente Altino",
+          "Av. Franz Voegeli",
+          "Rua Narciso Sturlini",
+        ],
+        lat: -23.53,
+        lng: -46.79,
+      },
+    ];
+
+    const routeTypes = ["URBAN", "INTERSTATE", "EXPRESS"];
+    const statuses = ["PLANNED", "IN_PROGRESS", "COMPLETED", "CANCELLED"];
+
+    for (let i = 0; i < count; i++) {
+      const zone = zones[i % zones.length];
+      const driver = drivers[i % drivers.length];
+      const vehicle = vehicles[i % vehicles.length];
+      const routeDate = new Date();
+      routeDate.setDate(routeDate.getDate() + (i % 14) - 7); // Entre 7 dias atrás e 7 dias no futuro
+
+      const routeCode = `RT-${this.formatDate(routeDate)}-${String(i + 4).padStart(3, "0")}`;
+      const routeStatus =
+        i < count * 0.3
+          ? "COMPLETED"
+          : i < count * 0.6
+            ? "IN_PROGRESS"
+            : i < count * 0.8
+              ? "PLANNED"
+              : "CANCELLED";
+
+      const stops: Partial<RouteStopEntity>[] = [];
+      const numStops = 3 + (i % 5); // Entre 3 e 7 paradas
+
+      for (let j = 0; j < numStops; j++) {
+        const street = zone.streets[j % zone.streets.length];
+        const number = 100 + j * 100 + (i % 50);
+        const hour = 8 + j;
+        const stopStatus =
+          routeStatus === "COMPLETED"
+            ? "COMPLETED"
+            : j < 2 && routeStatus === "IN_PROGRESS"
+              ? "COMPLETED"
+              : "PENDING";
+
+        stops.push({
+          sequence_order: j + 1,
+          address: `${street}, ${number}, ${zone.name}, São Paulo - SP`,
+          coordinates: `POINT(${zone.lng + j * 0.005} ${zone.lat + j * 0.003})`,
+          status: stopStatus,
+          planned_arrival_time: `${String(hour).padStart(2, "0")}:${String((j * 15) % 60).padStart(2, "0")}`,
+          estimated_duration_minutes: 10 + (j % 20),
+        });
+      }
+
+      routes.push({
+        route: {
+          route_code: routeCode,
+          name: `Rota ${zone.name} #${i + 1}`,
+          description: `Entregas na região ${zone.name}`,
+          driver_id: driver.id,
+          vehicle_id: vehicle.id,
+          status: routeStatus,
+          type: routeTypes[i % routeTypes.length],
+          route_date: routeDate,
+          planned_date: routeDate,
+          origin_address: `CD Principal, Av. das Nações Unidas, 12901, São Paulo - SP`,
+          origin_coordinates: "POINT(-46.6970 -23.6230)",
+          destination_address: stops[stops.length - 1].address,
+          destination_coordinates: stops[stops.length - 1].coordinates,
+          planned_start_time: "08:00",
+          estimated_duration_minutes: numStops * 60,
+          estimated_end_date: new Date(
+            routeDate.getFullYear(),
+            routeDate.getMonth(),
+            routeDate.getDate(),
+            8 + numStops,
+            0,
+          ),
+          total_distance: 15 + (i % 30),
+          total_duration: 60 + numStops * 20,
+          optimization_score: 70 + (i % 30),
+          total_deliveries: numStops,
+          completed_deliveries:
+            routeStatus === "COMPLETED"
+              ? numStops
+              : routeStatus === "IN_PROGRESS"
+                ? Math.floor(numStops / 2)
+                : 0,
+          failed_deliveries: routeStatus === "COMPLETED" && i % 10 === 0 ? 1 : 0,
+        },
+        stops,
+      });
+    }
+
+    return routes;
   }
 
   private formatDate(date: Date): string {

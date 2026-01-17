@@ -13,6 +13,11 @@ export * from "./interfaces/brasilapi.interface";
 export * from "./interfaces/awesomeapi.interface";
 export * from "./interfaces/cep-provider.interface";
 export * from "./interfaces/google-maps.interface";
+export type {
+  PlaceAutocompletePrediction,
+  PlaceAutocompleteResponse,
+  PlaceDetailsResponse,
+} from "./interfaces/google-maps.interface";
 
 // DTOs
 export * from "./dto/address-response.dto";

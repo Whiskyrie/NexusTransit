@@ -3,6 +3,15 @@ import { Repository } from "typeorm";
 import { ISeed } from "../interfaces/seed.interface";
 import { RoleEntity } from "../interfaces/role.interface";
 
+export enum RoleType {
+  SUPER_ADMIN = "super_admin",
+  ADMIN = "admin",
+  MANAGER = "manager",
+  OPERATOR = "operator",
+  DRIVER = "driver",
+  CUSTOMER = "customer",
+}
+
 /**
  * Seed de roles do sistema
  *
@@ -26,6 +35,7 @@ export class RolesSeed implements ISeed {
         name: "ADMIN",
         display_name: "Administrador",
         description: "Administrador do sistema com acesso total",
+        type: RoleType.ADMIN,
         permissions: ["*"],
         hierarchy_level: 0,
         is_active: true,
@@ -34,6 +44,7 @@ export class RolesSeed implements ISeed {
         name: "GESTOR",
         display_name: "Gestor",
         description: "Gestor de operações com acesso amplo",
+        type: RoleType.MANAGER,
         permissions: [
           "users.read",
           "users.create",
@@ -63,6 +74,7 @@ export class RolesSeed implements ISeed {
         name: "DESPACHANTE",
         display_name: "Despachante",
         description: "Despachante responsável por atribuir entregas",
+        type: RoleType.OPERATOR,
         permissions: [
           "deliveries.read",
           "deliveries.create",
@@ -83,6 +95,7 @@ export class RolesSeed implements ISeed {
         name: "MOTORISTA",
         display_name: "Motorista",
         description: "Motorista responsável por realizar entregas",
+        type: RoleType.DRIVER,
         permissions: [
           "deliveries.read",
           "deliveries.update_status",
@@ -99,6 +112,7 @@ export class RolesSeed implements ISeed {
         name: "CLIENTE",
         display_name: "Cliente",
         description: "Cliente que solicita entregas",
+        type: RoleType.CUSTOMER,
         permissions: [
           "deliveries.read",
           "deliveries.create",

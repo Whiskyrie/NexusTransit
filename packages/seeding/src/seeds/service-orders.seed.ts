@@ -103,18 +103,18 @@ export class ServiceOrdersSeed implements ISeed {
   async run(): Promise<void> {
     this.logger.log("Iniciando seed de ordens de serviço...");
 
-    // Verificar se já existem ordens
+    // Verificar se já existem ordens suficientes
     const count = await this.serviceOrderRepository.count();
-    if (count > 0) {
+    if (count >= 350) {
       this.logger.log(`Já existem ${count} ordens de serviço no sistema. Pulando seed.`);
       return;
     }
 
     // Buscar dados necessários
-    const customers = await this.customerRepository.find({ take: 5 });
-    const addresses = await this.customerAddressRepository.find({ take: 10 });
-    const drivers = await this.driverRepository.find({ take: 3 });
-    const vehicles = await this.vehicleRepository.find({ take: 3 });
+    const customers = await this.customerRepository.find({ take: 150 });
+    const addresses = await this.customerAddressRepository.find({ take: 300 });
+    const drivers = await this.driverRepository.find({ take: 40 });
+    const vehicles = await this.vehicleRepository.find({ take: 40 });
 
     if (customers.length === 0) {
       this.logger.warn("Nenhum cliente encontrado. Execute o seed de clientes primeiro.");
@@ -344,6 +344,17 @@ export class ServiceOrdersSeed implements ISeed {
       },
     ];
 
+    // Gerar ordens adicionais para atingir ~350
+    const additionalOrders = this.generateAdditionalOrders(
+      customers,
+      addresses,
+      drivers,
+      vehicles,
+      350 - serviceOrders.length,
+      orderCounter,
+    );
+    serviceOrders.push(...additionalOrders);
+
     // Inserir ordens de serviço
     for (const order of serviceOrders) {
       try {
@@ -356,7 +367,7 @@ export class ServiceOrdersSeed implements ISeed {
           cleanOrder as Partial<ServiceOrderEntity>,
         );
         await this.serviceOrderRepository.save(entity);
-        this.logger.log(`Ordem de serviço criada: ${order.order_number} - ${order.title}`);
+        this.logger.debug(`Ordem de serviço criada: ${order.order_number}`);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Erro desconhecido";
         this.logger.error(`Erro ao criar ordem ${order.order_number}: ${message}`);
@@ -364,6 +375,110 @@ export class ServiceOrdersSeed implements ISeed {
     }
 
     this.logger.log(`Seed de ordens de serviço concluído. ${serviceOrders.length} ordens criadas.`);
+  }
+
+  /**
+   * Gera ordens de serviço adicionais dinamicamente
+   */
+  private generateAdditionalOrders(
+    customers: CustomerEntity[],
+    addresses: CustomerAddressEntity[],
+    drivers: DriverEntity[],
+    vehicles: VehicleEntity[],
+    count: number,
+    startCounter: number,
+  ): Partial<ServiceOrderEntity>[] {
+    const orders: Partial<ServiceOrderEntity>[] = [];
+    const now = new Date();
+
+    const statuses = ["PENDING", "SCHEDULED", "IN_PROGRESS", "COMPLETED", "CANCELLED"];
+    const priorities = ["LOW", "NORMAL", "HIGH", "URGENT"];
+    const serviceTypes = [
+      "STANDARD_DELIVERY",
+      "EXPRESS_DELIVERY",
+      "SAME_DAY",
+      "COLLECTION",
+      "RETURN",
+    ];
+    const orderTypes = ["PICKUP_DELIVERY", "DELIVERY_ONLY", "RETURN", "TRANSFER"];
+    const paymentStatuses = ["PENDING", "PAID", "OVERDUE"];
+    const paymentMethods = ["CREDIT_CARD", "BANK_TRANSFER", "INVOICE", "CASH"];
+
+    const titles = [
+      "Entrega de mercadorias",
+      "Coleta de produtos",
+      "Entrega expressa",
+      "Entrega agendada",
+      "Entrega de documentos",
+      "Coleta de devolução",
+      "Entrega fracionada",
+      "Distribuição de amostras",
+      "Entrega de e-commerce",
+      "Transferência entre filiais",
+    ];
+
+    for (let i = 0; i < count; i++) {
+      const customer = customers[i % customers.length];
+      const customerAddrs = addresses.filter((a) => a.customerId === customer?.id);
+      const pickupAddr = customerAddrs[0] || addresses[i % addresses.length];
+      const deliveryAddr = customerAddrs[1] || addresses[(i + 1) % addresses.length];
+      const driver = drivers.length > 0 ? drivers[i % drivers.length] : undefined;
+      const vehicle = vehicles.length > 0 ? vehicles[i % vehicles.length] : undefined;
+
+      const daysOffset = Math.floor(i / 10) - 15; // Entre 15 dias atrás e 20 dias no futuro
+      const orderDate = new Date(now);
+      orderDate.setDate(orderDate.getDate() + daysOffset);
+
+      const deadlineDate = new Date(orderDate);
+      deadlineDate.setDate(deadlineDate.getDate() + (i % 5) + 1);
+
+      const status = statuses[i % statuses.length];
+      const isCompleted = status === "COMPLETED";
+      const isCancelled = status === "CANCELLED";
+
+      orders.push({
+        order_number: `OS-${now.getFullYear()}-${String(startCounter + i).padStart(5, "0")}`,
+        status,
+        priority: priorities[i % priorities.length],
+        service_type: serviceTypes[i % serviceTypes.length],
+        order_type: orderTypes[i % orderTypes.length],
+        title: titles[i % titles.length],
+        description: `Ordem de serviço #${i + 1} - ${titles[i % titles.length]} para ${customer?.name || "Cliente"}`,
+        customer_id: customer?.id,
+        pickup_address_id: pickupAddr?.id,
+        delivery_address_id: deliveryAddr?.id,
+        vehicle_id: status !== "PENDING" && vehicle ? vehicle.id : undefined,
+        driver_id: status !== "PENDING" && driver ? driver.id : undefined,
+        requested_date: orderDate,
+        scheduled_date: status !== "PENDING" ? orderDate : undefined,
+        delivery_deadline: deadlineDate,
+        pickup_contact_name: `Contato ${i + 1}`,
+        pickup_contact_phone: `(11) 9${String(8000 + i).slice(0, 4)}-${String(1000 + i).slice(0, 4)}`,
+        delivery_contact_name: `Destinatário ${i + 1}`,
+        delivery_contact_phone: `(11) 9${String(7000 + i).slice(0, 4)}-${String(2000 + i).slice(0, 4)}`,
+        estimated_cost: 50 + (i % 200),
+        actual_cost: isCompleted ? 50 + (i % 200) + (i % 20) : undefined,
+        payment_status: isCompleted
+          ? "PAID"
+          : isCancelled
+            ? "CANCELED"
+            : paymentStatuses[i % paymentStatuses.length],
+        payment_method: paymentMethods[i % paymentMethods.length],
+        invoice_number: isCompleted
+          ? `NF-${now.getFullYear()}-${String(i + 1).padStart(6, "0")}`
+          : undefined,
+        total_weight: 1 + (i % 50),
+        total_volume: 0.1 + (i % 10) * 0.1,
+        package_count: 1 + (i % 10),
+        requires_insurance: i % 5 === 0,
+        insurance_value: i % 5 === 0 ? 500 + (i % 1000) : undefined,
+        sla_hours: 24 + (i % 48),
+        notes: i % 3 === 0 ? `Observações da ordem #${i + 1}` : undefined,
+        created_by: "seed",
+      });
+    }
+
+    return orders;
   }
 
   async revert(): Promise<void> {

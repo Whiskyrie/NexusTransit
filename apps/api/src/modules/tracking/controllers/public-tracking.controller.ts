@@ -243,6 +243,21 @@ export class PublicTrackingController {
       }
     }
 
+    // Filtrar e mapear eventos com coordenadas válidas
+    const validRoutePoints = routeEvents
+      .map(event => {
+        const coords = event.getCoordinates();
+        if (!coords || coords.latitude === 0 || coords.longitude === 0) {
+          return null;
+        }
+        return {
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+          timestamp: event.timestamp,
+        };
+      })
+      .filter((point): point is NonNullable<typeof point> => point !== null);
+
     // Montar resposta
     const response: PublicTrackingMapDto = {
       tracking_code: trackingCode,
@@ -257,14 +272,7 @@ export class PublicTrackingController {
         longitude: delivery.delivery_address.longitude ?? 0,
         address: `${delivery.delivery_address.street}, ${delivery.delivery_address.city} - ${delivery.delivery_address.state}`,
       },
-      route: routeEvents.map(event => {
-        const coords = event.getCoordinates();
-        return {
-          latitude: coords?.latitude ?? 0,
-          longitude: coords?.longitude ?? 0,
-          timestamp: event.timestamp,
-        };
-      }),
+      route: validRoutePoints,
       total_distance_km: totalDistanceKm,
       remaining_distance_km: remainingDistanceKm,
     };

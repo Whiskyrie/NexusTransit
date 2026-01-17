@@ -1,0 +1,239 @@
+import { RouteStatus, RouteType, RouteFilters as RouteFiltersType } from "../../types/route.types";
+import { DateRangePicker } from "../ui/DateRangePicker";
+import { Button } from "../ui/Button";
+import { Select, type SelectOption } from "../ui/Select";
+import { Search, SlidersHorizontal, X, ChevronDown } from "lucide-react";
+import { useState, useMemo } from "react";
+import { format } from "date-fns";
+
+interface RouteFiltersProps {
+  filters: RouteFiltersType;
+  onFiltersChange: (filters: RouteFiltersType) => void;
+  onClearFilters: () => void;
+  drivers: SelectOption<string>[];
+  vehicles: SelectOption<string>[];
+}
+
+const statusLabels: Record<RouteStatus, string> = {
+  [RouteStatus.PLANNED]: "Planejada",
+  [RouteStatus.IN_PROGRESS]: "Em Andamento",
+  [RouteStatus.PAUSED]: "Pausada",
+  [RouteStatus.COMPLETED]: "Concluída",
+  [RouteStatus.CANCELLED]: "Cancelada",
+};
+
+const typeLabels: Record<RouteType, string> = {
+  [RouteType.URBAN]: "Urbana",
+  [RouteType.INTERSTATE]: "Interestadual",
+  [RouteType.RURAL]: "Rural",
+  [RouteType.EXPRESS]: "Expressa",
+  [RouteType.LOCAL]: "Local",
+};
+
+export function RouteFilters({
+  filters,
+  onFiltersChange,
+  onClearFilters,
+  drivers,
+  vehicles,
+}: RouteFiltersProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const activeFiltersCount = [
+    filters.status,
+    filters.type,
+    filters.driver_id,
+    filters.vehicle_id,
+    filters.route_date_from,
+    filters.route_date_to,
+  ].filter(Boolean).length;
+
+  const hasActiveFilters = activeFiltersCount > 0 || filters.search;
+
+  const handleFilterChange = (key: keyof RouteFiltersType, value: unknown) => {
+    onFiltersChange({ ...filters, [key]: value, page: 1 });
+  };
+
+  // Opções de status para o Select
+  const statusOptions: SelectOption<string>[] = useMemo(
+    () => [
+      { value: "", label: "Todos os status" },
+      ...Object.values(RouteStatus).map((status) => ({
+        value: status,
+        label: statusLabels[status],
+      })),
+    ],
+    [],
+  );
+
+  // Opções de tipo de rota para o Select
+  const typeOptions: SelectOption<string>[] = useMemo(
+    () => [
+      { value: "", label: "Todos os tipos" },
+      ...Object.values(RouteType).map((type) => ({
+        value: type,
+        label: typeLabels[type],
+      })),
+    ],
+    [],
+  );
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+      {/* Search Bar Principal */}
+      <div className="p-4 flex items-center gap-3">
+        <div className="flex-1 relative">
+          <Search
+            className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+            strokeWidth={1.5}
+          />
+          <input
+            type="text"
+            placeholder="Buscar rotas por nome, motorista ou veículo..."
+            value={filters.search || ""}
+            onChange={(e) => handleFilterChange("search", e.target.value)}
+            className="w-full h-12 pl-12 pr-4 text-sm bg-[#F5F5F0] border-0 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1A1A1A]/10 placeholder:text-gray-400 transition-all"
+          />
+        </div>
+
+        {/* Status Quick Filter Pills */}
+        <div className="hidden lg:flex items-center gap-2">
+          {Object.values(RouteStatus)
+            .slice(0, 3)
+            .map((status) => (
+              <button
+                key={status}
+                onClick={() =>
+                  handleFilterChange("status", filters.status === status ? undefined : status)
+                }
+                className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${filters.status === status
+                    ? "bg-[#1A1A1A] text-white shadow-md"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  }`}
+              >
+                {statusLabels[status]}
+              </button>
+            ))}
+        </div>
+
+        {/* Toggle Advanced Filters */}
+        <Button
+          variant="outline"
+          onClick={() => setIsExpanded(!isExpanded)}
+          className={`h-12 px-4 gap-2 ${isExpanded ? "bg-[#1A1A1A] text-white border-[#1A1A1A]" : ""}`}
+        >
+          <SlidersHorizontal className="w-4 h-4" strokeWidth={1.5} />
+          <span className="hidden sm:inline">Filtros</span>
+          {activeFiltersCount > 0 && (
+            <span
+              className={`min-w-5 h-5 flex items-center justify-center rounded-full text-xs font-bold ${isExpanded ? "bg-white text-[#1A1A1A]" : "bg-[#1A1A1A] text-white"
+                }`}
+            >
+              {activeFiltersCount}
+            </span>
+          )}
+          <ChevronDown
+            className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}
+            strokeWidth={1.5}
+          />
+        </Button>
+
+        {hasActiveFilters && (
+          <Button
+            variant="ghost"
+            onClick={onClearFilters}
+            className="h-12 px-3 text-red-500 hover:text-red-600 hover:bg-red-50"
+          >
+            <X className="w-4 h-4" strokeWidth={2} />
+          </Button>
+        )}
+      </div>
+
+      {/* Advanced Filters Panel */}
+      <div
+        className={`grid transition-all duration-300 ease-out ${isExpanded
+            ? "grid-rows-[1fr] opacity-100"
+            : "grid-rows-[0fr] opacity-0 pointer-events-none"
+          }`}
+      >
+        <div className={isExpanded ? "" : "overflow-hidden"}>
+          <div className="px-4 pb-4 pt-2 border-t border-gray-100">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Status */}
+              <Select
+                label="Status"
+                options={statusOptions}
+                value={filters.status || ""}
+                onChange={(value) =>
+                  handleFilterChange("status", value ? (value as RouteStatus) : undefined)
+                }
+                placeholder="Todos os status"
+              />
+
+              {/* Type */}
+              <Select
+                label="Tipo de Rota"
+                options={typeOptions}
+                value={filters.type || ""}
+                onChange={(value) =>
+                  handleFilterChange("type", value ? (value as RouteType) : undefined)
+                }
+                placeholder="Todos os tipos"
+              />
+
+              {/* Driver ID */}
+              <Select
+                label="Motorista"
+                options={[{ value: "", label: "Todos os motoristas" }, ...drivers]}
+                value={filters.driver_id || ""}
+                onChange={(value) => handleFilterChange("driver_id", value)}
+                placeholder="Selecione um motorista"
+              />
+
+              {/* Vehicle ID */}
+              <Select
+                label="Veículo"
+                options={[{ value: "", label: "Todos os veículos" }, ...vehicles]}
+                value={filters.vehicle_id || ""}
+                onChange={(value) => handleFilterChange("vehicle_id", value)}
+                placeholder="Selecione um veículo"
+              />
+
+              {/* Date Range */}
+              <div className="lg:col-span-4 space-y-2">
+                <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                  Período
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <DateRangePicker
+                    value={{
+                      start: filters.route_date_from
+                        ? new Date(filters.route_date_from + "T12:00:00")
+                        : undefined,
+                      end: filters.route_date_to
+                        ? new Date(filters.route_date_to + "T12:00:00")
+                        : undefined,
+                    }}
+                    onChange={(range) => {
+                      // Formatar datas como YYYY-MM-DD usando date-fns para preservar timezone local
+                      const formatLocalDate = (date: Date | undefined) => {
+                        if (!date) return undefined;
+                        return format(date, "yyyy-MM-dd");
+                      };
+                      onFiltersChange({
+                        ...filters,
+                        route_date_from: formatLocalDate(range.start),
+                        route_date_to: formatLocalDate(range.end),
+                        page: 1,
+                      });
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -233,11 +233,12 @@ export class Route extends BaseEntity {
   planned_start_time?: string;
 
   @Column({
-    type: 'time',
+    type: 'timestamp with time zone',
     nullable: true,
-    comment: 'Horário de término planejado',
+    comment:
+      'Data/hora estimada de término (calculada: planned_date + planned_start_time + estimated_duration_minutes)',
   })
-  planned_end_time?: string;
+  estimated_end_date?: Date;
 
   @Column({
     type: 'timestamp with time zone',
@@ -275,7 +276,7 @@ export class Route extends BaseEntity {
   @Column({
     type: 'integer',
     nullable: true,
-    comment: 'Tempo estimado de viagem em minutos',
+    comment: 'Duração estimada da rota em minutos (obtida via Google Maps API)',
   })
   estimated_duration_minutes?: number;
 
@@ -515,17 +516,15 @@ export class Route extends BaseEntity {
 
   /**
    * Verifica se está atrasada
+   * Compara com estimated_end_date (que já é uma data completa)
    */
   isDelayed(): boolean {
-    if (!this.planned_end_time || !this.actual_start_time) {
+    if (!this.estimated_end_date || !this.actual_start_time) {
       return false;
     }
 
     const now = new Date();
-    const dateString = `${this.route_date.toISOString().split('T')[0]}T${this.planned_end_time}`;
-    const plannedEnd = new Date(dateString);
-
-    return now > plannedEnd && !this.isFinalStatus();
+    return now > this.estimated_end_date && !this.isFinalStatus();
   }
 
   /**

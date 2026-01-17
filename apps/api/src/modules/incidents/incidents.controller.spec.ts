@@ -268,25 +268,28 @@ describe('IncidentsController', () => {
   describe('addComment', () => {
     it('deve adicionar comentário ao incidente', async () => {
       const incidentId = '123e4567-e89b-12d3-a456-426614174000';
-      const commentText = 'Novo comentário';
-      const isInternal = false;
+      const createCommentDto = {
+        comment_text: 'Novo comentário',
+        is_internal: false,
+      };
 
       const mockComment = {
         id: '123e4567-e89b-12d3-a456-426614174002',
         incident_id: incidentId,
-        comment_text: commentText,
-        is_internal: isInternal,
+        comment_text: createCommentDto.comment_text,
+        is_internal: createCommentDto.is_internal,
       };
 
       mockIncidentsService.addComment.mockResolvedValue(mockComment);
 
-      const result = await controller.addComment(incidentId, commentText, isInternal);
+      const result = await controller.addComment(incidentId, createCommentDto);
 
       expect(result).toBeDefined();
       expect(mockIncidentsService.addComment).toHaveBeenCalledWith(
         incidentId,
-        commentText,
-        isInternal,
+        createCommentDto.comment_text,
+        createCommentDto.is_internal,
+        undefined,
       );
     });
   });

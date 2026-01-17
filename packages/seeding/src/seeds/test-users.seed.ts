@@ -58,7 +58,7 @@ export class TestUsersSeed implements ISeed {
         first_name: "Admin",
         last_name: "Teste",
         phone: "+5511999999999",
-        user_type: "ADMIN",
+        user_type: "admin",
         role: adminRole,
       },
       {
@@ -66,7 +66,7 @@ export class TestUsersSeed implements ISeed {
         first_name: "Gestor",
         last_name: "Teste",
         phone: "+5511988888888",
-        user_type: "GESTOR",
+        user_type: "manager",
         role: gestorRole,
       },
       {
@@ -74,7 +74,7 @@ export class TestUsersSeed implements ISeed {
         first_name: "Despachante",
         last_name: "Teste",
         phone: "+5511977777777",
-        user_type: "DESPACHANTE",
+        user_type: "operator",
         role: despachanteRole,
       },
       {
@@ -82,7 +82,7 @@ export class TestUsersSeed implements ISeed {
         first_name: "Motorista",
         last_name: "Teste",
         phone: "+5511966666666",
-        user_type: "MOTORISTA",
+        user_type: "driver",
         role: motoristaRole,
       },
       {
@@ -90,10 +90,19 @@ export class TestUsersSeed implements ISeed {
         first_name: "Cliente",
         last_name: "Teste",
         phone: "+5511955555555",
-        user_type: "CLIENTE",
+        user_type: "customer",
         role: clienteRole,
       },
     ];
+
+    // Gerar mais usuários para atingir volume de 35
+    const additionalUsers = this.generateAdditionalUsers(
+      gestorRole,
+      despachanteRole,
+      motoristaRole,
+      clienteRole,
+    );
+    testUsers.push(...additionalUsers);
 
     const defaultPassword = await bcrypt.hash("Test@123", 10);
 
@@ -110,12 +119,18 @@ export class TestUsersSeed implements ISeed {
           last_name: userData.last_name,
           phone: userData.phone,
           user_type: userData.user_type,
-          status: "ACTIVE",
+          status: "active",
           email_verified: true,
-          roles: [userData.role],
         });
 
-        await this.userRepository.save(user);
+        const savedUser = await this.userRepository.save(user);
+
+        // Associar role manualmente
+        await this.userRepository.query(
+          `INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2)`,
+          [savedUser.id, userData.role.id],
+        );
+
         this.logger.log(`Usuário criado: ${userData.email}`);
       } else {
         this.logger.debug(`Usuário já existe: ${userData.email}`);
@@ -124,5 +139,107 @@ export class TestUsersSeed implements ISeed {
 
     this.logger.log("Seed de usuários de teste concluído!");
     this.logger.log("Senha padrão para todos: Test@123");
+  }
+
+  /**
+   * Gera usuários adicionais para atingir volume de ~35
+   */
+  private generateAdditionalUsers(
+    gestorRole: RoleEntity,
+    despachanteRole: RoleEntity,
+    motoristaRole: RoleEntity,
+    clienteRole: RoleEntity,
+  ): Array<{
+    email: string;
+    first_name: string;
+    last_name: string;
+    phone: string;
+    user_type: string;
+    role: RoleEntity;
+  }> {
+    const firstNames = [
+      "Ana",
+      "Bruno",
+      "Carla",
+      "Diego",
+      "Elena",
+      "Felipe",
+      "Gabriela",
+      "Hugo",
+      "Isabela",
+      "João",
+      "Karen",
+      "Lucas",
+      "Mariana",
+      "Nicolas",
+      "Olivia",
+      "Pedro",
+      "Renata",
+      "Samuel",
+      "Tatiana",
+      "Victor",
+      "Wanderson",
+      "Ximena",
+      "Yasmin",
+      "Zé",
+      "Amanda",
+      "Bernardo",
+      "Cecília",
+      "Daniel",
+      "Eduarda",
+      "Fernando",
+    ];
+    const lastNames = [
+      "Silva",
+      "Santos",
+      "Oliveira",
+      "Souza",
+      "Rodrigues",
+      "Ferreira",
+      "Alves",
+      "Pereira",
+      "Lima",
+      "Gomes",
+      "Costa",
+      "Ribeiro",
+      "Martins",
+      "Carvalho",
+      "Almeida",
+    ];
+
+    const roles = [
+      { role: gestorRole, type: "manager", prefix: "gestor" },
+      { role: despachanteRole, type: "operator", prefix: "despachante" },
+      { role: motoristaRole, type: "driver", prefix: "motorista" },
+      { role: clienteRole, type: "customer", prefix: "cliente" },
+    ];
+
+    const users: Array<{
+      email: string;
+      first_name: string;
+      last_name: string;
+      phone: string;
+      user_type: string;
+      role: RoleEntity;
+    }> = [];
+
+    // Gerar 30 usuários adicionais (total ~35 com os 5 base)
+    for (let i = 0; i < 30; i++) {
+      const firstName = firstNames[i % firstNames.length];
+      const lastName = lastNames[i % lastNames.length];
+      const roleInfo = roles[i % roles.length];
+      const phoneNum = 911000000 + i;
+
+      users.push({
+        email: `${roleInfo.prefix}.${firstName.toLowerCase()}${i}@nexustransit.com`,
+        first_name: firstName,
+        last_name: lastName,
+        phone: `+5511${phoneNum}`,
+        user_type: roleInfo.type,
+        role: roleInfo.role,
+      });
+    }
+
+    return users;
   }
 }

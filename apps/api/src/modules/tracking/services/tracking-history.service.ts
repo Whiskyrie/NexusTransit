@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -11,14 +11,50 @@ import { TrackingHistoryData, TrackingStatistics } from '../interfaces/tracking-
  * Fornece acesso otimizado a dados agregados de rastreamento
  */
 @Injectable()
-export class TrackingHistoryService {
+export class TrackingHistoryService implements OnModuleInit {
   private readonly logger = new Logger(TrackingHistoryService.name);
+  private viewExists = false;
 
   constructor(
     @InjectRepository(TrackingEvent)
     private readonly trackingEventRepository: Repository<TrackingEvent>,
     private readonly dataSource: DataSource,
   ) {}
+
+  /**
+   * Verifica se a view materializada existe no banco de dados
+   */
+  async onModuleInit(): Promise<void> {
+    await this.checkViewExists();
+  }
+
+  /**
+   * Verifica existência da view materializada
+   */
+  private async checkViewExists(): Promise<boolean> {
+    try {
+      const result = await this.dataSource.query(`
+        SELECT EXISTS (
+          SELECT 1 FROM pg_matviews 
+          WHERE matviewname = 'tracking_history'
+        ) as exists
+      `);
+      this.viewExists = result[0]?.exists ?? false;
+
+      if (!this.viewExists) {
+        this.logger.warn(
+          'View materializada tracking_history não existe. ' +
+            'Execute a migration CreateTrackingHistoryView ou recrie a view manualmente.',
+        );
+      }
+
+      return this.viewExists;
+    } catch (error) {
+      this.logger.error('Erro ao verificar existência da view materializada:', error);
+      this.viewExists = false;
+      return false;
+    }
+  }
 
   /**
    * Busca histórico agregado de uma entrega
@@ -149,6 +185,15 @@ export class TrackingHistoryService {
    * Pode ser chamado manualmente ou via scheduled job
    */
   async refreshMaterializedView(): Promise<void> {
+    // Verificar se a view existe antes de tentar refresh
+    if (!this.viewExists) {
+      const exists = await this.checkViewExists();
+      if (!exists) {
+        this.logger.debug('Pulando refresh: view materializada não existe');
+        return;
+      }
+    }
+
     this.logger.log('Iniciando refresh da view materializada tracking_history');
 
     try {
@@ -159,6 +204,12 @@ export class TrackingHistoryService {
       const duration = Date.now() - startTime;
       this.logger.log(`View materializada atualizada com sucesso em ${duration}ms`);
     } catch (error) {
+      // Verificar se o erro é porque a view não existe
+      if (error instanceof Error && error.message.includes('does not exist')) {
+        this.viewExists = false;
+        this.logger.warn('View materializada não encontrada. Marcando como inexistente.');
+        return;
+      }
       this.logger.error('Erro ao atualizar view materializada:', error);
       throw error;
     }

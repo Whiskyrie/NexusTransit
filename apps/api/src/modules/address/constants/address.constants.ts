@@ -60,6 +60,8 @@ export const CACHE_TTL = {
   GEOCODING: 60 * 60 * 24 * 30, // 30 dias
   REVERSE_GEOCODING: 60 * 60 * 24 * 30, // 30 dias
   ADDRESS_VALIDATION: 60 * 60 * 24, // 1 dia
+  AUTOCOMPLETE: 60 * 5, // 5 minutos
+  PLACE_DETAILS: 60 * 60 * 24 * 30, // 30 dias
 } as const;
 
 /**
@@ -70,6 +72,8 @@ export const CACHE_KEYS = {
   GEOCODING: 'address:geocode:',
   REVERSE_GEOCODING: 'address:reverse:',
   ADDRESS_VALIDATION: 'address:validate:',
+  AUTOCOMPLETE: 'address:autocomplete:',
+  PLACE_DETAILS: 'address:place:',
 } as const;
 
 /**

@@ -3,6 +3,15 @@ import { BaseEntity } from '@nexus/common';
 import { Role as RoleEnum } from '@nexus/auth';
 import { User } from '../../users/entities/user.entity';
 
+export enum RoleType {
+  SUPER_ADMIN = 'super_admin',
+  ADMIN = 'admin',
+  MANAGER = 'manager',
+  OPERATOR = 'operator',
+  DRIVER = 'driver',
+  CUSTOMER = 'customer',
+}
+
 /**
  * Role Entity
  * Entidade para gerenciar roles do sistema RBAC
@@ -30,6 +39,13 @@ export class Role extends BaseEntity {
     comment: 'Descrição do role',
   })
   description?: string;
+
+  @Column({
+    type: 'enum',
+    enum: RoleType,
+    comment: 'Tipo do role para categorização',
+  })
+  type!: RoleType;
 
   @Column({
     type: 'integer',

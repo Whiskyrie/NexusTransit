@@ -15,6 +15,7 @@ import { RedisHealthIndicator } from './indicators/redis.indicator';
 export class HealthController {
   constructor(
     private readonly health: HealthCheckService,
+
     private readonly db: TypeOrmHealthIndicator,
     private readonly memory: MemoryHealthIndicator,
     private readonly disk: DiskHealthIndicator,
@@ -25,6 +26,7 @@ export class HealthController {
   @HealthCheck()
   @ApiOperation({
     summary: 'Health check geral',
+
     description: 'Verifica o status geral da aplicação (database, memória, disco, Redis)',
   })
   @ApiResponse({

@@ -155,11 +155,11 @@ export class VehiclesService {
       order_direction = 'DESC',
     } = filterDto;
 
-    const queryBuilder = this.vehicleRepository
-      .createQueryBuilder('vehicle')
-      .leftJoinAndSelect('vehicle.documents', 'documents')
-      .leftJoinAndSelect('vehicle.maintenances', 'maintenances')
-      .leftJoinAndSelect('vehicle.driverHistories', 'driverHistories');
+    const queryBuilder = this.vehicleRepository.createQueryBuilder('vehicle');
+    // Removendo joins temporariamente para identificar problema
+    // .leftJoinAndSelect('vehicle.documents', 'documents')
+    // .leftJoinAndSelect('vehicle.maintenances', 'maintenances')
+    // .leftJoinAndSelect('vehicle.driverHistories', 'driverHistories');
 
     // Apply filters
     if (search) {

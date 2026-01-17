@@ -165,19 +165,30 @@ export class WebhookService {
    * Dispara webhook para um evento
    */
   async trigger(event: WebhookEvent, payload: Record<string, unknown>): Promise<void> {
-    const webhooks = await this.webhookRepository.find({
-      where: {
-        is_active: true,
-      },
-    });
+    try {
+      const webhooks = await this.webhookRepository.find({
+        where: {
+          is_active: true,
+        },
+      });
 
-    const matchingWebhooks = webhooks.filter(w => w.events.includes(event));
+      const matchingWebhooks = webhooks.filter(w => w.events.includes(event));
 
-    this.logger.log(`Disparando ${matchingWebhooks.length} webhooks para evento: ${event}`);
+      this.logger.log(`Disparando ${matchingWebhooks.length} webhooks para evento: ${event}`);
 
-    await Promise.allSettled(
-      matchingWebhooks.map(webhook => this.executeWebhook(webhook, event, payload)),
-    );
+      await Promise.allSettled(
+        matchingWebhooks.map(webhook => this.executeWebhook(webhook, event, payload)),
+      );
+    } catch (error) {
+      // Ignora silenciosamente se a tabela webhooks não existir
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('relação "webhooks" não existe')) {
+        this.logger.debug('Tabela webhooks não existe, pulando disparo de webhooks');
+        return;
+      }
+      // Re-lança outros erros
+      throw error;
+    }
   }
 
   /**

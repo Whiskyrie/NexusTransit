@@ -448,11 +448,13 @@ export class RouteResponseDto {
   planned_start_time?: string;
 
   @ApiPropertyOptional({
-    description: 'Horário de término planejado',
-    example: '18:00',
+    description:
+      'Data/hora estimada de término (calculada via Google Maps API para rotas longas/interestaduais)',
+    example: '2024-01-16T14:30:00Z',
   })
   @Expose()
-  planned_end_time?: string;
+  @Type(() => Date)
+  estimated_end_date?: Date;
 
   @ApiPropertyOptional({
     description: 'Data/hora real de início',

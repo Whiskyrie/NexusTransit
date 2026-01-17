@@ -1,5 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { GoogleMapsService } from '@nexus/geo-services';
+import {
+  GoogleMapsService,
+  PlaceAutocompleteResponse,
+  PlaceDetailsResponse,
+} from '@nexus/geo-services';
 import { RedisService } from '@nexus/redis';
 import { CACHE_KEYS, CACHE_TTL } from '../constants';
 import {
@@ -382,6 +386,156 @@ export class GeocodingService implements IGeocodingService {
       this.logger.debug(`Reverse geocoding salvo no cache por ${CACHE_TTL.REVERSE_GEOCODING}s`);
     } catch (error) {
       this.logger.warn(`Erro ao salvar reverse geocoding no cache:`, error);
+    }
+  }
+
+  /**
+   * Autocomplete de lugares usando Google Places API
+   */
+  async placeAutocomplete(
+    input: string,
+    options?: {
+      types?: string[];
+      componentRestrictions?: { country: string };
+      location?: { lat: number; lng: number };
+      radius?: number;
+    },
+  ): Promise<PlaceAutocompleteResponse> {
+    // Gerar chave de cache
+    const cacheKey = this.generateAutocompleteCacheKey(input, options);
+
+    // Verificar cache
+    const cached = await this.getCachedAutocompleteResult(cacheKey);
+    if (cached) {
+      this.logger.debug(`Autocomplete encontrado no cache`);
+      return cached;
+    }
+
+    this.logger.log(`Place autocomplete: ${input}`);
+
+    try {
+      const result = await this.googleMapsService.placeAutocomplete(input, options);
+
+      // Salvar no cache (menor TTL para autocomplete)
+      await this.cacheAutocompleteResult(cacheKey, result);
+
+      return result;
+    } catch (error) {
+      this.logger.error(`Erro ao fazer place autocomplete:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Obter detalhes de um lugar através do place_id
+   */
+  async placeDetails(placeId: string): Promise<PlaceDetailsResponse> {
+    // Gerar chave de cache
+    const cacheKey = this.generatePlaceDetailsCacheKey(placeId);
+
+    // Verificar cache
+    const cached = await this.getCachedPlaceDetailsResult(cacheKey);
+    if (cached) {
+      this.logger.debug(`Place details encontrado no cache`);
+      return cached;
+    }
+
+    this.logger.log(`Place details: ${placeId}`);
+
+    try {
+      const result = await this.googleMapsService.placeDetails(placeId);
+
+      // Salvar no cache
+      await this.cachePlaceDetailsResult(cacheKey, result);
+
+      return result;
+    } catch (error) {
+      this.logger.error(`Erro ao obter place details:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Gera chave de cache para autocomplete
+   */
+  private generateAutocompleteCacheKey(
+    input: string,
+    options?: {
+      types?: string[];
+      componentRestrictions?: { country: string };
+      location?: { lat: number; lng: number };
+      radius?: number;
+    },
+  ): string {
+    const optionsStr = JSON.stringify(options ?? {});
+    return `${CACHE_KEYS.AUTOCOMPLETE}:${input}:${optionsStr}`;
+  }
+
+  /**
+   * Gera chave de cache para place details
+   */
+  private generatePlaceDetailsCacheKey(placeId: string): string {
+    return `${CACHE_KEYS.PLACE_DETAILS}:${placeId}`;
+  }
+
+  /**
+   * Busca resultado de autocomplete no cache
+   */
+  private async getCachedAutocompleteResult(
+    cacheKey: string,
+  ): Promise<PlaceAutocompleteResponse | null> {
+    try {
+      const cached = await this.redisService.get<PlaceAutocompleteResponse>(cacheKey);
+      return cached ?? null;
+    } catch (error) {
+      this.logger.warn(`Erro ao buscar autocomplete no cache:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Salva resultado de autocomplete no cache
+   */
+  private async cacheAutocompleteResult(
+    cacheKey: string,
+    result: PlaceAutocompleteResponse,
+  ): Promise<void> {
+    try {
+      // TTL menor para autocomplete (5 minutos)
+      await this.redisService.set(cacheKey, result, 300);
+      this.logger.debug(`Autocomplete salvo no cache por 300s`);
+    } catch (error) {
+      this.logger.warn(`Erro ao salvar autocomplete no cache:`, error);
+    }
+  }
+
+  /**
+   * Busca resultado de place details no cache
+   */
+  private async getCachedPlaceDetailsResult(
+    cacheKey: string,
+  ): Promise<PlaceDetailsResponse | null> {
+    try {
+      const cached = await this.redisService.get<PlaceDetailsResponse>(cacheKey);
+      return cached ?? null;
+    } catch (error) {
+      this.logger.warn(`Erro ao buscar place details no cache:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Salva resultado de place details no cache
+   */
+  private async cachePlaceDetailsResult(
+    cacheKey: string,
+    result: PlaceDetailsResponse,
+  ): Promise<void> {
+    try {
+      await this.redisService.set(cacheKey, result, CACHE_TTL.GEOCODING);
+      this.logger.debug(`Place details salvo no cache por ${CACHE_TTL.GEOCODING}s`);
+    } catch (error) {
+      this.logger.warn(`Erro ao salvar place details no cache:`, error);
     }
   }
 }

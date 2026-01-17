@@ -18,6 +18,12 @@ async function bootstrap(): Promise<void> {
   const appConfig = configService.get<AppConfig>('app');
   const port = appConfig?.port ?? 3000;
 
+  // Enable CORS
+  app.enableCors({
+    origin: ['http://localhost:1420', 'http://localhost:5173'],
+    credentials: true,
+  });
+
   // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({

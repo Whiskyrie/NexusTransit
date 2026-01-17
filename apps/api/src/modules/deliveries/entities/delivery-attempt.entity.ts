@@ -14,10 +14,11 @@ import { Driver } from '../../drivers/entities/driver.entity';
  * - Geolocalização das tentativas
  */
 @Entity('delivery_attempts')
-@Index(['delivery_id'])
-@Index(['attempt_number'])
-@Index(['status'])
-@Index(['started_at'])
+@Index('IDX_ATTEMPT_DELIVERY', ['delivery_id'])
+@Index('IDX_ATTEMPT_DRIVER', ['driver_id'])
+@Index('IDX_ATTEMPT_DATE', ['attempt_date'])
+@Index('IDX_ATTEMPT_RESULT', ['result'])
+@Index('IDX_ATTEMPT_DELIVERY_NUMBER', ['delivery_id', 'attempt_number'])
 export class DeliveryAttempt extends BaseEntity {
   @Column({
     type: 'integer',
@@ -26,25 +27,18 @@ export class DeliveryAttempt extends BaseEntity {
   attempt_number!: number;
 
   @Column({
-    type: 'enum',
-    enum: ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'FAILED'],
-    default: 'PENDING',
-    comment: 'Status da tentativa',
+    type: 'timestamp with time zone',
+    default: () => 'CURRENT_TIMESTAMP',
+    comment: 'Data/hora da tentativa',
   })
-  status!: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED';
+  attempt_date!: Date;
 
   @Column({
-    type: 'timestamp with time zone',
-    comment: 'Data/hora de início da tentativa',
+    type: 'varchar',
+    length: 50,
+    comment: 'Resultado da tentativa (SUCCESS, FAILED, etc)',
   })
-  started_at!: Date;
-
-  @Column({
-    type: 'timestamp with time zone',
-    nullable: true,
-    comment: 'Data/hora de conclusão da tentativa',
-  })
-  completed_at?: Date;
+  result!: string;
 
   @Column({
     type: 'enum',
@@ -57,125 +51,100 @@ export class DeliveryAttempt extends BaseEntity {
   @Column({
     type: 'text',
     nullable: true,
-    comment: 'Descrição detalhada da falha',
-  })
-  failure_description?: string;
-
-  @Column({
-    type: 'jsonb',
-    nullable: true,
-    comment: 'Localização da tentativa',
-  })
-  location?: {
-    latitude: number;
-    longitude: number;
-    accuracy?: number;
-    address?: string;
-    timestamp: Date;
-  };
-
-  @Column({
-    type: 'jsonb',
-    nullable: true,
-    comment: 'Informações de contato durante a tentativa',
-  })
-  contact_info?: {
-    contacted_person?: string;
-    phone?: string;
-    email?: string;
-    relationship?: 'RECIPIENT' | 'FAMILY' | 'NEIGHBOR' | 'OTHER';
-  };
-
-  @Column({
-    type: 'jsonb',
-    nullable: true,
     comment: 'Observações da tentativa',
   })
-  notes?: {
-    internal_notes?: string;
-    customer_notes?: string;
-    driver_notes?: string;
-    weather_conditions?: string;
-    traffic_conditions?: string;
-    access_issues?: string[];
-  };
+  notes?: string;
+
+  @Column({
+    type: 'decimal',
+    precision: 10,
+    scale: 8,
+    nullable: true,
+    comment: 'Latitude da localização',
+  })
+  location_latitude?: number;
+
+  @Column({
+    type: 'decimal',
+    precision: 11,
+    scale: 8,
+    nullable: true,
+    comment: 'Longitude da localização',
+  })
+  location_longitude?: number;
+
+  @Column({
+    type: 'decimal',
+    precision: 10,
+    scale: 2,
+    nullable: true,
+    comment: 'Precisão do GPS em metros',
+  })
+  location_accuracy?: number;
 
   @Column({
     type: 'jsonb',
     nullable: true,
-    comment: 'Evidências coletadas durante a tentativa',
+    comment: 'Evidências coletadas durante a tentativa (fotos, etc)',
   })
   evidence?: {
     photos?: string[];
     videos?: string[];
     audio_notes?: string[];
     documents?: string[];
-    gps_tracks?: {
-      latitude: number;
-      longitude: number;
-      timestamp: Date;
-      speed?: number;
-    }[];
   };
 
   @Column({
-    type: 'boolean',
-    default: false,
-    comment: 'Indica se o cliente foi contatado',
-  })
-  customer_contacted!: boolean;
-
-  @Column({
-    type: 'timestamp with time zone',
+    type: 'varchar',
+    length: 255,
     nullable: true,
-    comment: 'Data/hora do contato com o cliente',
+    comment: 'Nome da pessoa contatada',
   })
-  customer_contacted_at?: Date;
+  contact_name?: string;
 
   @Column({
     type: 'varchar',
     length: 20,
     nullable: true,
-    comment: 'Método de contato utilizado',
+    comment: 'Telefone da pessoa contatada',
   })
-  contact_method?: 'PHONE' | 'SMS' | 'EMAIL' | 'WHATSAPP' | 'IN_PERSON';
+  contact_phone?: string;
 
   @Column({
-    type: 'jsonb',
+    type: 'varchar',
+    length: 100,
     nullable: true,
-    comment: 'Próxima ação recomendada',
+    comment: 'Relação com o destinatário',
   })
-  next_action?: {
-    type: 'RETRY' | 'RESCHEDULE' | 'CANCEL' | 'ESCALATE';
-    scheduled_at?: Date;
-    reason?: string;
-    assigned_to?: string;
-  };
+  contact_relationship?: string;
 
   @Column({
-    type: 'jsonb',
+    type: 'timestamp with time zone',
     nullable: true,
-    comment: 'Dados do motorista durante a tentativa',
+    comment: 'Data/hora agendada para próxima tentativa',
   })
-  driver_data?: {
-    driver_id: string;
-    vehicle_id?: string;
-    vehicle_odometer?: number;
-    fuel_level?: number;
-  };
+  next_attempt_scheduled_at?: Date;
 
   // Relacionamentos
-  @ManyToOne(() => Delivery, delivery => delivery.attempts, { nullable: false })
+  @ManyToOne(() => Delivery, delivery => delivery.attempts, {
+    nullable: false,
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
+  })
   @JoinColumn({ name: 'delivery_id' })
   delivery!: Delivery;
 
   @Column('uuid', { comment: 'ID da entrega' })
   delivery_id!: string;
 
-  @ManyToOne(() => Driver, driver => driver.delivery_attempts, { nullable: true })
+  @ManyToOne(() => Driver, driver => driver.delivery_attempts, {
+    nullable: false,
+    onDelete: 'RESTRICT',
+    onUpdate: 'CASCADE',
+  })
   @JoinColumn({ name: 'driver_id' })
-  driver?: Driver;
+  driver!: Driver;
 
-  @Column('uuid', { nullable: true, comment: 'ID do motorista' })
-  driver_id?: string;
+  @Column('uuid', { comment: 'ID do motorista' })
+  driver_id!: string;
 }

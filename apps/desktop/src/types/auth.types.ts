@@ -16,7 +16,8 @@ export interface AuthResponse {
 export interface UserPayload {
   id: string;
   email: string;
-  name: string;
+  first_name: string;
+  last_name: string;
   user_type: UserType;
   roles?: string[];
   permissions?: string[];
