@@ -1,6 +1,10 @@
 {
     "$schema": "https://turbo.build/schema.json",
     "ui": "tui",
+    "globalEnv": [
+        "NODE_ENV",
+        "NODE_OPTIONS"
+    ],
     "tasks": {
         "build": {
             "dependsOn": [
@@ -29,6 +33,9 @@
                 "src/**/*.ts",
                 "test/**/*.ts",
                 "test/**/*.tsx"
+            ],
+            "env": [
+                "NODE_OPTIONS"
             ]
         },
         "lint": {
