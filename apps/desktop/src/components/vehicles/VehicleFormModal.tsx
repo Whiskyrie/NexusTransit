@@ -6,7 +6,7 @@ import {
   FuelType,
   Vehicle,
 } from "../../types/vehicle.types";
-import { Button } from "../ui/Button";
+import { Button } from "@/shared/components/atoms";
 import { Input } from "../ui/Input";
 import { Select, type SelectOption } from "../ui/Select";
 import { X, Truck, Hash, Calendar, Palette, Loader2 } from "lucide-react";

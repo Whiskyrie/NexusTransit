@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Search, SlidersHorizontal, X } from "lucide-react";
-import { Button } from "../ui/Button";
+import { Button } from "@/shared/components/atoms";
 import { Select, type SelectOption } from "../ui/Select";
 import type { UserFilters as UserFiltersType, User } from "../../types/user.types";
 

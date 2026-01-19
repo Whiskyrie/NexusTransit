@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { X, Plus, Trash2, MapPin, Phone, Mail, User, Building2 } from "lucide-react";
-import { Button } from "../ui/Button";
+import { Button } from "@/shared/components/atoms";
 import { Input } from "../ui/Input";
 import { Select } from "../ui/Select/Select";
 import {

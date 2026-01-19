@@ -133,8 +133,6 @@ function ConfirmDeleteModal({
   );
 }
 
-
-
 export function RoutesPage() {
   const [routes, setRoutes] = useState<Route[]>([]);
   const [isLoading, setIsLoading] = useState(true);

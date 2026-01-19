@@ -14,7 +14,7 @@ import {
   Share2,
   Copy,
 } from "lucide-react";
-import { Button } from "../ui/Button";
+import { Button } from "@/shared/components/atoms";
 import { Delivery } from "../../types/delivery.types";
 import { DeliveryStatusBadge, DeliveryPriorityBadge } from "./";
 

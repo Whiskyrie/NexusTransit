@@ -3,7 +3,7 @@ import {
   VehicleType,
   VehicleFilters as VehicleFiltersType,
 } from "../../types/vehicle.types";
-import { Button } from "../ui/Button";
+import { Button } from "@/shared/components/atoms";
 import { Select, type SelectOption } from "../ui/Select";
 import { Search, SlidersHorizontal, X, ChevronDown } from "lucide-react";
 import { useState, useMemo } from "react";

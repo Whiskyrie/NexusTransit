@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
-import { Button } from "../ui/Button";
+import { Button } from "@/shared/components/atoms";
 import { Input } from "../ui/Input";
 import { Select } from "../ui/Select";
 import { driverService } from "../../services/driver.service";

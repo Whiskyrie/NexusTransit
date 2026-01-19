@@ -1,5 +1,5 @@
 import { Fragment } from "react";
-import { Dialog, Transition } from "@headlessui/react";
+import { Dialog, DialogPanel, DialogTitle, Transition } from "@headlessui/react";
 import { AlertTriangle } from "lucide-react";
 
 interface ConfirmDeleteModalProps {
@@ -50,7 +50,7 @@ export function ConfirmDeleteModal({
               leaveFrom="opacity-100 translate-y-0 sm:scale-100"
               leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             >
-              <Dialog.Panel className="relative transform overflow-hidden rounded-2xl bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-md sm:p-6">
+              <DialogPanel className="relative transform overflow-hidden rounded-2xl bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-md sm:p-6">
                 <div className="flex flex-col items-center text-center">
                   <div className="mx-auto flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-red-50 mb-4 ring-8 ring-red-50/50">
                     <AlertTriangle
@@ -60,9 +60,9 @@ export function ConfirmDeleteModal({
                     />
                   </div>
 
-                  <Dialog.Title as="h3" className="text-xl font-bold leading-6 text-gray-900 mb-2">
+                  <DialogTitle as="h3" className="text-xl font-bold leading-6 text-gray-900 mb-2">
                     {title}
-                  </Dialog.Title>
+                  </DialogTitle>
 
                   <div className="mt-2 text-center">
                     <p className="text-sm text-gray-500">
@@ -99,7 +99,7 @@ export function ConfirmDeleteModal({
                     </button>
                   </div>
                 </div>
-              </Dialog.Panel>
+              </DialogPanel>
             </Transition.Child>
           </div>
         </div>

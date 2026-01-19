@@ -15,7 +15,7 @@ import {
   CreditCard,
   FileText,
 } from "lucide-react";
-import { Button } from "../ui/Button";
+import { Button } from "@/shared/components/atoms";
 import type { Customer } from "../../types/customer.types";
 import type { Delivery } from "../../types/delivery.types";
 

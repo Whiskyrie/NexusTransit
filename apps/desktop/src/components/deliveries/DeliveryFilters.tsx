@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { Search, SlidersHorizontal, X } from "lucide-react";
-import { Button } from "../ui/Button";
+import { Button } from "@/shared/components/atoms";
 import { Select, type SelectOption } from "../ui/Select";
 import type {
   DeliveryFilters as DeliveryFiltersType,

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { X, User, Mail, Phone, CreditCard, FileText } from "lucide-react";
-import { Button } from "../ui/Button";
+import { Button } from "@/shared/components/atoms";
 import { Input } from "../ui/Input";
 import { DatePicker } from "../ui/DatePicker";
 import { Select, type SelectOption } from "../ui/Select";

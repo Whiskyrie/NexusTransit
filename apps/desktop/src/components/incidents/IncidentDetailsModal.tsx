@@ -5,7 +5,6 @@
 import { useState, useEffect } from "react";
 import { X, User, Truck, Package, RefreshCw, AlertTriangle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { IncidentStatusBadge } from "./IncidentStatusBadge";
 import { IncidentAttachments } from "./IncidentAttachments";
 import { IncidentCommentThread } from "./IncidentCommentThread";
 import { IncidentStatusTimeline } from "./IncidentStatusTimeline";

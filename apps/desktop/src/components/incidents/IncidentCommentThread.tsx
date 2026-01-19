@@ -4,7 +4,7 @@
 
 import { memo, useState } from "react";
 import { Send, MessageSquare } from "lucide-react";
-import { Button } from "../ui/Button";
+import { Button } from "@/shared/components/atoms";
 import type { IncidentComment } from "../../types/incident.types";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";

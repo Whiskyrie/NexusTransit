@@ -1,5 +1,5 @@
 import { RouteStatus } from "../../types/route.types";
-import { Button } from "../ui/Button";
+import { Button } from "@/shared/components/atoms";
 import { Play, Pause, RotateCcw, CheckCircle, XCircle, Zap, MoreVertical } from "lucide-react";
 import { useState } from "react";
 

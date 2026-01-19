@@ -4,7 +4,7 @@
 
 import { memo, useState } from "react";
 import { Download, Trash2, FileText, X } from "lucide-react";
-import { Button } from "../ui/Button";
+import { Button } from "@/shared/components/atoms";
 import type { IncidentAttachment } from "../../types/incident.types";
 
 interface IncidentAttachmentsProps {

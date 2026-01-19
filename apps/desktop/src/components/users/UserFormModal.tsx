@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { X, User, Mail, Phone, Lock } from "lucide-react";
 import { Input } from "../ui/Input";
-import { Button } from "../ui/Button";
+import { Button } from "@/shared/components/atoms";
 import { Select, type SelectOption } from "../ui/Select";
 import { userService } from "../../services/user.service";
 import type { User as UserType, CreateUserDto, UpdateUserDto } from "../../types/user.types";
