@@ -6,6 +6,8 @@
     "types": "dist/index.d.ts",
     "scripts": {
         "build": "tsc",
+        "test": "echo \"No tests configured for seeding\" && exit 0",
+        "lint": "echo \"No lint configured for seeding\" && exit 0",
         "seed:run": "ts-node src/cli/seed.ts",
         "seed:run:dev": "ts-node src/cli/seed.ts --env=dev",
         "seed:run:test": "ts-node src/cli/seed.ts --env=test",
