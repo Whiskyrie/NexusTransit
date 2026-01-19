@@ -1,0 +1,17 @@
+/**
+ * Path Aliases Configuration
+ * Configuração de aliases para imports limpos
+ */
+
+export default {
+  compilerOptions: {
+    baseUrl: '.',
+    paths: {
+      '@/*': ['./src/*'],
+      '@/core/*': ['./src/core/*'],
+      '@/shared/*': ['./src/shared/*'],
+      '@/features/*': ['./src/features/*'],
+      '@/lib/*': ['./src/lib/*'],
+    }
+  }
+}
