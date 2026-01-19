@@ -178,7 +178,7 @@ export class AuditService {
   async findByEntity(resourceType: string, resourceId: string): Promise<AuditResponseDto[]> {
     const logs = await this.auditLogRepository.find({
       where: { resourceType, resourceId },
-      order: { created_at: "DESC" },
+      order: { created_at: "DESC" as any },
     });
 
     return logs.map((log) => this.mapToResponseDto(log));
@@ -190,7 +190,7 @@ export class AuditService {
   async findByUser(userId: string): Promise<AuditResponseDto[]> {
     const logs = await this.auditLogRepository.find({
       where: { userId },
-      order: { created_at: "DESC" },
+      order: { created_at: "DESC" as any },
       take: 100,
     });
 
@@ -203,7 +203,7 @@ export class AuditService {
   async findByAction(action: AuditAction): Promise<AuditResponseDto[]> {
     const logs = await this.auditLogRepository.find({
       where: { action },
-      order: { created_at: "DESC" },
+      order: { created_at: "DESC" as any },
       take: 100,
     });
 
@@ -216,9 +216,9 @@ export class AuditService {
   async findByDateRange(startDate: Date, endDate: Date): Promise<AuditResponseDto[]> {
     const logs = await this.auditLogRepository.find({
       where: {
-        created_at: Between(startOfDay(startDate), endOfDay(endDate)),
+        created_at: Between(startOfDay(startDate), endOfDay(endDate)) as any,
       },
-      order: { created_at: "DESC" },
+      order: { created_at: "DESC" as any },
     });
 
     return logs.map((log) => this.mapToResponseDto(log));
@@ -235,7 +235,7 @@ export class AuditService {
     // Total de logs
     const totalLogs = await this.auditLogRepository.count({
       where: {
-        created_at: Between(startDate, endDate),
+        created_at: Between(startDate, endDate) as any,
       },
     });
 
@@ -327,8 +327,8 @@ export class AuditService {
     // Taxa de erro (baseado em status code >= 400)
     const errorCount = await this.auditLogRepository.count({
       where: {
-        created_at: Between(startDate, endDate),
-        statusCode: In([400, 401, 403, 404, 500, 502, 503]),
+        created_at: Between(startDate, endDate) as any,
+        statusCode: In([400, 401, 403, 404, 500, 502, 503]) as any,
       },
     });
 

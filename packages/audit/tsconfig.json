@@ -7,8 +7,21 @@
         "types": [
             "jest",
             "node"
-        ]
+        ],
+        "paths": {
+            "@nexus/common": [
+                "../common/src"
+            ],
+            "@nexus/common/*": [
+                "../common/src/*"
+            ]
+        }
     },
+    "references": [
+        {
+            "path": "../common"
+        }
+    ],
     "include": [
         "src/**/*"
     ],
