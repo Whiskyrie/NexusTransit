@@ -14,6 +14,8 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",
+    "maxWorkers": 2,
+    "workerIdleMemoryLimit": "512MB",
     "moduleNameMapper": {
         "^@nexus/common$": "<rootDir>/../../common/src",
         "^@nexus/common/(.*)$": "<rootDir>/../../common/src/$1"
@@ -25,7 +27,8 @@
                     "jest",
                     "node"
                 ]
-            }
+            },
+            "isolatedModules": true
         }
     }
 }
