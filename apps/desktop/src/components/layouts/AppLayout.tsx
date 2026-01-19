@@ -1,29 +1,24 @@
-import { useState } from "react";
 import { Outlet } from "react-router-dom";
-import { Sidebar } from "./Sidebar";
+import { AppSidebar } from "@/shared/components/organisms";
 
 /**
- * Layout principal da aplicação com Sidebar colapsável
+ * Layout principal da aplicação
+ * Refatorado com Clean Architecture + Design System
  *
- * Fornece navegação lateral e área de conteúdo para páginas internas
+ * Features:
+ * - Sidebar minimalista com seções colapsáveis
+ * - Tipografia Inter (Linear-style)
+ * - Design tokens centralizados
  */
 export function AppLayout() {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-
   return (
-    <div className="flex h-screen bg-[#F5F5F0] p-4 gap-4 overflow-hidden font-sans">
-      {/* Sidebar colapsável */}
-      <Sidebar
-        collapsed={sidebarCollapsed}
-        onCollapsedChange={setSidebarCollapsed}
-        className="bg-white"
-      />
+    <div className="flex h-screen bg-white overflow-hidden">
+      {/* Sidebar Refatorada */}
+      <AppSidebar />
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-y-auto rounded-[20px] bg-[#F5F5F0] relative">
-        <div className="max-w-360 mx-auto p-8">
-          <Outlet />
-        </div>
+      {/* Main Content Area */}
+      <main className="flex-1 overflow-y-auto bg-gray-50 p-6">
+        <Outlet />
       </main>
     </div>
   );
