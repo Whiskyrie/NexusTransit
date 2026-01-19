@@ -1,4 +1,3 @@
-export * from "./Button";
 export * from "./Input";
 export * from "./DateInput";
 export * from "./Calendar";
@@ -7,7 +6,6 @@ export * from "./DateTimePicker";
 export * from "./DateRangePicker";
 export * from "./TabSwitcher";
 export * from "./AuthCard";
-export * from "./Table";
 export * from "./Toast";
 export * from "./ConfirmDeleteModal";
 export * from "./Select";
