@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
 import { EventType } from '../enums/event-type.enum';
 import { EventStatus } from '../enums/event-status.enum';
+import { PaginatedResponseDto } from '@nexus/common';
 
 /**
  * DTO de resposta para evento de rastreamento
@@ -133,33 +134,4 @@ export class TrackingEventResponseDto {
   location?: string;
 }
 
-/**
- * DTO de resposta paginada
- */
-export class PaginatedResponseDto<T> {
-  @ApiProperty({
-    description: 'Lista de resultados',
-    isArray: true,
-  })
-  data!: T[];
-
-  @ApiProperty({
-    description: 'Metadados de paginação',
-    example: {
-      page: 1,
-      limit: 10,
-      total: 100,
-      total_pages: 10,
-      has_previous: false,
-      has_next: true,
-    },
-  })
-  meta!: {
-    page: number;
-    limit: number;
-    total: number;
-    total_pages: number;
-    has_previous: boolean;
-    has_next: boolean;
-  };
-}
+export { PaginatedResponseDto };
