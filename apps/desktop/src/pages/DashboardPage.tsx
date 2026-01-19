@@ -2,14 +2,11 @@ import { useState, useMemo } from "react";
 import { Truck, Clock, CheckCircle, AlertCircle, RefreshCw } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useUser } from "../stores/auth.store";
-import { MetricCard } from "../components/ui/MetricCard";
-import {
-  PerformanceChart,
-} from "../components/ui/charts/PerformanceChart";
+import { PageHeader, MetricCard } from "@/shared/components/molecules";
+import { Button } from "@/shared/components/atoms";
+import { PerformanceChart } from "../components/ui/charts/PerformanceChart";
 import { ShipmentsOverview, TopEstados, TopClientes } from "../components/dashboard";
-import {
-  dashboardService,
-} from "../services/dashboard.service";
+import { dashboardService } from "../services/dashboard.service";
 import { deliveryService } from "../services/delivery.service";
 
 export function DashboardPage() {
@@ -34,7 +31,11 @@ export function DashboardPage() {
   // --- React Query Hooks ---
 
   // 1. Dashboard Stats
-  const { data: stats, isLoading: isLoadingStats, dataUpdatedAt } = useQuery({
+  const {
+    data: stats,
+    isLoading: isLoadingStats,
+    dataUpdatedAt,
+  } = useQuery({
     queryKey: ["dashboard", "stats"],
     queryFn: () => dashboardService.getStats(),
   });
@@ -82,35 +83,37 @@ export function DashboardPage() {
     queryClient.invalidateQueries({ queryKey: ["dashboard"] });
   };
 
-  const isGlobalLoading = isLoadingStats || isLoadingChart || isLoadingDeliveries || isLoadingTopEstados || isLoadingTopClientes || queryClient.isFetching() > 0;
+  const isGlobalLoading =
+    isLoadingStats ||
+    isLoadingChart ||
+    isLoadingDeliveries ||
+    isLoadingTopEstados ||
+    isLoadingTopClientes ||
+    queryClient.isFetching() > 0;
 
   return (
-    <div className="space-y-6 font-sans text-[#1A1A1A]">
+    <div className="space-y-6">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold mb-1">Dashboard</h1>
-          <p className="text-sm text-[#6B6B6B]">
-            Bem-vindo de volta, {stableUser?.first_name || "Usuário"}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          {lastUpdatedText && (
-            <span className="text-xs text-gray-500">Atualizado às {lastUpdatedText}</span>
-          )}
-          <button
-            onClick={handleRefresh}
-            disabled={isGlobalLoading}
-            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-[#E5E7EB] rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 cursor-pointer"
-          >
-            <RefreshCw
-              className={`w-4 h-4 ${isGlobalLoading ? "animate-spin" : ""}`}
-            />
-            Atualizar
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        title="Dashboard"
+        subtitle={`Bem-vindo de volta, ${stableUser?.first_name || "Usuário"}`}
+        actions={
+          <div className="flex items-center gap-3">
+            {lastUpdatedText && (
+              <span className="text-xs text-gray-500">Atualizado às {lastUpdatedText}</span>
+            )}
+            <Button
+              variant="outline"
+              size="md"
+              onClick={handleRefresh}
+              leftIcon={RefreshCw}
+              isLoading={isGlobalLoading}
+            >
+              Atualizar
+            </Button>
+          </div>
+        }
+      />
 
       {/* Metrics Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -122,9 +125,9 @@ export function DashboardPage() {
           trend={
             stats
               ? {
-                value: `${stats.deliveries.todayTrend > 0 ? "+" : ""}${stats.deliveries.todayTrend}%`,
-                direction: stats.deliveries.todayTrend >= 0 ? "up" : "down",
-              }
+                  value: `${stats.deliveries.todayTrend > 0 ? "+" : ""}${stats.deliveries.todayTrend}%`,
+                  direction: stats.deliveries.todayTrend >= 0 ? "up" : "down",
+                }
               : undefined
           }
         />
@@ -136,9 +139,9 @@ export function DashboardPage() {
           trend={
             stats
               ? {
-                value: `${stats.deliveries.inTransitTrend > 0 ? "+" : ""}${stats.deliveries.inTransitTrend}%`,
-                direction: stats.deliveries.inTransitTrend >= 0 ? "up" : "down",
-              }
+                  value: `${stats.deliveries.inTransitTrend > 0 ? "+" : ""}${stats.deliveries.inTransitTrend}%`,
+                  direction: stats.deliveries.inTransitTrend >= 0 ? "up" : "down",
+                }
               : undefined
           }
         />
@@ -150,9 +153,9 @@ export function DashboardPage() {
           trend={
             stats
               ? {
-                value: `${stats.deliveries.deliveredTrend > 0 ? "+" : ""}${stats.deliveries.deliveredTrend}%`,
-                direction: stats.deliveries.deliveredTrend >= 0 ? "up" : "down",
-              }
+                  value: `${stats.deliveries.deliveredTrend > 0 ? "+" : ""}${stats.deliveries.deliveredTrend}%`,
+                  direction: stats.deliveries.deliveredTrend >= 0 ? "up" : "down",
+                }
               : undefined
           }
         />
@@ -164,9 +167,9 @@ export function DashboardPage() {
           trend={
             stats
               ? {
-                value: `${stats.deliveries.pendingTrend > 0 ? "+" : ""}${stats.deliveries.pendingTrend}%`,
-                direction: stats.deliveries.pendingTrend <= 0 ? "up" : "down",
-              }
+                  value: `${stats.deliveries.pendingTrend > 0 ? "+" : ""}${stats.deliveries.pendingTrend}%`,
+                  direction: stats.deliveries.pendingTrend <= 0 ? "up" : "down",
+                }
               : undefined
           }
         />

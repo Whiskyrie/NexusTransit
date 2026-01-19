@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Plus, RefreshCw, Download, Package, Copy } from "lucide-react";
-import { Table, TableColumn } from "../components/ui/Table";
-import { Button } from "../components/ui/Button";
+import { PageHeader } from "@/shared/components/molecules";
+import { Button } from "@/shared/components/atoms";
+import { Table, type TableColumn } from "@/shared/components/molecules";
 import { Toast } from "../components/ui/Toast";
 import { ConfirmDeleteModal } from "../components/ui/ConfirmDeleteModal";
 import {
@@ -375,94 +376,86 @@ export function DeliveriesPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F5F5F0]">
-      <div className="max-w-full mx-auto space-y-4 px-4">
-        {/* Header */}
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold text-[#1A1A1A]">Entregas</h1>
-              <p className="text-xs text-gray-500">
-                Gerencie todas as entregas do sistema em tempo real
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" onClick={handleExport} className="h-9 px-3">
-                <Download className="w-4 h-4" strokeWidth={1.5} />
-              </Button>
-              <Button variant="outline" onClick={handleRefresh} className="h-9 px-3">
-                <RefreshCw
-                  className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`}
-                  strokeWidth={1.5}
-                />
-              </Button>
-              <Button onClick={handleCreateDelivery} className="h-9 px-4">
-                <Plus className="w-4 h-4 mr-1" strokeWidth={2} />
-                Nova Entrega
-              </Button>
-            </div>
+    <div className="space-y-6">
+      {/* Header */}
+      <PageHeader
+        title="Entregas"
+        subtitle="Gerencie todas as entregas do sistema em tempo real"
+        actions={
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="md" onClick={handleExport} leftIcon={Download} />
+            <Button
+              variant="outline"
+              size="md"
+              onClick={handleRefresh}
+              leftIcon={RefreshCw}
+              isLoading={isLoading}
+            />
+            <Button variant="primary" size="md" onClick={handleCreateDelivery} leftIcon={Plus}>
+              Nova Entrega
+            </Button>
           </div>
-        </div>
+        }
+      />
 
-        {/* Filters */}
-        <DeliveryFilters
-          filters={filters}
-          onFiltersChange={handleFiltersChange}
-          onClearFilters={handleClearFilters}
+      {/* Filters */}
+      <DeliveryFilters
+        filters={filters}
+        onFiltersChange={handleFiltersChange}
+        onClearFilters={handleClearFilters}
+      />
+
+      {/* Table */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <Table
+          columns={columns}
+          data={deliveries}
+          keyExtractor={(delivery) => delivery.id}
+          isLoading={isLoading}
+          pagination={{
+            ...pagination,
+            page: filters.page || 1,
+            limit: filters.limit || 10,
+            onPageChange: handlePageChange,
+          }}
+          emptyMessage="Nenhuma entrega encontrada"
         />
-
-        {/* Table */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <Table
-            columns={columns}
-            data={deliveries}
-            keyExtractor={(delivery) => delivery.id}
-            isLoading={isLoading}
-            pagination={{
-              ...pagination,
-              page: filters.page || 1,
-              limit: filters.limit || 10,
-              onPageChange: handlePageChange,
-            }}
-            emptyMessage="Nenhuma entrega encontrada"
-          />
-        </div>
-
-        {/* Delete Modal */}
-        <ConfirmDeleteModal
-          isOpen={deleteModal.isOpen}
-          title="Excluir Entrega"
-          itemName={deleteModal.trackingCode}
-          isDeleting={isDeleting}
-          onConfirm={handleDeleteConfirm}
-          onCancel={handleDeleteCancel}
-        />
-
-        {/* Form Modal (Create/Edit) */}
-        <DeliveryFormModal
-          isOpen={formModal.isOpen}
-          onClose={handleFormClose}
-          onSubmit={handleFormSubmit}
-          isLoading={isSubmitting}
-          delivery={formModal.delivery}
-        />
-
-        {/* Details Modal */}
-        <DeliveryDetailsModal
-          isOpen={detailsModal.isOpen}
-          onClose={handleDetailsClose}
-          delivery={detailsModal.delivery}
-        />
-
-        {/* Toast */}
-        {toast.show && (
-          <Toast
-            message={toast.message}
-            type={toast.type}
-            onClose={() => setToast({ ...toast, show: false })}
-          />
-        )}
       </div>
+
+      {/* Delete Modal */}
+      <ConfirmDeleteModal
+        isOpen={deleteModal.isOpen}
+        title="Excluir Entrega"
+        itemName={deleteModal.trackingCode}
+        isDeleting={isDeleting}
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+      />
+
+      {/* Form Modal (Create/Edit) */}
+      <DeliveryFormModal
+        isOpen={formModal.isOpen}
+        onClose={handleFormClose}
+        onSubmit={handleFormSubmit}
+        isLoading={isSubmitting}
+        delivery={formModal.delivery}
+      />
+
+      {/* Details Modal */}
+      <DeliveryDetailsModal
+        isOpen={detailsModal.isOpen}
+        onClose={handleDetailsClose}
+        delivery={detailsModal.delivery}
+      />
+
+      {/* Toast */}
+      {toast.show && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast({ ...toast, show: false })}
+        />
+      )}
     </div>
   );
 }

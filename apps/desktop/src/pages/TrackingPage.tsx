@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Search, MapPin, Package, Clock, RefreshCw } from "lucide-react";
-import { Button } from "../components/ui/Button";
+import { Search, MapPin, Package, Clock, RefreshCw, Navigation } from "lucide-react";
+import { PageHeader } from "@/shared/components/molecules";
+import { Button } from "@/shared/components/atoms";
 import { TrackingMap } from "../components/tracking/TrackingMap";
 import { TrackingTimeline } from "../components/tracking/TrackingTimeline";
 import { trackingService } from "../services/tracking.service";
@@ -115,9 +116,7 @@ export function TrackingPage() {
           <p className="text-gray-500 mb-6">
             O código de rastreamento "{searchCode}" não foi encontrado em nosso sistema.
           </p>
-          <Button onClick={() => setSearchCode("")} variant="primary">
-            Tentar outro código
-          </Button>
+          <Button onClick={() => setSearchCode("")}>Tentar outro código</Button>
         </div>
       </div>
     );
@@ -152,9 +151,7 @@ export function TrackingPage() {
             Ocorreu um erro ao buscar informações do rastreamento. Tente novamente.
           </p>
           <div className="flex gap-3 justify-center">
-            <Button onClick={handleRefresh} variant="primary">
-              Tentar novamente
-            </Button>
+            <Button onClick={handleRefresh}>Tentar novamente</Button>
             <Button onClick={() => setSearchCode("")} variant="outline">
               Voltar
             </Button>
@@ -166,23 +163,29 @@ export function TrackingPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header com busca */}
-      <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100/50">
-        <div className="flex items-center justify-between gap-4 mb-4">
-          <h1 className="text-3xl font-bold text-gray-900">Rastreamento de Entregas</h1>
-          {searchCode && (
+      {/* Page Header */}
+      <PageHeader
+        title="Rastreamento de Entregas"
+        description="Acompanhe suas entregas em tempo real"
+        icon={Navigation}
+        actions={
+          searchCode ? (
             <Button
-              onClick={handleRefresh}
+              size="sm"
               variant="outline"
+              onClick={handleRefresh}
               disabled={isLoading}
-              className="gap-2"
+              leftIcon={RefreshCw}
+              isLoading={isLoading}
             >
-              <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
               Atualizar
             </Button>
-          )}
-        </div>
+          ) : undefined
+        }
+      />
 
+      {/* Search Form */}
+      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
         <form onSubmit={handleSearch} className="flex gap-3">
           <div className="flex-1 relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -194,13 +197,15 @@ export function TrackingPage() {
               className="w-full h-12 pl-12 pr-4 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition-all text-sm font-medium"
             />
           </div>
-          <Button type="submit" variant="primary" disabled={isLoading} className="h-12 px-6">
+          <Button type="submit" disabled={isLoading} className="h-12 px-6">
             {isLoading ? "Buscando..." : "Buscar"}
           </Button>
         </form>
+      </div>
 
-        {/* Status atual */}
-        {trackingData && (
+      {/* Status atual */}
+      {trackingData && (
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
               <div className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">
@@ -235,8 +240,8 @@ export function TrackingPage() {
               </div>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Grid principal: Mapa + Timeline */}
       {mapData && timelineData ? (

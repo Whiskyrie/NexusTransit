@@ -14,8 +14,9 @@ import {
   AlertTriangle,
   X,
 } from "lucide-react";
-import { Table, TableColumn } from "../components/ui/Table";
-import { Button } from "../components/ui/Button";
+import { PageHeader } from "@/shared/components/molecules";
+import { Button } from "@/shared/components/atoms";
+import { Table, type TableColumn } from "@/shared/components/molecules";
 import { RouteStatusBadge, RouteFilters, RouteFormModal } from "../components/routes";
 import { routeService } from "../services/route.service";
 import type { Route, RouteFilters as RouteFiltersType, CreateRouteDto } from "../types/route.types";
@@ -40,8 +41,9 @@ function Toast({ message, type, onClose }: ToastProps) {
 
   return (
     <div
-      className={`fixed bottom-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-lg shadow-lg animate-in slide-in-from-bottom-2 duration-200 ${type === "success" ? "bg-emerald-500 text-white" : "bg-red-500 text-white"
-        }`}
+      className={`fixed bottom-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-lg shadow-lg animate-in slide-in-from-bottom-2 duration-200 ${
+        type === "success" ? "bg-emerald-500 text-white" : "bg-red-500 text-white"
+      }`}
     >
       {type === "success" ? <CheckCircle className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
       <span className="text-sm font-medium">{message}</span>
@@ -173,14 +175,14 @@ export function RoutesPage() {
           driversResponse.data.map((driver) => ({
             value: driver.id,
             label: driver.full_name,
-          }))
+          })),
         );
 
         setVehiclesOptions(
           vehiclesResponse.data.map((vehicle) => ({
             value: vehicle.id,
             label: `${vehicle.model} - ${vehicle.license_plate}`,
-          }))
+          })),
         );
       } catch (error) {
         console.error("Failed to fetch filters data:", error);
@@ -448,96 +450,93 @@ export function RoutesPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F5F5F0]">
-      <div className="max-w-full mx-auto space-y-4 px-4">
-        {/* Header Compacto */}
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold text-[#1A1A1A]">Rotas</h1>
-              <p className="text-xs text-gray-500">Gerencie suas rotas de entrega</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" onClick={handleExport} className="h-9 px-3">
-                <Download className="w-4 h-4" strokeWidth={1.5} />
-              </Button>
-              <Button variant="outline" onClick={fetchRoutes} className="h-9 px-3">
-                <RefreshCw
-                  className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`}
-                  strokeWidth={1.5}
-                />
-              </Button>
-              <Button onClick={() => setShowCreateModal(true)} className="h-9 px-4">
-                <Plus className="w-4 h-4 mr-1" strokeWidth={2} />
-                Nova Rota
-              </Button>
-            </div>
+    <div className="space-y-6">
+      {/* Header */}
+      <PageHeader
+        title="Rotas"
+        subtitle="Gerencie suas rotas de entrega"
+        actions={
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="md" onClick={handleExport} leftIcon={Download} />
+            <Button
+              variant="outline"
+              size="md"
+              onClick={fetchRoutes}
+              leftIcon={RefreshCw}
+              isLoading={isLoading}
+            />
+            <Button
+              variant="primary"
+              size="md"
+              onClick={() => setShowCreateModal(true)}
+              leftIcon={Plus}
+            >
+              Nova Rota
+            </Button>
           </div>
-        </div>
+        }
+      />
 
-        {/* Filters */}
-        <RouteFilters
-          filters={filters}
-          onFiltersChange={handleFilterChange}
-          onClearFilters={handleClearFilters}
-          drivers={driversOptions}
-          vehicles={vehiclesOptions}
-        />
+      {/* Filters */}
+      <RouteFilters
+        filters={filters}
+        onFiltersChange={handleFilterChange}
+        onClearFilters={handleClearFilters}
+        drivers={driversOptions}
+        vehicles={vehiclesOptions}
+      />
 
-        {/* Table */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <Table
-            columns={columns}
-            data={routes}
-            keyExtractor={(route) => route.id}
-            isLoading={isLoading}
-            pagination={{
-              page: filters.page || 1,
-              limit: filters.limit || 10,
-              total: pagination.total,
-              total_pages: pagination.total_pages,
-              has_previous: pagination.has_previous,
-              has_next: pagination.has_next,
-              onPageChange: handlePageChange,
-            }}
-            emptyMessage="Nenhuma rota encontrada"
-          />
-        </div>
-
-        {/* Create Modal */}
-        <RouteFormModal
-          isOpen={showCreateModal}
-          onClose={() => setShowCreateModal(false)}
-          onSubmit={handleCreateRoute}
-          isLoading={isCreating}
-        />
-
-        {/* Edit Modal */}
-        <RouteFormModal
-          isOpen={showEditModal}
-          onClose={() => {
-            setShowEditModal(false);
-            setSelectedRoute(null);
+      {/* Table */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <Table
+          columns={columns}
+          data={routes}
+          keyExtractor={(route) => route.id}
+          isLoading={isLoading}
+          pagination={{
+            page: filters.page || 1,
+            limit: filters.limit || 10,
+            total: pagination.total,
+            total_pages: pagination.total_pages,
+            has_previous: pagination.has_previous,
+            has_next: pagination.has_next,
+            onPageChange: handlePageChange,
           }}
-          onSubmit={handleCreateRoute}
-          isLoading={isCreating}
-          route={selectedRoute}
+          emptyMessage="Nenhuma rota encontrada"
         />
-
-        {/* Delete Confirmation Modal */}
-        <ConfirmDeleteModal
-          isOpen={deleteModal.isOpen}
-          routeName={deleteModal.route?.name || ""}
-          isDeleting={isDeleting}
-          onConfirm={handleDeleteRoute}
-          onCancel={closeDeleteModal}
-        />
-
-        {/* Toast Notification */}
-        {toast && (
-          <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
-        )}
       </div>
+
+      {/* Create Modal */}
+      <RouteFormModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSubmit={handleCreateRoute}
+        isLoading={isCreating}
+      />
+
+      {/* Edit Modal */}
+      <RouteFormModal
+        isOpen={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setSelectedRoute(null);
+        }}
+        onSubmit={handleCreateRoute}
+        isLoading={isCreating}
+        route={selectedRoute}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmDeleteModal
+        isOpen={deleteModal.isOpen}
+        routeName={deleteModal.route?.name || ""}
+        isDeleting={isDeleting}
+        onConfirm={handleDeleteRoute}
+        onCancel={closeDeleteModal}
+      />
+
+      {/* Toast Notification */}
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   );
 }

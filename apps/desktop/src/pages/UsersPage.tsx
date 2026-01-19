@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { Plus, Download, RefreshCw } from "lucide-react";
-import { Table, TableColumn } from "../components/ui/Table";
-import { Button } from "../components/ui/Button";
+import { Users, Plus, Download, RefreshCw } from "lucide-react";
+import { PageHeader } from "@/shared/components/molecules";
+import { Button } from "@/shared/components/atoms";
+import { Table, type TableColumn } from "@/shared/components/molecules";
 import { Toast } from "../components/ui/Toast";
 import { ConfirmDeleteModal } from "../components/ui/ConfirmDeleteModal";
 import { userService } from "../services/user.service";
@@ -164,94 +165,89 @@ export function UsersPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F5F5F0]">
-      <div className="max-w-full mx-auto space-y-4 px-4">
-        {/* Header Compacto */}
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold text-[#1A1A1A]">Usuários</h1>
-              <p className="text-xs text-gray-500">Gerencie os usuários do sistema</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" className="h-9 px-3">
-                <Download className="w-4 h-4" strokeWidth={1.5} />
-              </Button>
-              <Button variant="outline" onClick={fetchUsers} className="h-9 px-3">
-                <RefreshCw
-                  className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`}
-                  strokeWidth={1.5}
-                />
-              </Button>
-              <Button onClick={handleCreateUser} className="h-9 px-4">
-                <Plus className="w-4 h-4 mr-1" strokeWidth={2} />
-                Novo Usuário
-              </Button>
-            </div>
-          </div>
-        </div>
+    <div className="space-y-6">
+      {/* Page Header */}
+      <PageHeader
+        title="Usuários"
+        description="Gerencie os usuários do sistema"
+        icon={Users}
+        actions={
+          <>
+            <Button variant="ghost" size="sm" leftIcon={Download} />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={fetchUsers}
+              leftIcon={RefreshCw}
+              isLoading={isLoading}
+            />
+            <Button size="sm" onClick={handleCreateUser} leftIcon={Plus}>
+              Novo Usuário
+            </Button>
+          </>
+        }
+      />
 
-        {/* Filters */}
-        <UserFiltersComponent
-          filters={filters}
-          onFiltersChange={setFilters}
-          onClearFilters={() =>
-            setFilters({ page: 1, limit: 10, search: "", status: undefined, user_type: undefined })
-          }
+      {/* Filters */}
+      <UserFiltersComponent
+        filters={filters}
+        onFiltersChange={setFilters}
+        onClearFilters={() =>
+          setFilters({ page: 1, limit: 10, search: "", status: undefined, user_type: undefined })
+        }
+      />
+
+      {/* Table */}
+      <Table
+        columns={columns}
+        data={users}
+        keyExtractor={(user) => user.id}
+        isLoading={isLoading}
+        pagination={{
+          ...pagination,
+          page: filters.page || 1,
+          limit: filters.limit || 10,
+          onPageChange: handlePageChange,
+        }}
+        emptyMessage="Nenhum usuário encontrado"
+      />
+
+      {/* Create Modal */}
+      <UserFormModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={handleModalSuccess}
+      />
+
+      {/* Edit Modal */}
+      <UserFormModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSuccess={handleModalSuccess}
+        user={selectedUser}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmDeleteModal
+        isOpen={deleteModalOpen}
+        title="Excluir Usuário"
+        itemName={userToDelete ? `${userToDelete.first_name} ${userToDelete.last_name}` : ""}
+        isDeleting={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => {
+          setDeleteModalOpen(false);
+          setUserToDelete(undefined);
+        }}
+      />
+
+      {/* Toast */}
+      {toast.show && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast({ ...toast, show: false })}
         />
-
-        {/* Table */}
-        <Table
-          columns={columns}
-          data={users}
-          keyExtractor={(user) => user.id}
-          isLoading={isLoading}
-          pagination={{
-            ...pagination,
-            page: filters.page || 1,
-            limit: filters.limit || 10,
-            onPageChange: handlePageChange,
-          }}
-          emptyMessage="Nenhum usuário encontrado"
-        />
-
-        {/* Create Modal */}
-        <UserFormModal
-          isOpen={isCreateModalOpen}
-          onClose={() => setIsCreateModalOpen(false)}
-          onSuccess={handleModalSuccess}
-        />
-
-        {/* Edit Modal */}
-        <UserFormModal
-          isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
-          onSuccess={handleModalSuccess}
-          user={selectedUser}
-        />
-
-        {/* Delete Confirmation Modal */}
-        <ConfirmDeleteModal
-          isOpen={deleteModalOpen}
-          title="Excluir Usuário"
-          itemName={userToDelete ? `${userToDelete.first_name} ${userToDelete.last_name}` : ""}
-          isDeleting={isDeleting}
-          onConfirm={handleConfirmDelete}
-          onCancel={() => {
-            setDeleteModalOpen(false);
-            setUserToDelete(undefined);
-          }}
-        />
-
-        {/* Toast */}
-        {toast.show && (
-          <Toast
-            message={toast.message}
-            type={toast.type}
-            onClose={() => setToast({ ...toast, show: false })}
-          />
-        )}
-      </div>
+      )}
     </div>
   );
 }

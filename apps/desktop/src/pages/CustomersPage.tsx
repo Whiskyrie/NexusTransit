@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Plus, RefreshCw, Edit2, Eye, Trash2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "../components/ui/Button";
-import { Table, type TableColumn } from "../components/ui/Table";
+import { PageHeader } from "@/shared/components/molecules";
+import { Button } from "@/shared/components/atoms";
+import { Table, type TableColumn } from "@/shared/components/molecules";
 import { CustomerModal } from "../components/customers/CustomerModal";
 import { CustomerDetailsModal } from "../components/customers/CustomerDetailsModal";
 import { CustomerFilters } from "../components/customers/CustomerFilters";
@@ -242,61 +243,62 @@ export function CustomersPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F5F5F0]">
-      <div className="max-w-full mx-auto space-y-4 px-4">
-        {/* Header Compacto */}
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold text-[#1A1A1A]">Clientes</h1>
-              <p className="text-xs text-gray-500">Gerencie seus clientes e suas informações</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" className="h-9 px-3" onClick={() => refetch()}>
-                <RefreshCw
-                  className={`w-4 h-4 ${isLoadingCustomers ? "animate-spin" : ""}`}
-                  strokeWidth={1.5}
-                />
-              </Button>
-              <Button onClick={() => setIsCreateModalOpen(true)} className="h-9 px-4">
-                <Plus className="w-4 h-4 mr-1" strokeWidth={2} />
-                Novo Cliente
-              </Button>
-            </div>
+    <div className="space-y-6">
+      {/* Header */}
+      <PageHeader
+        title="Clientes"
+        subtitle="Gerencie seus clientes e suas informações"
+        actions={
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="md"
+              onClick={() => refetch()}
+              leftIcon={RefreshCw}
+              isLoading={isLoadingCustomers}
+            />
+            <Button
+              variant="primary"
+              size="md"
+              onClick={() => setIsCreateModalOpen(true)}
+              leftIcon={Plus}
+            >
+              Novo Cliente
+            </Button>
           </div>
-        </div>
+        }
+      />
 
-        {/* Filters */}
-        <CustomerFilters
-          filters={filters}
-          onFiltersChange={handleFiltersChange}
-          onClearFilters={handleClearFilters}
-          hasActiveFilters={hasActiveFilters}
+      {/* Filters */}
+      <CustomerFilters
+        filters={filters}
+        onFiltersChange={handleFiltersChange}
+        onClearFilters={handleClearFilters}
+        hasActiveFilters={hasActiveFilters}
+      />
+
+      {/* Table */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <Table
+          columns={columns}
+          data={customersData?.data || []}
+          keyExtractor={(customer) => customer.id}
+          isLoading={isLoadingCustomers}
+          pagination={
+            customersData
+              ? {
+                  page: customersData.meta.page,
+                  limit: customersData.meta.limit,
+                  total: customersData.meta.total,
+                  total_pages: customersData.meta.total_pages,
+                  has_previous: customersData.meta.has_previous,
+                  has_next: customersData.meta.has_next,
+                  onPageChange: handlePageChange,
+                }
+              : undefined
+          }
+          emptyMessage="Nenhum cliente encontrado"
         />
-
-        {/* Table */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <Table
-            columns={columns}
-            data={customersData?.data || []}
-            keyExtractor={(customer) => customer.id}
-            isLoading={isLoadingCustomers}
-            pagination={
-              customersData
-                ? {
-                    page: customersData.meta.page,
-                    limit: customersData.meta.limit,
-                    total: customersData.meta.total,
-                    total_pages: customersData.meta.total_pages,
-                    has_previous: customersData.meta.has_previous,
-                    has_next: customersData.meta.has_next,
-                    onPageChange: handlePageChange,
-                  }
-                : undefined
-            }
-            emptyMessage="Nenhum cliente encontrado"
-          />
-        </div>
       </div>
 
       {/* Create Modal */}

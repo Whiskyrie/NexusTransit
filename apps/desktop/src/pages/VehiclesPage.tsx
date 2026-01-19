@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Plus, RefreshCw, Download } from "lucide-react";
-import { Table, TableColumn, Toast, ConfirmDeleteModal } from "../components/ui";
-import { Button } from "../components/ui/Button";
+import { PageHeader, Table, type TableColumn } from "@/shared/components/molecules";
+import { Button } from "@/shared/components/atoms";
+import { Toast, ConfirmDeleteModal } from "../components/ui";
 import {
   VehicleStatusBadge,
   VehicleFilters,
@@ -200,94 +201,93 @@ export function VehiclesPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F5F5F0]">
-      <div className="max-w-full mx-auto space-y-4 px-4">
-        {/* Header Compacto */}
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold text-[#1A1A1A]">Veículos</h1>
-              <p className="text-xs text-gray-500">Gerencie sua frota de veículos</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" className="h-9 px-3">
-                <Download className="w-4 h-4" strokeWidth={1.5} />
-              </Button>
-              <Button variant="outline" onClick={fetchVehicles} className="h-9 px-3">
-                <RefreshCw
-                  className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`}
-                  strokeWidth={1.5}
-                />
-              </Button>
-              <Button onClick={() => setIsFormModalOpen(true)} className="h-9 px-4">
-                <Plus className="w-4 h-4 mr-1" strokeWidth={2} />
-                Novo Veículo
-              </Button>
-            </div>
+    <div className="space-y-6">
+      {/* Header */}
+      <PageHeader
+        title="Veículos"
+        subtitle="Gerencie sua frota de veículos"
+        actions={
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="md" leftIcon={Download} />
+            <Button
+              variant="outline"
+              size="md"
+              onClick={fetchVehicles}
+              leftIcon={RefreshCw}
+              isLoading={isLoading}
+            />
+            <Button
+              variant="primary"
+              size="md"
+              onClick={() => setIsFormModalOpen(true)}
+              leftIcon={Plus}
+            >
+              Novo Veículo
+            </Button>
           </div>
-        </div>
+        }
+      />
 
-        {/* Filters */}
-        <VehicleFilters
-          filters={filters}
-          onFiltersChange={handleFiltersChange}
-          onClearFilters={handleClearFilters}
-        />
+      {/* Filters */}
+      <VehicleFilters
+        filters={filters}
+        onFiltersChange={handleFiltersChange}
+        onClearFilters={handleClearFilters}
+      />
 
-        {/* Table */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <Table
-            columns={columns}
-            data={vehicles}
-            keyExtractor={(vehicle) => vehicle.id}
-            isLoading={isLoading}
-            pagination={{
-              ...pagination,
-              page: filters.page || 1,
-              limit: filters.limit || 10,
-              onPageChange: handlePageChange,
-            }}
-            emptyMessage="Nenhum veículo encontrado"
-          />
-        </div>
-
-        {/* Modals */}
-        <VehicleFormModal
-          isOpen={isFormModalOpen}
-          onClose={() => setIsFormModalOpen(false)}
-          onSubmit={handleCreateVehicle}
-          isLoading={isCreating}
-        />
-
-        <VehicleFormModal
-          isOpen={isEditModalOpen}
-          onClose={() => {
-            setIsEditModalOpen(false);
-            setSelectedVehicle(null);
+      {/* Table */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <Table
+          columns={columns}
+          data={vehicles}
+          keyExtractor={(vehicle) => vehicle.id}
+          isLoading={isLoading}
+          pagination={{
+            ...pagination,
+            page: filters.page || 1,
+            limit: filters.limit || 10,
+            onPageChange: handlePageChange,
           }}
-          onSubmit={handleCreateVehicle}
-          isLoading={isCreating}
-          vehicle={selectedVehicle}
+          emptyMessage="Nenhum veículo encontrado"
         />
-
-        <ConfirmDeleteModal
-          isOpen={deleteModal.isOpen}
-          title="Excluir Veículo"
-          itemName={deleteModal.vehicleName}
-          isDeleting={isDeleting}
-          onConfirm={handleDeleteConfirm}
-          onCancel={handleDeleteCancel}
-        />
-
-        {/* Toast */}
-        {toast.show && (
-          <Toast
-            message={toast.message}
-            type={toast.type}
-            onClose={() => setToast({ ...toast, show: false })}
-          />
-        )}
       </div>
+
+      {/* Modals */}
+      <VehicleFormModal
+        isOpen={isFormModalOpen}
+        onClose={() => setIsFormModalOpen(false)}
+        onSubmit={handleCreateVehicle}
+        isLoading={isCreating}
+      />
+
+      <VehicleFormModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedVehicle(null);
+        }}
+        onSubmit={handleCreateVehicle}
+        isLoading={isCreating}
+        vehicle={selectedVehicle}
+      />
+
+      <ConfirmDeleteModal
+        isOpen={deleteModal.isOpen}
+        title="Excluir Veículo"
+        itemName={deleteModal.vehicleName}
+        isDeleting={isDeleting}
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+      />
+
+      {/* Toast */}
+      {toast.show && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast({ ...toast, show: false })}
+        />
+      )}
     </div>
   );
 }

@@ -10,7 +10,7 @@ import type { LoginCredentials } from "../types/auth.types";
 import { AuthCard } from "../components/ui/AuthCard";
 import { TabSwitcher } from "../components/ui/TabSwitcher";
 import { Input } from "../components/ui/Input";
-import { Button } from "../components/ui/Button";
+import { Button } from "@/shared/components/atoms";
 
 /**
  * Schema de validação Zod para login
@@ -160,6 +160,8 @@ export function LoginPage() {
                 type="submit"
                 fullWidth
                 isLoading={isSubmitting}
+                size="lg"
+                className="py-4"
                 aria-label="Log in to your account"
               >
                 Log In
