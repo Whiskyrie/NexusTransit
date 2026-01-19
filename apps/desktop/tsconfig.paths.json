@@ -5,7 +5,6 @@
 
 export default {
   compilerOptions: {
-    baseUrl: '.',
     paths: {
       '@/*': ['./src/*'],
       '@/core/*': ['./src/core/*'],

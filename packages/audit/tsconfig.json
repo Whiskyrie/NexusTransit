@@ -1,27 +1,13 @@
 {
     "extends": "../../tsconfig.json",
     "compilerOptions": {
-        "outDir": "./dist",
         "rootDir": "./src",
-        "composite": true,
+        "outDir": "./dist",
         "types": [
             "jest",
             "node"
-        ],
-        "paths": {
-            "@nexus/common": [
-                "../common/src"
-            ],
-            "@nexus/common/*": [
-                "../common/src/*"
-            ]
-        }
+        ]
     },
-    "references": [
-        {
-            "path": "../common"
-        }
-    ],
     "include": [
         "src/**/*"
     ],
