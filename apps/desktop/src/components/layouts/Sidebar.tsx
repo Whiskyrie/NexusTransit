@@ -136,7 +136,7 @@ function NavItem({ item, isCollapsed }: NavItemProps) {
       <li>
         <Tooltip.Provider>
           <Tooltip.Root>
-            <Tooltip.Trigger asChild>
+            <Tooltip.Trigger>
               <NavLink
                 to={item.path}
                 className={({ isActive }) =>
