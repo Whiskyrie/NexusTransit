@@ -12,12 +12,12 @@ import { AppSidebar } from "@/shared/components/organisms";
  */
 export function AppLayout() {
   return (
-    <div className="flex h-screen bg-white overflow-hidden">
+    <div className="flex h-screen bg-[#F5F5F0] overflow-hidden">
       {/* Sidebar Refatorada */}
       <AppSidebar />
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto bg-gray-50 p-6">
+      <main className="flex-1 overflow-y-auto bg-[#F5F5F0] p-6">
         <Outlet />
       </main>
     </div>

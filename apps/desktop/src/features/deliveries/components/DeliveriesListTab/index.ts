@@ -1,0 +1,1 @@
+export { DeliveriesListTab } from "./DeliveriesListTab";
