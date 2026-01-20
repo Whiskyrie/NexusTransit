@@ -6,6 +6,7 @@
     "lib": [
       "ES2023"
     ],
+    "rootDir": ".",
     "outDir": "./dist",
     "declaration": true,
     "declarationMap": true,
