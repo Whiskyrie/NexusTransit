@@ -202,7 +202,9 @@ describe('IncidentsService', () => {
 
       const result = await service.create(createDto, mockFiles);
 
-      expect(mockStorageService.uploadMultipleFiles).toHaveBeenCalledWith(mockFiles, 'incidents');
+      expect(mockStorageService.uploadMultipleFiles).toHaveBeenCalledWith(mockFiles, {
+        fileType: 'proofs',
+      });
       expect(result).toBeDefined();
     });
   });
