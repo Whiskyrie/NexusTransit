@@ -5,6 +5,7 @@ import { ClsService } from 'nestjs-cls';
 
 describe('CustomersController', () => {
   let controller: CustomersController;
+  let module: TestingModule;
 
   const mockCustomersService = {
     create: jest.fn(),
@@ -26,7 +27,7 @@ describe('CustomersController', () => {
   };
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       controllers: [CustomersController],
       providers: [
         {
@@ -45,5 +46,9 @@ describe('CustomersController', () => {
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
+  });
+
+  afterAll(async () => {
+    if (module) await module.close();
   });
 });

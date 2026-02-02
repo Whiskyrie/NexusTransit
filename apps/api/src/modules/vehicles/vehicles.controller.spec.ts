@@ -6,6 +6,7 @@ import { VehicleStatus, VehicleType, FuelType, LicensePlateType } from './enums'
 describe('VehiclesController', () => {
   let controller: VehiclesController;
   let service: VehiclesService;
+  let module: TestingModule;
 
   const mockVehiclesService = {
     create: jest.fn(),
@@ -33,7 +34,7 @@ describe('VehiclesController', () => {
   };
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       controllers: [VehiclesController],
       providers: [
         {
@@ -49,6 +50,12 @@ describe('VehiclesController', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    if (module) {
+      await module.close();
+    }
   });
 
   it('deve estar definido', () => {

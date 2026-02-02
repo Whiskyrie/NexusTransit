@@ -5,9 +5,10 @@ import { IncidentStatus } from '../enums/incident.enums';
 
 describe('IncidentStateMachineService', () => {
   let service: IncidentStateMachineService;
+  let module: TestingModule;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       providers: [IncidentStateMachineService],
     }).compile();
 
@@ -16,6 +17,10 @@ describe('IncidentStateMachineService', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    if (module) await module.close();
   });
 
   describe('validateTransition', () => {

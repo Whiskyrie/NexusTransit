@@ -11,6 +11,7 @@ import { RoleResponseDto } from './dto/role-response.dto';
 
 describe('RolesService', () => {
   let service: RolesService;
+  let module: TestingModule;
 
   const mockRepository = {
     create: jest.fn(),
@@ -42,7 +43,7 @@ describe('RolesService', () => {
   } as unknown as RoleEntity;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       providers: [
         RolesService,
         {
@@ -57,6 +58,12 @@ describe('RolesService', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    if (module) {
+      await module.close();
+    }
   });
 
   describe('create', () => {

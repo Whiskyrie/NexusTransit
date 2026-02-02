@@ -7,6 +7,7 @@ import { EventStatus } from '../enums/event-status.enum';
 
 describe('TrackingCalculationService', () => {
   let service: TrackingCalculationService;
+  let module: TestingModule;
 
   const mockEvent = {
     id: 'test-id',
@@ -40,7 +41,7 @@ describe('TrackingCalculationService', () => {
   };
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       providers: [
         TrackingCalculationService,
         {
@@ -55,6 +56,12 @@ describe('TrackingCalculationService', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    if (module) {
+      await module.close();
+    }
   });
 
   describe('calculateDistanceBetweenEvents', () => {

@@ -7,6 +7,7 @@ import { RouteStatus } from '../enums/route-status';
 
 describe('RouteMetricsService', () => {
   let service: RouteMetricsService;
+  let module: TestingModule;
 
   const mockRouteRepository = {
     findOne: jest.fn(),
@@ -21,7 +22,7 @@ describe('RouteMetricsService', () => {
   };
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       providers: [
         RouteMetricsService,
         {
@@ -40,6 +41,10 @@ describe('RouteMetricsService', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    if (module) await module.close();
   });
 
   describe('calculateRouteMetrics', () => {

@@ -43,6 +43,10 @@ describe('IncidentExportService', () => {
     jest.clearAllMocks();
   });
 
+  afterAll(async () => {
+    if (module) await module.close();
+  });
+
   describe('exportToCSV', () => {
     it('deve exportar incidentes para CSV', async () => {
       const filterDto: IncidentFilterDto = {};

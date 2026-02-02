@@ -16,6 +16,7 @@ import type { IncidentFilterDto } from './dto/incident-filter.dto';
 
 describe('IncidentsService', () => {
   let service: IncidentsService;
+  let module: TestingModule;
   let _incidentRepository: Repository<Incident>;
   let _attachmentRepository: Repository<IncidentAttachment>;
   let _commentRepository: Repository<IncidentComment>;
@@ -110,6 +111,12 @@ describe('IncidentsService', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    if (module) {
+      await module.close();
+    }
   });
 
   describe('create', () => {

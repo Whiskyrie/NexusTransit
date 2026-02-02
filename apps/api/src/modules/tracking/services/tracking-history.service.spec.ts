@@ -11,6 +11,7 @@ import {
 
 describe('TrackingHistoryService', () => {
   let service: TrackingHistoryService;
+  let module: TestingModule;
 
   const mockHistoryData: TrackingHistoryData = {
     delivery_id: 'delivery-123',
@@ -55,7 +56,7 @@ describe('TrackingHistoryService', () => {
   };
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       providers: [
         TrackingHistoryService,
         {
@@ -74,6 +75,12 @@ describe('TrackingHistoryService', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    if (module) {
+      await module.close();
+    }
   });
 
   describe('getHistory', () => {

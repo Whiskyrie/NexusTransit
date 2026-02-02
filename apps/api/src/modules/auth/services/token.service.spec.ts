@@ -6,6 +6,7 @@ import type { JwtPayload } from '@nexus/auth';
 
 describe('TokenService', () => {
   let service: TokenService;
+  let module: TestingModule;
 
   const mockJwtService = {
     sign: jest.fn(),
@@ -18,7 +19,7 @@ describe('TokenService', () => {
   };
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       providers: [
         TokenService,
         {
@@ -37,6 +38,10 @@ describe('TokenService', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    if (module) await module.close();
   });
 
   describe('generateAccessToken', () => {

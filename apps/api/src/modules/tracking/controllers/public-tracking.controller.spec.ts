@@ -10,6 +10,7 @@ import { EventStatus } from '../enums/event-status.enum';
 
 describe('PublicTrackingController', () => {
   let controller: PublicTrackingController;
+  let module: TestingModule;
 
   const mockDelivery = {
     id: 'delivery-123',
@@ -68,7 +69,7 @@ describe('PublicTrackingController', () => {
   };
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       controllers: [PublicTrackingController],
       providers: [
         {
@@ -91,6 +92,12 @@ describe('PublicTrackingController', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    if (module) {
+      await module.close();
+    }
   });
 
   describe('trackByCode', () => {

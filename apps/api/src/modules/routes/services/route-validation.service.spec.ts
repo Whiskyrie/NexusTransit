@@ -11,6 +11,7 @@ import { VehicleStatus } from '../../vehicles/enums/vehicle-status.enum';
 
 describe('RouteValidationService', () => {
   let service: RouteValidationService;
+  let module: TestingModule;
 
   const mockRouteRepository = {
     findOne: jest.fn(),
@@ -37,7 +38,7 @@ describe('RouteValidationService', () => {
   };
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       providers: [
         RouteValidationService,
         {
@@ -64,6 +65,12 @@ describe('RouteValidationService', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    if (module) {
+      await module.close();
+    }
   });
 
   describe('validateDriverAssignment', () => {

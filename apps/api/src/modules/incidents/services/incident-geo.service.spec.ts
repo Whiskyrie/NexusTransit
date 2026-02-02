@@ -46,6 +46,10 @@ describe('IncidentGeoService', () => {
     jest.clearAllMocks();
   });
 
+  afterAll(async () => {
+    if (module) await module.close();
+  });
+
   describe('findNearby', () => {
     it('deve buscar incidentes próximos com sucesso', async () => {
       const dto: NearbyIncidentsDto = {

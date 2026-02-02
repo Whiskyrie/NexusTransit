@@ -10,6 +10,7 @@ import { DistanceCalculatorService } from '@nexus/common';
 
 describe('RouteOptimizationService', () => {
   let service: RouteOptimizationService;
+  let module: TestingModule;
 
   const mockRouteRepository = {
     findOne: jest.fn(),
@@ -33,7 +34,7 @@ describe('RouteOptimizationService', () => {
   };
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       providers: [
         RouteOptimizationService,
         {
@@ -60,6 +61,10 @@ describe('RouteOptimizationService', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    if (module) await module.close();
   });
 
   describe('optimizeRoute', () => {

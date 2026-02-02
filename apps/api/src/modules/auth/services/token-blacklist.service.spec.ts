@@ -5,6 +5,7 @@ import { RedisService } from '@nexus/redis';
 
 describe('TokenBlacklistService', () => {
   let service: TokenBlacklistService;
+  let module: TestingModule;
   let redisService: jest.Mocked<RedisService>;
   let jwtService: jest.Mocked<JwtService>;
 
@@ -21,7 +22,7 @@ describe('TokenBlacklistService', () => {
   };
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       providers: [
         TokenBlacklistService,
         {
@@ -42,6 +43,10 @@ describe('TokenBlacklistService', () => {
     // Reset all mocks
     Object.values(mockRedisService).forEach(mock => mock.mockReset());
     Object.values(mockJwtService).forEach(mock => mock.mockReset());
+  });
+
+  afterAll(async () => {
+    if (module) await module.close();
   });
 
   it('should be defined', () => {

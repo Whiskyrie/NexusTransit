@@ -11,6 +11,7 @@ import type { BrazilianAddress } from '../interfaces/address.interface';
 
 describe('DeliveryValidationService', () => {
   let service: DeliveryValidationService;
+  let module: TestingModule;
   let _driverRepository: Repository<Driver>;
   let _vehicleRepository: Repository<Vehicle>;
   let _deliveryRepository: Repository<Delivery>;
@@ -31,7 +32,7 @@ describe('DeliveryValidationService', () => {
   };
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       providers: [
         DeliveryValidationService,
         {
@@ -57,6 +58,12 @@ describe('DeliveryValidationService', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    if (module) {
+      await module.close();
+    }
   });
 
   describe('validateDriverAvailability', () => {

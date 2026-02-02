@@ -61,7 +61,7 @@ describe('TrackingEventSubscriber', () => {
   };
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       providers: [
         TrackingEventSubscriber,
         {
@@ -88,6 +88,12 @@ describe('TrackingEventSubscriber', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    if (module) {
+      await module.close();
+    }
   });
 
   describe('listenTo', () => {

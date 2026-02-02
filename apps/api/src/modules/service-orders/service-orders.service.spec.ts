@@ -72,6 +72,7 @@ interface MockDelivery {
 
 describe('ServiceOrdersService', () => {
   let service: ServiceOrdersService;
+  let module: TestingModule;
 
   const mockRepository = {
     create: jest.fn(),
@@ -128,7 +129,7 @@ describe('ServiceOrdersService', () => {
   };
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       providers: [
         ServiceOrdersService,
         {
@@ -171,6 +172,12 @@ describe('ServiceOrdersService', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    if (module) {
+      await module.close();
+    }
   });
 
   it('should be defined', () => {

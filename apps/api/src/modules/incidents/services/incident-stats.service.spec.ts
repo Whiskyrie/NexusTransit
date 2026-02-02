@@ -10,6 +10,7 @@ import type { IncidentStatsFilterDto } from '../dto/incident-stats.dto';
 
 describe('IncidentStatsService', () => {
   let service: IncidentStatsService;
+  let module: TestingModule;
   let _incidentRepository: Repository<Incident>;
   let _statusHistoryRepository: Repository<IncidentStatusHistory>;
   let _cacheService: IncidentStatsCacheService;
@@ -102,6 +103,10 @@ describe('IncidentStatsService', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    if (module) await module.close();
   });
 
   describe('getGeneralStats', () => {

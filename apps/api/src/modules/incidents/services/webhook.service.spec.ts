@@ -84,6 +84,10 @@ describe('WebhookService', () => {
     jest.clearAllMocks();
   });
 
+  afterAll(async () => {
+    if (module) await module.close();
+  });
+
   describe('create', () => {
     it('deve criar webhook com sucesso', async () => {
       const createDto: CreateWebhookDto = {
