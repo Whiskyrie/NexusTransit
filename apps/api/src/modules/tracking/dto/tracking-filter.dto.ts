@@ -1,6 +1,6 @@
 import { IsOptional, IsEnum, IsDateString, IsUUID, IsString, Length } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { BaseFilterDto } from '../../../../../../packages/common/src/dto/base-filter.dto';
+import { BaseFilterDto } from '@nexus/common';
 import { TrackingStatus, TrackingEventType } from '../enums';
 
 /**

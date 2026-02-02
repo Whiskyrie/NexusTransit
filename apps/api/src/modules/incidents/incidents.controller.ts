@@ -42,7 +42,7 @@ import { IncidentResponseDto } from './dto/incident-response.dto';
 import { NearbyIncidentsDto } from './dto/nearby-incidents.dto';
 import { WithinAreaDto } from './dto/within-area.dto';
 import { IncidentWithDistanceDto } from './dto/incident-with-distance.dto';
-import { PaginatedResponseDto } from '../../../../../packages/common/src/dto/paginated-response.dto';
+import { PaginatedResponseDto } from '@nexus/common';
 import { IncidentStatus } from './enums/incident.enums';
 import { IncidentStatusHistory } from './entities/incident-status-history.entity';
 import { IncidentAttachment } from './entities/incident-attachment.entity';
