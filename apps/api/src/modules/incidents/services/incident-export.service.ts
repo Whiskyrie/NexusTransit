@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { createObjectCsvWriter } from 'csv-writer';
 import * as PDFDocument from 'pdfkit';
+import * as fs from 'fs';
 import { Incident } from '../entities/incident.entity';
 import { IncidentFilterDto } from '../dto/incident-filter.dto';
 import {
@@ -88,7 +89,6 @@ export class IncidentExportService {
     await csvWriter.writeRecords(csvData);
 
     // Ler arquivo e retornar buffer
-    const fs = await import('fs');
     const buffer = fs.readFileSync(csvPath);
 
     // Remover arquivo temporário

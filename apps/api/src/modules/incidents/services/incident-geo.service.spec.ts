@@ -9,10 +9,12 @@ import { IncidentStatus } from '../enums/incident.enums';
 
 describe('IncidentGeoService', () => {
   let service: IncidentGeoService;
+  let module: TestingModule;
   let _incidentRepository: Repository<Incident>;
 
-  const mockQueryBuilder = {
+  const createMockQueryBuilder = () => ({
     select: jest.fn().mockReturnThis(),
+    addSelect: jest.fn().mockReturnThis(),
     where: jest.fn().mockReturnThis(),
     andWhere: jest.fn().mockReturnThis(),
     setParameters: jest.fn().mockReturnThis(),
@@ -20,15 +22,20 @@ describe('IncidentGeoService', () => {
     limit: jest.fn().mockReturnThis(),
     getRawMany: jest.fn().mockResolvedValue([]),
     getMany: jest.fn().mockResolvedValue([]),
-  };
+  });
+
+  let mockQueryBuilder: ReturnType<typeof createMockQueryBuilder>;
 
   const mockIncidentRepository = {
-    createQueryBuilder: jest.fn(() => mockQueryBuilder),
+    createQueryBuilder: jest.fn(),
     findOne: jest.fn(),
   };
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    mockQueryBuilder = createMockQueryBuilder();
+    mockIncidentRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
+
+    module = await Test.createTestingModule({
       providers: [
         IncidentGeoService,
         {

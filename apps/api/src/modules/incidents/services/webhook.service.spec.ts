@@ -12,17 +12,24 @@ import { of } from 'rxjs';
 
 describe('WebhookService', () => {
   let service: WebhookService;
+  let module: TestingModule;
   let _webhookRepository: Repository<Webhook>;
   let _webhookLogRepository: Repository<WebhookLog>;
   let _httpService: HttpService;
 
-  const mockWebhookQueryBuilder = {
+  const createMockQueryBuilder = () => ({
+    where: jest.fn().mockReturnThis(),
     andWhere: jest.fn().mockReturnThis(),
     skip: jest.fn().mockReturnThis(),
     take: jest.fn().mockReturnThis(),
     orderBy: jest.fn().mockReturnThis(),
     getManyAndCount: jest.fn().mockResolvedValue([[], 0]),
-  };
+    getMany: jest.fn().mockResolvedValue([]),
+    getOne: jest.fn().mockResolvedValue(null),
+  });
+
+  let mockWebhookQueryBuilder: ReturnType<typeof createMockQueryBuilder>;
+  let mockWebhookLogQueryBuilder: ReturnType<typeof createMockQueryBuilder>;
 
   const mockWebhookRepository = {
     create: jest.fn(),
@@ -31,15 +38,7 @@ describe('WebhookService', () => {
     findOne: jest.fn(),
     softRemove: jest.fn(),
     findAndCount: jest.fn(),
-    createQueryBuilder: jest.fn(() => mockWebhookQueryBuilder),
-  };
-
-  const mockWebhookLogQueryBuilder = {
-    andWhere: jest.fn().mockReturnThis(),
-    skip: jest.fn().mockReturnThis(),
-    take: jest.fn().mockReturnThis(),
-    orderBy: jest.fn().mockReturnThis(),
-    getManyAndCount: jest.fn().mockResolvedValue([[], 0]),
+    createQueryBuilder: jest.fn(),
   };
 
   const mockWebhookLogRepository = {
@@ -48,7 +47,7 @@ describe('WebhookService', () => {
     find: jest.fn(),
     findOne: jest.fn(),
     findAndCount: jest.fn(),
-    createQueryBuilder: jest.fn(() => mockWebhookLogQueryBuilder),
+    createQueryBuilder: jest.fn(),
   };
 
   const mockHttpService = {
@@ -56,7 +55,13 @@ describe('WebhookService', () => {
   };
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    // Reset mock query builders for each test
+    mockWebhookQueryBuilder = createMockQueryBuilder();
+    mockWebhookLogQueryBuilder = createMockQueryBuilder();
+    mockWebhookRepository.createQueryBuilder.mockReturnValue(mockWebhookQueryBuilder);
+    mockWebhookLogRepository.createQueryBuilder.mockReturnValue(mockWebhookLogQueryBuilder);
+
+    module = await Test.createTestingModule({
       providers: [
         WebhookService,
         {
