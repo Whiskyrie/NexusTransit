@@ -39,7 +39,6 @@ describe('TrackingEventsService', () => {
   };
 
   const mockEvent: Partial<TrackingEvent> = {
-    id: 'test-id',
     event_id: 'evt-123',
     delivery_id: 'delivery-123',
     driver_id: 'driver-123',

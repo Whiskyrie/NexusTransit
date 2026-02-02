@@ -176,7 +176,14 @@ describe('TrackingCalculationService', () => {
 
   describe('calculateETA', () => {
     it('should calculate ETA based on average speed', async () => {
-      mockRepository.findOne.mockResolvedValue(mockEvent);
+      const eventWithCoords = {
+        ...mockEvent,
+        getCoordinates: jest.fn().mockReturnValue({
+          latitude: -23.5505,
+          longitude: -46.6333,
+        }),
+      };
+      mockRepository.findOne.mockResolvedValue(eventWithCoords);
 
       // Mockar calculateDistanceBetweenCoordinates
       jest.spyOn(service, 'calculateDistanceBetweenCoordinates').mockResolvedValue({
@@ -239,12 +246,20 @@ describe('TrackingCalculationService', () => {
 
   describe('isNearDestination', () => {
     it('should return true when near destination', async () => {
-      mockRepository.findOne.mockResolvedValue(mockEvent);
-      mockRepository.query = jest.fn().mockResolvedValue([
-        {
-          distance_meters: '1500',
-        },
-      ]);
+      const eventWithCoords = {
+        ...mockEvent,
+        getCoordinates: jest.fn().mockReturnValue({
+          latitude: -23.5505,
+          longitude: -46.6333,
+        }),
+      };
+      mockRepository.findOne.mockResolvedValue(eventWithCoords);
+
+      // Mock calculateDistanceBetweenCoordinates para retornar distância pequena (dentro do raio)
+      jest.spyOn(service, 'calculateDistanceBetweenCoordinates').mockResolvedValue({
+        distance_meters: 1500,
+        distance_km: 1.5,
+      });
 
       const result = await service.isNearDestination('delivery-123', -23.5515, -46.6343);
 
@@ -252,12 +267,20 @@ describe('TrackingCalculationService', () => {
     });
 
     it('should return false when far from destination', async () => {
-      mockRepository.findOne.mockResolvedValue(mockEvent);
-      mockRepository.query = jest.fn().mockResolvedValue([
-        {
-          distance_meters: '5000',
-        },
-      ]);
+      const eventWithCoords = {
+        ...mockEvent,
+        getCoordinates: jest.fn().mockReturnValue({
+          latitude: -23.5505,
+          longitude: -46.6333,
+        }),
+      };
+      mockRepository.findOne.mockResolvedValue(eventWithCoords);
+
+      // Mock calculateDistanceBetweenCoordinates para retornar distância grande (fora do raio)
+      jest.spyOn(service, 'calculateDistanceBetweenCoordinates').mockResolvedValue({
+        distance_meters: 5000,
+        distance_km: 5,
+      });
 
       const result = await service.isNearDestination('delivery-123', -23.5515, -46.6343);
 
@@ -275,12 +298,20 @@ describe('TrackingCalculationService', () => {
 
   describe('hasArrived', () => {
     it('should return true when within arrival radius', async () => {
-      mockRepository.findOne.mockResolvedValue(mockEvent);
-      mockRepository.query = jest.fn().mockResolvedValue([
-        {
-          distance_meters: '50',
-        },
-      ]);
+      const eventWithCoords = {
+        ...mockEvent,
+        getCoordinates: jest.fn().mockReturnValue({
+          latitude: -23.5505,
+          longitude: -46.6333,
+        }),
+      };
+      mockRepository.findOne.mockResolvedValue(eventWithCoords);
+
+      // Mock calculateDistanceBetweenCoordinates para retornar distância pequena (dentro do raio de chegada)
+      jest.spyOn(service, 'calculateDistanceBetweenCoordinates').mockResolvedValue({
+        distance_meters: 50,
+        distance_km: 0.05,
+      });
 
       const result = await service.hasArrived('delivery-123', -23.5505, -46.6333);
 
@@ -288,12 +319,20 @@ describe('TrackingCalculationService', () => {
     });
 
     it('should return false when outside arrival radius', async () => {
-      mockRepository.findOne.mockResolvedValue(mockEvent);
-      mockRepository.query = jest.fn().mockResolvedValue([
-        {
-          distance_meters: '200',
-        },
-      ]);
+      const eventWithCoords = {
+        ...mockEvent,
+        getCoordinates: jest.fn().mockReturnValue({
+          latitude: -23.5505,
+          longitude: -46.6333,
+        }),
+      };
+      mockRepository.findOne.mockResolvedValue(eventWithCoords);
+
+      // Mock calculateDistanceBetweenCoordinates para retornar distância maior que o raio
+      jest.spyOn(service, 'calculateDistanceBetweenCoordinates').mockResolvedValue({
+        distance_meters: 200,
+        distance_km: 0.2,
+      });
 
       const result = await service.hasArrived('delivery-123', -23.5505, -46.6333);
 

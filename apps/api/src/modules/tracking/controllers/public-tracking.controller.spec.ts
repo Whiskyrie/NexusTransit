@@ -193,10 +193,17 @@ describe('PublicTrackingController', () => {
 
   describe('getMapData', () => {
     it('should return map data with route', async () => {
-      const mockRouteEvents = [mockEvent, mockEvent]; // Precisa de 2+ eventos para calcular distância
+      const mockEventWithCoords = {
+        ...mockEvent,
+        getCoordinates: jest.fn().mockReturnValue({
+          latitude: -23.5505,
+          longitude: -46.6333,
+        }),
+      };
+      const mockRouteEvents = [mockEventWithCoords, mockEventWithCoords]; // Precisa de 2+ eventos para calcular distância
 
       mockDeliveryRepository.findOne.mockResolvedValue(mockDelivery);
-      mockTrackingEventsService.findLatestByTrackingCode.mockResolvedValue(mockEvent);
+      mockTrackingEventsService.findLatestByTrackingCode.mockResolvedValue(mockEventWithCoords);
       mockTrackingEventsService.findRoutePointsByTrackingCode.mockResolvedValue(mockRouteEvents);
       mockTrackingCalculationService.calculateTotalDistance.mockResolvedValue({
         distance_meters: 15000,
@@ -241,10 +248,17 @@ describe('PublicTrackingController', () => {
     });
 
     it('should calculate remaining distance when coordinates available', async () => {
-      const mockRouteEvents = [mockEvent, mockEvent]; // Precisa de 2+ eventos
+      const mockEventWithCoords = {
+        ...mockEvent,
+        getCoordinates: jest.fn().mockReturnValue({
+          latitude: -23.5505,
+          longitude: -46.6333,
+        }),
+      };
+      const mockRouteEvents = [mockEventWithCoords, mockEventWithCoords]; // Precisa de 2+ eventos
 
       mockDeliveryRepository.findOne.mockResolvedValue(mockDelivery);
-      mockTrackingEventsService.findLatestByTrackingCode.mockResolvedValue(mockEvent);
+      mockTrackingEventsService.findLatestByTrackingCode.mockResolvedValue(mockEventWithCoords);
       mockTrackingEventsService.findRoutePointsByTrackingCode.mockResolvedValue(mockRouteEvents);
       mockTrackingCalculationService.calculateTotalDistance.mockResolvedValue({
         distance_meters: 15000,

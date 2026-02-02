@@ -11,9 +11,9 @@ import { type InsertEvent, type UpdateEvent } from 'typeorm';
 
 describe('TrackingEventSubscriber', () => {
   let subscriber: TrackingEventSubscriber;
+  let module: TestingModule;
 
   const mockEvent: Partial<TrackingEvent> = {
-    id: 'test-id',
     event_id: 'evt-123',
     delivery_id: 'delivery-123',
     driver_id: 'driver-123',

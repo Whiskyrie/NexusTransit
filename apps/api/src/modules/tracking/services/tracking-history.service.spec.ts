@@ -187,17 +187,21 @@ describe('TrackingHistoryService', () => {
 
   describe('refreshMaterializedView', () => {
     it('should refresh the materialized view', async () => {
-      mockDataSource.query.mockResolvedValue([]);
+      // First call checks if view exists, second call does the refresh
+      mockDataSource.query.mockResolvedValueOnce([{ exists: true }]).mockResolvedValueOnce([]);
 
       await service.refreshMaterializedView();
 
-      expect(mockDataSource.query).toHaveBeenCalledWith(
+      expect(mockDataSource.query).toHaveBeenCalledTimes(2);
+      expect(mockDataSource.query).toHaveBeenLastCalledWith(
         'REFRESH MATERIALIZED VIEW CONCURRENTLY tracking_history',
       );
     });
 
     it('should handle refresh errors', async () => {
-      mockDataSource.query.mockRejectedValue(new Error('Refresh failed'));
+      mockDataSource.query
+        .mockResolvedValueOnce([{ exists: true }])
+        .mockRejectedValueOnce(new Error('Refresh failed'));
 
       await expect(service.refreshMaterializedView()).rejects.toThrow('Refresh failed');
     });
