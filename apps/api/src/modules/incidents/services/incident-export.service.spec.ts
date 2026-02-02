@@ -8,24 +8,30 @@ import { IncidentStatus, IncidentSeverity, IncidentType } from '../enums/inciden
 
 describe('IncidentExportService', () => {
   let service: IncidentExportService;
+  let module: TestingModule;
   let _incidentRepository: Repository<Incident>;
 
-  const mockQueryBuilder = {
+  const createMockQueryBuilder = () => ({
     leftJoinAndSelect: jest.fn().mockReturnThis(),
     where: jest.fn().mockReturnThis(),
     andWhere: jest.fn().mockReturnThis(),
     orderBy: jest.fn().mockReturnThis(),
     getMany: jest.fn().mockResolvedValue([]),
-  };
+  });
+
+  let mockQueryBuilder: ReturnType<typeof createMockQueryBuilder>;
 
   const mockIncidentRepository = {
     find: jest.fn(),
     findOne: jest.fn(),
-    createQueryBuilder: jest.fn(() => mockQueryBuilder),
+    createQueryBuilder: jest.fn(),
   };
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    mockQueryBuilder = createMockQueryBuilder();
+    mockIncidentRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
+
+    module = await Test.createTestingModule({
       providers: [
         IncidentExportService,
         {
@@ -41,6 +47,10 @@ describe('IncidentExportService', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    if (module) await module.close();
   });
 
   describe('exportToCSV', () => {

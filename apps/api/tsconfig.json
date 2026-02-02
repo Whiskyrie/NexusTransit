@@ -6,7 +6,6 @@
     "lib": [
       "ES2023"
     ],
-    "rootDir": ".",
     "outDir": "./dist",
     "declaration": true,
     "declarationMap": true,
@@ -14,7 +13,7 @@
     "removeComments": true,
     "incremental": true,
     "skipLibCheck": true,
-    "isolatedModules": false,
+    "isolatedModules": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
@@ -70,10 +69,13 @@
         "./src/filters/*"
       ],
       "@nexus/common": [
-        "../../packages/common/src/index.ts"
+        "../../packages/common/dist/index.d.ts"
       ],
       "@nexus/geo-services": [
-        "../../packages/geoServices/src/index.ts"
+        "../../packages/geoServices/dist/index.d.ts"
+      ],
+      "@nexus/storage": [
+        "../../packages/storage/dist/index.d.ts"
       ]
     }
   },

@@ -6,9 +6,10 @@ jest.mock('bcrypt');
 
 describe('PasswordService', () => {
   let service: PasswordService;
+  let module: TestingModule;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       providers: [PasswordService],
     }).compile();
 
@@ -17,6 +18,10 @@ describe('PasswordService', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    if (module) await module.close();
   });
 
   describe('hashPassword', () => {

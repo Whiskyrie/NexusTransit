@@ -12,7 +12,7 @@ import { IncidentComment } from './entities/incident-comment.entity';
 import { IncidentStatusHistory } from './entities/incident-status-history.entity';
 import { Webhook } from './entities/webhook.entity';
 import { WebhookLog } from './entities/webhook-log.entity';
-import { StorageModule } from '../../../../../packages/storage/src/storage.module';
+import { StorageModule } from '@nexus/storage';
 
 // Services
 import { IncidentStateMachineService } from './services/incident-state-machine.service';

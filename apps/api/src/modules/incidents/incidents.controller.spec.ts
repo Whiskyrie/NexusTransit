@@ -13,6 +13,7 @@ import type { Response } from 'express';
 
 describe('IncidentsController', () => {
   let controller: IncidentsController;
+  let module: TestingModule;
   let _incidentsService: IncidentsService;
   let _geoService: IncidentGeoService;
   let _exportService: IncidentExportService;
@@ -44,7 +45,7 @@ describe('IncidentsController', () => {
   };
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       controllers: [IncidentsController],
       providers: [
         {
@@ -70,6 +71,12 @@ describe('IncidentsController', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    if (module) {
+      await module.close();
+    }
   });
 
   describe('create', () => {
@@ -200,6 +207,11 @@ describe('IncidentsController', () => {
       const newStatus = IncidentStatus.INVESTIGATING;
       const resolutionNotes = 'Investigação iniciada';
 
+      const updateStatusDto = {
+        status: newStatus,
+        resolution_notes: resolutionNotes,
+      };
+
       const mockUpdated = {
         id: incidentId,
         status: newStatus,
@@ -207,7 +219,7 @@ describe('IncidentsController', () => {
 
       mockIncidentsService.updateStatus.mockResolvedValue(mockUpdated);
 
-      const result = await controller.updateStatus(incidentId, newStatus, resolutionNotes);
+      const result = await controller.updateStatus(incidentId, updateStatusDto);
 
       expect(result.status).toBe(newStatus);
       expect(mockIncidentsService.updateStatus).toHaveBeenCalledWith(

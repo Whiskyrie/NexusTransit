@@ -10,6 +10,7 @@ import type { IncidentStatsFilterDto } from '../dto/incident-stats.dto';
 
 describe('IncidentStatsService', () => {
   let service: IncidentStatsService;
+  let module: TestingModule;
   let _incidentRepository: Repository<Incident>;
   let _statusHistoryRepository: Repository<IncidentStatusHistory>;
   let _cacheService: IncidentStatsCacheService;
@@ -27,28 +28,33 @@ describe('IncidentStatsService', () => {
     clone: jest.Mock;
   }
 
-  const mockQueryBuilder: MockQueryBuilder = {
-    select: jest.fn().mockReturnThis(),
-    addSelect: jest.fn().mockReturnThis(),
-    where: jest.fn().mockReturnThis(),
-    andWhere: jest.fn().mockReturnThis(),
-    groupBy: jest.fn().mockReturnThis(),
-    orderBy: jest.fn().mockReturnThis(),
-    getRawMany: jest.fn().mockResolvedValue([]),
-    getRawOne: jest.fn().mockResolvedValue({}),
-    getCount: jest.fn().mockResolvedValue(0),
-    clone: jest.fn(),
+  const createMockQueryBuilder = (): MockQueryBuilder => {
+    const qb: MockQueryBuilder = {
+      select: jest.fn().mockReturnThis(),
+      addSelect: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      groupBy: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      getRawMany: jest.fn().mockResolvedValue([]),
+      getRawOne: jest.fn().mockResolvedValue({}),
+      getCount: jest.fn().mockResolvedValue(0),
+      clone: jest.fn(),
+    };
+    // Each clone returns a new independent mock query builder
+    qb.clone.mockImplementation(() => createMockQueryBuilder());
+    return qb;
   };
 
-  mockQueryBuilder.clone.mockReturnValue(mockQueryBuilder);
+  let mockQueryBuilder: MockQueryBuilder;
 
   const mockIncidentRepository = {
-    createQueryBuilder: jest.fn(() => mockQueryBuilder),
+    createQueryBuilder: jest.fn(),
     count: jest.fn(),
     findAndCount: jest.fn(),
   };
 
-  const mockStatusHistoryQueryBuilder = {
+  const createStatusHistoryQueryBuilder = () => ({
     select: jest.fn().mockReturnThis(),
     addSelect: jest.fn().mockReturnThis(),
     innerJoin: jest.fn().mockReturnThis(),
@@ -57,12 +63,18 @@ describe('IncidentStatsService', () => {
     andWhere: jest.fn().mockReturnThis(),
     groupBy: jest.fn().mockReturnThis(),
     orderBy: jest.fn().mockReturnThis(),
-    getRawOne: jest.fn().mockResolvedValue({}),
+    getRawOne: jest.fn().mockResolvedValue({
+      avg_response_time_minutes: 30,
+      min_response_time_minutes: 5,
+      max_response_time_minutes: 120,
+    }),
     getRawMany: jest.fn().mockResolvedValue([]),
-  };
+  });
+
+  let mockStatusHistoryQueryBuilder: ReturnType<typeof createStatusHistoryQueryBuilder>;
 
   const mockStatusHistoryRepository = {
-    createQueryBuilder: jest.fn(() => mockStatusHistoryQueryBuilder),
+    createQueryBuilder: jest.fn(),
     find: jest.fn(),
   };
 
@@ -74,7 +86,13 @@ describe('IncidentStatsService', () => {
   };
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    // Reset mock query builders for each test
+    mockQueryBuilder = createMockQueryBuilder();
+    mockStatusHistoryQueryBuilder = createStatusHistoryQueryBuilder();
+    mockIncidentRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
+    mockStatusHistoryRepository.createQueryBuilder.mockReturnValue(mockStatusHistoryQueryBuilder);
+
+    module = await Test.createTestingModule({
       providers: [
         IncidentStatsService,
         {
@@ -102,6 +120,10 @@ describe('IncidentStatsService', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    if (module) await module.close();
   });
 
   describe('getGeneralStats', () => {

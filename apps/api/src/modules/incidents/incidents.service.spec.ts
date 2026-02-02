@@ -16,6 +16,7 @@ import type { IncidentFilterDto } from './dto/incident-filter.dto';
 
 describe('IncidentsService', () => {
   let service: IncidentsService;
+  let module: TestingModule;
   let _incidentRepository: Repository<Incident>;
   let _attachmentRepository: Repository<IncidentAttachment>;
   let _commentRepository: Repository<IncidentComment>;
@@ -58,12 +59,12 @@ describe('IncidentsService', () => {
   const mockStateMachineService = {
     validateTransition: jest.fn(),
     getPossibleTransitions: jest.fn(),
-    transition: jest.fn().mockResolvedValue({ status: IncidentStatus.INVESTIGATING }),
+    transition: jest.fn().mockReturnValue({ success: true, status: IncidentStatus.INVESTIGATING }),
     canTransition: jest.fn(),
   };
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       providers: [
         IncidentsService,
         {
@@ -110,6 +111,12 @@ describe('IncidentsService', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    if (module) {
+      await module.close();
+    }
   });
 
   describe('create', () => {
@@ -195,7 +202,9 @@ describe('IncidentsService', () => {
 
       const result = await service.create(createDto, mockFiles);
 
-      expect(mockStorageService.uploadMultipleFiles).toHaveBeenCalledWith(mockFiles, 'incidents');
+      expect(mockStorageService.uploadMultipleFiles).toHaveBeenCalledWith(mockFiles, {
+        fileType: 'proofs',
+      });
       expect(result).toBeDefined();
     });
   });
@@ -286,7 +295,7 @@ describe('IncidentsService', () => {
       expect(result.id).toBe(mockIncident.id);
       expect(mockIncidentRepository.findOne).toHaveBeenCalledWith({
         where: { id: '123e4567-e89b-12d3-a456-426614174000' },
-        relations: ['attachments', 'comments'],
+        relations: ['attachments', 'comments', 'driver', 'vehicle'],
       });
     });
 
@@ -350,6 +359,10 @@ describe('IncidentsService', () => {
       mockStateMachineService.validateTransition.mockReturnValue({
         valid: true,
         message: 'Transição válida',
+      });
+      mockStateMachineService.transition.mockReturnValue({
+        success: true,
+        status: newStatus,
       });
       mockIncidentRepository.save.mockResolvedValue({
         ...mockIncident,

@@ -11,6 +11,7 @@ import { type BatchTrackingEventsDto } from '../dto/batch-tracking-events.dto';
 
 describe('TrackingEventsService', () => {
   let service: TrackingEventsService;
+  let module: TestingModule;
 
   const createMockQueryBuilder = () => ({
     leftJoinAndSelect: jest.fn().mockReturnThis(),
@@ -38,7 +39,6 @@ describe('TrackingEventsService', () => {
   };
 
   const mockEvent: Partial<TrackingEvent> = {
-    id: 'test-id',
     event_id: 'evt-123',
     delivery_id: 'delivery-123',
     driver_id: 'driver-123',
@@ -60,7 +60,7 @@ describe('TrackingEventsService', () => {
     mockQueryBuilder = createMockQueryBuilder();
     mockRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
 
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       providers: [
         TrackingEventsService,
         {
@@ -75,6 +75,12 @@ describe('TrackingEventsService', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    if (module) {
+      await module.close();
+    }
   });
 
   describe('create', () => {

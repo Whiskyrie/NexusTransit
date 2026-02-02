@@ -11,6 +11,7 @@ import type { BrazilianAddress } from '../interfaces/address.interface';
 
 describe('DeliveryValidationService', () => {
   let service: DeliveryValidationService;
+  let module: TestingModule;
   let _driverRepository: Repository<Driver>;
   let _vehicleRepository: Repository<Vehicle>;
   let _deliveryRepository: Repository<Delivery>;
@@ -31,7 +32,7 @@ describe('DeliveryValidationService', () => {
   };
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       providers: [
         DeliveryValidationService,
         {
@@ -57,6 +58,12 @@ describe('DeliveryValidationService', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    if (module) {
+      await module.close();
+    }
   });
 
   describe('validateDriverAvailability', () => {
@@ -355,6 +362,10 @@ describe('DeliveryValidationService', () => {
 
   describe('validateDeliveryCreation', () => {
     it('deve validar criação de entrega completa', async () => {
+      // Usar data bem no futuro para garantir que não será considerada passado
+      const futureDate = new Date();
+      futureDate.setFullYear(futureDate.getFullYear() + 1);
+
       const deliveryData = {
         weight: 50,
         driverId: 'driver-123',
@@ -375,7 +386,7 @@ describe('DeliveryValidationService', () => {
           state: 'PR',
           postal_code: '80420-000',
         },
-        scheduled_delivery_at: new Date('2025-12-20T18:00:00Z'),
+        scheduled_delivery_at: futureDate,
       };
 
       const mockDriver = {

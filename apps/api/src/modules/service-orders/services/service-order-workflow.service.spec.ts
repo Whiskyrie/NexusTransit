@@ -5,9 +5,10 @@ import { BadRequestException } from '@nestjs/common';
 
 describe('ServiceOrderWorkflowService', () => {
   let service: ServiceOrderWorkflowService;
+  let module: TestingModule;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       providers: [ServiceOrderWorkflowService],
     }).compile();
 
@@ -16,6 +17,10 @@ describe('ServiceOrderWorkflowService', () => {
 
   it('should be defined', () => {
     expect(service).toBeDefined();
+  });
+
+  afterAll(async () => {
+    if (module) await module.close();
   });
 
   describe('canTransition', () => {

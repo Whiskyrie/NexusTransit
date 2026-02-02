@@ -11,6 +11,7 @@ import { EventStatus, EventType } from '../enums';
 
 describe('TrackingCacheService', () => {
   let service: TrackingCacheService;
+  let module: TestingModule;
 
   const mockRedisService = {
     get: jest.fn(),
@@ -60,7 +61,7 @@ describe('TrackingCacheService', () => {
   };
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       providers: [
         TrackingCacheService,
         {
@@ -79,6 +80,12 @@ describe('TrackingCacheService', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    if (module) {
+      await module.close();
+    }
   });
 
   describe('getTrackingData', () => {

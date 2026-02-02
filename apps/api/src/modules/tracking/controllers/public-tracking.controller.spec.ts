@@ -10,6 +10,7 @@ import { EventStatus } from '../enums/event-status.enum';
 
 describe('PublicTrackingController', () => {
   let controller: PublicTrackingController;
+  let module: TestingModule;
 
   const mockDelivery = {
     id: 'delivery-123',
@@ -68,7 +69,7 @@ describe('PublicTrackingController', () => {
   };
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       controllers: [PublicTrackingController],
       providers: [
         {
@@ -91,6 +92,12 @@ describe('PublicTrackingController', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    if (module) {
+      await module.close();
+    }
   });
 
   describe('trackByCode', () => {
@@ -186,10 +193,17 @@ describe('PublicTrackingController', () => {
 
   describe('getMapData', () => {
     it('should return map data with route', async () => {
-      const mockRouteEvents = [mockEvent, mockEvent]; // Precisa de 2+ eventos para calcular distância
+      const mockEventWithCoords = {
+        ...mockEvent,
+        getCoordinates: jest.fn().mockReturnValue({
+          latitude: -23.5505,
+          longitude: -46.6333,
+        }),
+      };
+      const mockRouteEvents = [mockEventWithCoords, mockEventWithCoords]; // Precisa de 2+ eventos para calcular distância
 
       mockDeliveryRepository.findOne.mockResolvedValue(mockDelivery);
-      mockTrackingEventsService.findLatestByTrackingCode.mockResolvedValue(mockEvent);
+      mockTrackingEventsService.findLatestByTrackingCode.mockResolvedValue(mockEventWithCoords);
       mockTrackingEventsService.findRoutePointsByTrackingCode.mockResolvedValue(mockRouteEvents);
       mockTrackingCalculationService.calculateTotalDistance.mockResolvedValue({
         distance_meters: 15000,
@@ -234,10 +248,17 @@ describe('PublicTrackingController', () => {
     });
 
     it('should calculate remaining distance when coordinates available', async () => {
-      const mockRouteEvents = [mockEvent, mockEvent]; // Precisa de 2+ eventos
+      const mockEventWithCoords = {
+        ...mockEvent,
+        getCoordinates: jest.fn().mockReturnValue({
+          latitude: -23.5505,
+          longitude: -46.6333,
+        }),
+      };
+      const mockRouteEvents = [mockEventWithCoords, mockEventWithCoords]; // Precisa de 2+ eventos
 
       mockDeliveryRepository.findOne.mockResolvedValue(mockDelivery);
-      mockTrackingEventsService.findLatestByTrackingCode.mockResolvedValue(mockEvent);
+      mockTrackingEventsService.findLatestByTrackingCode.mockResolvedValue(mockEventWithCoords);
       mockTrackingEventsService.findRoutePointsByTrackingCode.mockResolvedValue(mockRouteEvents);
       mockTrackingCalculationService.calculateTotalDistance.mockResolvedValue({
         distance_meters: 15000,

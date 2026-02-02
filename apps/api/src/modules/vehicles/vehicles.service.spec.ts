@@ -17,6 +17,7 @@ import {
 
 describe('VehiclesService', () => {
   let service: VehiclesService;
+  let module: TestingModule;
 
   const mockVehicleRepository = {
     create: jest.fn(),
@@ -53,7 +54,7 @@ describe('VehiclesService', () => {
   };
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       providers: [
         VehiclesService,
         {
@@ -80,6 +81,12 @@ describe('VehiclesService', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    if (module) {
+      await module.close();
+    }
   });
 
   describe('create', () => {

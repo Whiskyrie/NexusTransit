@@ -13,23 +13,20 @@ module.exports = {
   maxWorkers: process.env.CI ? 2 : "50%",
   workerIdleMemoryLimit: "512MB",
 
-  // Performance optimization
-  globals: {
-    "ts-jest": {
-      isolatedModules: true,
-      tsconfig: {
-        types: ["jest", "node"],
-      },
-    },
-  },
-
   // File patterns
   moduleFileExtensions: ["js", "json", "ts"],
   testRegex: ".*\\.spec\\.ts$",
 
-  // Transform
+  // Transform - ts-jest config moved here (globals is deprecated)
   transform: {
-    "^.+\\.(t|j)s$": "ts-jest",
+    "^.+\\.(t|j)s$": [
+      "ts-jest",
+      {
+        tsconfig: {
+          types: ["jest", "node"],
+        },
+      },
+    ],
   },
 
   // Coverage
