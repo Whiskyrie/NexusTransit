@@ -17,54 +17,73 @@ import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { Card } from "../../atoms/Card";
 import { cn } from "../../../utils";
 import type { MetricCardProps } from "./MetricCard.types";
+import { tokens } from "@/styles/tokens";
 
 const variantStyles = {
   primary: {
-    icon: "text-blue-900 bg-blue-50",
+    icon: {
+      bg: tokens.colors.status.info.light,
+      text: tokens.colors.status.info.dark,
+    },
     trend: {
-      up: "text-green-600",
-      down: "text-red-600",
-      neutral: "text-gray-500",
+      up: tokens.colors.status.success.dark,
+      down: tokens.colors.status.error.dark,
+      neutral: tokens.colors.text.secondary,
     },
   },
   secondary: {
-    icon: "text-gray-700 bg-gray-100",
+    icon: {
+      bg: tokens.colors.background.tertiary,
+      text: tokens.colors.text.primary,
+    },
     trend: {
-      up: "text-green-600",
-      down: "text-red-600",
-      neutral: "text-gray-500",
+      up: tokens.colors.status.success.dark,
+      down: tokens.colors.status.error.dark,
+      neutral: tokens.colors.text.secondary,
     },
   },
   success: {
-    icon: "text-green-700 bg-green-50",
+    icon: {
+      bg: tokens.colors.status.success.light,
+      text: tokens.colors.status.success.dark,
+    },
     trend: {
-      up: "text-green-600",
-      down: "text-red-600",
-      neutral: "text-gray-500",
+      up: tokens.colors.status.success.dark,
+      down: tokens.colors.status.error.dark,
+      neutral: tokens.colors.text.secondary,
     },
   },
   warning: {
-    icon: "text-amber-700 bg-amber-50",
+    icon: {
+      bg: tokens.colors.status.warning.light,
+      text: tokens.colors.status.warning.dark,
+    },
     trend: {
-      up: "text-green-600",
-      down: "text-red-600",
-      neutral: "text-gray-500",
+      up: tokens.colors.status.success.dark,
+      down: tokens.colors.status.error.dark,
+      neutral: tokens.colors.text.secondary,
     },
   },
   error: {
-    icon: "text-red-700 bg-red-50",
+    icon: {
+      bg: tokens.colors.status.error.light,
+      text: tokens.colors.status.error.dark,
+    },
     trend: {
-      up: "text-green-600",
-      down: "text-red-600",
-      neutral: "text-gray-500",
+      up: tokens.colors.status.success.dark,
+      down: tokens.colors.status.error.dark,
+      neutral: tokens.colors.text.secondary,
     },
   },
   info: {
-    icon: "text-blue-700 bg-blue-50",
+    icon: {
+      bg: tokens.colors.status.info.light,
+      text: tokens.colors.status.info.dark,
+    },
     trend: {
-      up: "text-green-600",
-      down: "text-red-600",
-      neutral: "text-gray-500",
+      up: tokens.colors.status.success.dark,
+      down: tokens.colors.status.error.dark,
+      neutral: tokens.colors.text.secondary,
     },
   },
 };
@@ -100,13 +119,22 @@ export const MetricCard = memo<MetricCardProps>(function MetricCard({
     >
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <p className="text-sm text-gray-600 mb-1">{label}</p>
-          <p className="text-2xl font-bold text-gray-900">{value}</p>
+          <p className="text-sm mb-1" style={{ color: tokens.colors.text.secondary }}>
+            {label}
+          </p>
+          <p className="text-2xl font-bold" style={{ color: tokens.colors.text.primary }}>
+            {value}
+          </p>
 
           {trend && (
             <div className="flex items-center gap-1 mt-2">
-              {TrendIcon && <TrendIcon className={cn("w-4 h-4", styles.trend[trend.direction])} />}
-              <span className={cn("text-sm font-medium", styles.trend[trend.direction])}>
+              {TrendIcon && (
+                <TrendIcon className="w-4 h-4" style={{ color: styles.trend[trend.direction] }} />
+              )}
+              <span
+                className="text-sm font-medium"
+                style={{ color: styles.trend[trend.direction] }}
+              >
                 {trend.value}
               </span>
             </div>
@@ -114,7 +142,13 @@ export const MetricCard = memo<MetricCardProps>(function MetricCard({
         </div>
 
         {Icon && (
-          <div className={cn("p-3 rounded-xl", styles.icon)}>
+          <div
+            className="p-3 rounded-xl"
+            style={{
+              backgroundColor: styles.icon.bg,
+              color: styles.icon.text,
+            }}
+          >
             <Icon className="w-5 h-5" />
           </div>
         )}

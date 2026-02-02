@@ -4,47 +4,48 @@ import { useNavigate } from "react-router-dom";
 import { memo } from "react";
 import type { Delivery } from "../../types/delivery.types";
 import { DeliveryDetailsModal } from "../deliveries/DeliveryDetailsModal";
+import { tokens } from "@/styles/tokens";
 
 interface ShipmentsOverviewProps {
   deliveries: Delivery[];
   isLoading?: boolean;
 }
 
-// Configuração de cores baseada no JSON
+// Configuração de cores usando design tokens
 const statusConfig = {
   DELIVERED: {
-    bg: "#ECFDF5",
-    text: "#065F46",
+    bg: tokens.colors.status.success.light,
+    text: tokens.colors.status.success.dark,
     label: "Entregue",
     icon: CheckCircle,
   },
   IN_TRANSIT: {
-    bg: "#F5F5F0",
-    text: "#1A1A1A",
+    bg: tokens.colors.metric.secondary.bg,
+    text: tokens.colors.text.primary,
     label: "Em trânsito",
     icon: Truck,
   },
   OUT_FOR_DELIVERY: {
-    bg: "#FEF3C7",
-    text: "#92400E",
+    bg: tokens.colors.status.warning.light,
+    text: tokens.colors.status.warning.dark,
     label: "Saiu para entrega",
     icon: Package,
   },
   PICKED_UP: {
-    bg: "#FEF3C7",
-    text: "#92400E",
+    bg: tokens.colors.status.warning.light,
+    text: tokens.colors.status.warning.dark,
     label: "Coletado",
     icon: Package,
   },
   PENDING: {
-    bg: "#F3F4F6",
-    text: "#374151",
+    bg: tokens.colors.background.tertiary,
+    text: tokens.colors.text.secondary,
     label: "Processando",
     icon: Clock,
   },
   ASSIGNED: {
-    bg: "#F3F4F6",
-    text: "#374151",
+    bg: tokens.colors.background.tertiary,
+    text: tokens.colors.text.secondary,
     label: "Atribuído",
     icon: Package,
   },
@@ -83,9 +84,11 @@ export const ShipmentsOverview = memo(function ShipmentsOverview({
   return (
     <>
       <div
-        className="bg-white rounded-2xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-[#E5E7EB]"
+        className="rounded-2xl p-6"
         style={{
-          fontFamily: "'Inter', sans-serif",
+          backgroundColor: tokens.colors.background.card,
+          boxShadow: tokens.shadows.card,
+          border: `1px solid ${tokens.colors.border.default}`,
         }}
       >
         {/* Header */}
@@ -94,9 +97,7 @@ export const ShipmentsOverview = memo(function ShipmentsOverview({
             <h3
               className="text-base font-semibold mb-1"
               style={{
-                fontSize: "16px",
-                fontWeight: 600,
-                color: "#1A1F2E",
+                color: tokens.colors.text.primary,
               }}
             >
               Entregas Recentes
@@ -104,9 +105,7 @@ export const ShipmentsOverview = memo(function ShipmentsOverview({
             <p
               className="text-xs"
               style={{
-                fontSize: "12px",
-                fontWeight: 400,
-                color: "#6B7280",
+                color: tokens.colors.text.secondary,
               }}
             >
               {recentDeliveries.length} entregas ativas
@@ -115,12 +114,14 @@ export const ShipmentsOverview = memo(function ShipmentsOverview({
 
           <button
             onClick={() => navigate("/deliveries")}
-            className="px-4 py-2.5 bg-[#1A1A1A] text-white rounded-xl text-sm font-medium hover:bg-[#2A2A2A] transition-colors"
+            className="px-4 py-2.5 rounded-xl text-sm font-medium transition-colors"
             style={{
-              fontSize: "13px",
-              fontWeight: 500,
+              backgroundColor: tokens.colors.metric.primary.bg,
+              color: tokens.colors.metric.primary.text,
               cursor: "pointer",
             }}
+            onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
+            onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
           >
             Ver todas
           </button>
@@ -132,7 +133,8 @@ export const ShipmentsOverview = memo(function ShipmentsOverview({
             {[...Array(5)].map((_, i) => (
               <div
                 key={i}
-                className="flex items-center gap-4 p-4 bg-[#F5F5F0] rounded-xl animate-pulse"
+                className="flex items-center gap-4 p-4 rounded-xl animate-pulse"
+                style={{ backgroundColor: tokens.colors.background.secondary }}
               >
                 <div className="w-10 h-10 bg-gray-200 rounded-lg" />
                 <div className="flex-1 space-y-2">
@@ -145,13 +147,11 @@ export const ShipmentsOverview = memo(function ShipmentsOverview({
           </div>
         ) : recentDeliveries.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <Package className="w-12 h-12 text-gray-300 mb-3" />
+            <Package className="w-12 h-12 mb-3" style={{ color: tokens.colors.text.tertiary }} />
             <p
-              className="text-sm"
+              className="text-sm font-medium"
               style={{
-                fontSize: "14px",
-                fontWeight: 500,
-                color: "#1A1F2E",
+                color: tokens.colors.text.primary,
               }}
             >
               Nenhuma entrega encontrada
@@ -159,9 +159,7 @@ export const ShipmentsOverview = memo(function ShipmentsOverview({
             <p
               className="text-xs mt-1"
               style={{
-                fontSize: "12px",
-                fontWeight: 400,
-                color: "#6B7280",
+                color: tokens.colors.text.secondary,
               }}
             >
               Comece criando uma nova entrega
@@ -176,15 +174,21 @@ export const ShipmentsOverview = memo(function ShipmentsOverview({
               return (
                 <div
                   key={delivery.id}
-                  className="flex items-center gap-4 p-4 bg-[#F5F5F0] rounded-xl hover:bg-[#F9FAFB] transition-colors cursor-pointer"
+                  className="flex items-center gap-4 p-4 rounded-xl transition-colors cursor-pointer"
+                  style={{ backgroundColor: tokens.colors.background.secondary }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor = tokens.colors.background.hover)
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = tokens.colors.background.secondary)
+                  }
                   onClick={() => setSelectedDelivery(delivery)}
                 >
                   {/* Avatar/Icon */}
                   <div
                     className="w-10 h-10 rounded-lg flex items-center justify-center"
                     style={{
-                      background: "#F5F5F0",
-                      padding: "8px",
+                      backgroundColor: tokens.colors.background.secondary,
                     }}
                   >
                     <StatusIcon className="w-5 h-5" style={{ color: config.text }} />
@@ -196,9 +200,7 @@ export const ShipmentsOverview = memo(function ShipmentsOverview({
                       <p
                         className="text-sm font-medium truncate"
                         style={{
-                          fontSize: "14px",
-                          fontWeight: 500,
-                          color: "#1A1F2E",
+                          color: tokens.colors.text.primary,
                         }}
                       >
                         {delivery.tracking_code}
@@ -207,9 +209,7 @@ export const ShipmentsOverview = memo(function ShipmentsOverview({
                     <p
                       className="text-xs truncate"
                       style={{
-                        fontSize: "12px",
-                        fontWeight: 400,
-                        color: "#6B7280",
+                        color: tokens.colors.text.secondary,
                       }}
                     >
                       {delivery.customer?.name || "Cliente não informado"}
@@ -218,13 +218,9 @@ export const ShipmentsOverview = memo(function ShipmentsOverview({
 
                   {/* Status Badge */}
                   <div
-                    className="px-3 py-1.5 rounded-lg flex items-center gap-1.5"
+                    className="px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-xs font-medium"
                     style={{
-                      background: config.bg,
-                      borderRadius: "6px",
-                      padding: "4px 10px",
-                      fontSize: "12px",
-                      fontWeight: 500,
+                      backgroundColor: config.bg,
                     }}
                   >
                     <StatusIcon className="w-3 h-3" style={{ color: config.text }} />
@@ -236,9 +232,7 @@ export const ShipmentsOverview = memo(function ShipmentsOverview({
                     <p
                       className="text-xs font-medium"
                       style={{
-                        fontSize: "12px",
-                        fontWeight: 500,
-                        color: "#6B7280",
+                        color: tokens.colors.text.secondary,
                       }}
                     >
                       {formatDate(delivery.created_at)}
@@ -246,9 +240,7 @@ export const ShipmentsOverview = memo(function ShipmentsOverview({
                     <p
                       className="text-xs"
                       style={{
-                        fontSize: "12px",
-                        fontWeight: 400,
-                        color: "#9CA3AF",
+                        color: tokens.colors.text.tertiary,
                       }}
                     >
                       {formatTime(delivery.created_at)}

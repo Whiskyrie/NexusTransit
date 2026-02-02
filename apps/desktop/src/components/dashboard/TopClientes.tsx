@@ -1,5 +1,6 @@
 import { MoreHorizontal, Building2 } from "lucide-react";
 import { memo } from "react";
+import { tokens } from "@/styles/tokens";
 
 interface TopClientesProps {
   data?: Array<{
@@ -17,9 +18,10 @@ export const TopClientes = memo(function TopClientes({
 }: TopClientesProps) {
   return (
     <div
-      className="bg-white rounded-2xl p-6 border border-[#E5E7EB]"
+      className="rounded-2xl p-6"
       style={{
-        fontFamily: "'Inter', sans-serif",
+        backgroundColor: tokens.colors.background.card,
+        border: `1px solid ${tokens.colors.border.default}`,
       }}
     >
       {/* Header */}
@@ -27,15 +29,20 @@ export const TopClientes = memo(function TopClientes({
         <h3
           className="text-base font-semibold"
           style={{
-            fontSize: "16px",
-            fontWeight: 600,
-            color: "#1A1F2E",
+            color: tokens.colors.text.primary,
           }}
         >
           Top Clientes
         </h3>
-        <button className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
-          <MoreHorizontal className="w-5 h-5" style={{ color: "#6B7280" }} />
+        <button
+          className="p-1.5 rounded-lg transition-colors"
+          style={{ backgroundColor: "transparent" }}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.backgroundColor = tokens.colors.background.hover)
+          }
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+        >
+          <MoreHorizontal className="w-5 h-5" style={{ color: tokens.colors.text.secondary }} />
         </button>
       </div>
 
@@ -66,12 +73,15 @@ export const TopClientes = memo(function TopClientes({
                 <div
                   className="w-10 h-10 rounded-lg flex items-center justify-center"
                   style={{
-                    background: "#F5F5F0",
+                    backgroundColor: tokens.colors.metric.secondary.bg,
                     padding: "8px",
                     borderRadius: "10px",
                   }}
                 >
-                  <Building2 className="w-5 h-5" style={{ color: "#1A1A1A" }} />
+                  <Building2
+                    className="w-5 h-5"
+                    style={{ color: tokens.colors.metric.secondary.text }}
+                  />
                 </div>
 
                 {/* Text Group */}
@@ -79,9 +89,7 @@ export const TopClientes = memo(function TopClientes({
                   <p
                     className="text-sm font-medium"
                     style={{
-                      fontSize: "14px",
-                      fontWeight: 500,
-                      color: "#1A1F2E",
+                      color: tokens.colors.text.primary,
                     }}
                   >
                     {item.nome}
@@ -89,9 +97,7 @@ export const TopClientes = memo(function TopClientes({
                   <p
                     className="text-xs"
                     style={{
-                      fontSize: "12px",
-                      fontWeight: 400,
-                      color: "#6B7280",
+                      color: tokens.colors.text.secondary,
                     }}
                   >
                     {item.categoria}
@@ -104,9 +110,7 @@ export const TopClientes = memo(function TopClientes({
                 <p
                   className="text-sm font-semibold"
                   style={{
-                    fontSize: "14px",
-                    fontWeight: 600,
-                    color: "#1A1A1A",
+                    color: tokens.colors.text.primary,
                   }}
                 >
                   {item.entregas}
@@ -114,9 +118,7 @@ export const TopClientes = memo(function TopClientes({
                 <p
                   className="text-xs"
                   style={{
-                    fontSize: "11px",
-                    fontWeight: 400,
-                    color: "#6B7280",
+                    color: tokens.colors.text.secondary,
                   }}
                 >
                   entregas
@@ -126,7 +128,9 @@ export const TopClientes = memo(function TopClientes({
           ))
         ) : (
           <div className="py-8 text-center">
-            <p style={{ fontSize: "14px", color: "#6B7280" }}>Nenhum dado disponível</p>
+            <p style={{ fontSize: "14px", color: tokens.colors.text.secondary }}>
+              Nenhum dado disponível
+            </p>
           </div>
         )}
       </div>

@@ -9,6 +9,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { ChevronDown } from "lucide-react";
+import { tokens } from "@/styles/tokens";
 
 export interface PerformanceDataPoint {
   day: string;
@@ -58,24 +59,42 @@ function CustomTooltip({
   const data = payload[0]?.payload as PerformanceDataPoint;
 
   return (
-    <div className="bg-[#1F2937] rounded-lg p-3 shadow-[0_4px_12px_rgba(0,0,0,0.15)] min-w-40">
-      <p className="text-white text-sm font-medium mb-2">{data?.label || label}</p>
+    <div
+      className="rounded-lg p-3 min-w-40"
+      style={{
+        backgroundColor: tokens.colors.chart.tooltip.background,
+        boxShadow: tokens.shadows.tooltip,
+      }}
+    >
+      <p className="text-sm font-medium mb-2" style={{ color: tokens.colors.chart.tooltip.text }}>
+        {data?.label || label}
+      </p>
       <div className="space-y-1.5">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-[#3B82F6]" />
-            <span className="text-gray-300 text-xs">{currentLabel}</span>
+            <div
+              className="w-2 h-2 rounded-full"
+              style={{ backgroundColor: tokens.colors.chart.primary }}
+            />
+            <span className="text-xs" style={{ color: tokens.colors.text.tertiary }}>
+              {currentLabel}
+            </span>
           </div>
-          <span className="text-[#3B82F6] text-xs font-semibold">
+          <span className="text-xs font-semibold" style={{ color: tokens.colors.chart.primary }}>
             {valueFormatter(data?.current || 0)}
           </span>
         </div>
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-[#F59E0B]" />
-            <span className="text-gray-300 text-xs">{previousLabel}</span>
+            <div
+              className="w-2 h-2 rounded-full"
+              style={{ backgroundColor: tokens.colors.chart.secondary }}
+            />
+            <span className="text-xs" style={{ color: tokens.colors.text.tertiary }}>
+              {previousLabel}
+            </span>
           </div>
-          <span className="text-[#F59E0B] text-xs font-semibold">
+          <span className="text-xs font-semibold" style={{ color: tokens.colors.chart.secondary }}>
             {valueFormatter(data?.previous || 0)}
           </span>
         </div>
@@ -109,15 +128,41 @@ export function PerformanceChart({
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-2xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+      <div
+        className="rounded-2xl p-6"
+        style={{
+          backgroundColor: tokens.colors.background.card,
+          boxShadow: tokens.shadows.card,
+        }}
+      >
         <div className="flex items-center justify-between mb-6">
-          <div className="h-6 w-32 bg-gray-200 rounded animate-pulse" />
-          <div className="h-9 w-28 bg-gray-200 rounded-lg animate-pulse" />
+          <div
+            className="h-6 w-32 rounded animate-pulse"
+            style={{ backgroundColor: tokens.colors.background.tertiary }}
+          />
+          <div
+            className="h-9 w-28 rounded-lg animate-pulse"
+            style={{ backgroundColor: tokens.colors.background.tertiary }}
+          />
         </div>
-        <div className="flex items-center justify-center bg-gray-50 rounded-xl" style={{ height }}>
+        <div
+          className="flex items-center justify-center rounded-xl"
+          style={{
+            height,
+            backgroundColor: tokens.colors.background.secondary,
+          }}
+        >
           <div className="flex flex-col items-center gap-2">
-            <div className="w-8 h-8 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
-            <span className="text-sm text-gray-500">Carregando dados...</span>
+            <div
+              className="w-8 h-8 border-2 rounded-full animate-spin"
+              style={{
+                borderColor: tokens.colors.border.default,
+                borderTopColor: tokens.colors.text.secondary,
+              }}
+            />
+            <span className="text-sm" style={{ color: tokens.colors.text.secondary }}>
+              Carregando dados...
+            </span>
           </div>
         </div>
       </div>
@@ -125,27 +170,53 @@ export function PerformanceChart({
   }
 
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+    <div
+      className="rounded-2xl p-6"
+      style={{
+        backgroundColor: tokens.colors.background.card,
+        boxShadow: tokens.shadows.card,
+      }}
+    >
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-[#1A1A1A]">{title}</h3>
+        <h3 className="text-lg font-semibold" style={{ color: tokens.colors.text.primary }}>
+          {title}
+        </h3>
 
         {periodOptions.length > 0 && (
           <div className="relative">
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex items-center gap-2 px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm font-medium text-gray-700 transition-colors"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+              style={{
+                backgroundColor: tokens.colors.background.secondary,
+                color: tokens.colors.text.primary,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = tokens.colors.background.tertiary;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = tokens.colors.background.secondary;
+              }}
             >
               {selectedOption?.label}
               <ChevronDown
-                className={`w-4 h-4 text-gray-500 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`}
+                className={`w-4 h-4 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`}
+                style={{ color: tokens.colors.text.secondary }}
               />
             </button>
 
             {isDropdownOpen && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setIsDropdownOpen(false)} />
-                <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-gray-100 py-1 min-w-35 z-20">
+                <div
+                  className="absolute right-0 top-full mt-1 rounded-lg py-1 min-w-35 z-20"
+                  style={{
+                    backgroundColor: tokens.colors.background.card,
+                    boxShadow: tokens.shadows.dropdown,
+                    border: `1px solid ${tokens.colors.border.light}`,
+                  }}
+                >
                   {periodOptions.map((option) => (
                     <button
                       key={option.value}
@@ -153,10 +224,28 @@ export function PerformanceChart({
                         onPeriodChange?.(option.value);
                         setIsDropdownOpen(false);
                       }}
-                      className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors ${option.value === selectedPeriod
-                        ? "text-blue-600 font-medium bg-blue-50"
-                        : "text-gray-700"
-                        }`}
+                      className="w-full px-3 py-2 text-left text-sm transition-colors"
+                      style={{
+                        color:
+                          option.value === selectedPeriod
+                            ? tokens.colors.brand.secondary
+                            : tokens.colors.text.primary,
+                        fontWeight: option.value === selectedPeriod ? 500 : 400,
+                        backgroundColor:
+                          option.value === selectedPeriod
+                            ? tokens.colors.status.info.light
+                            : "transparent",
+                      }}
+                      onMouseEnter={(e) => {
+                        if (option.value !== selectedPeriod) {
+                          e.currentTarget.style.backgroundColor = tokens.colors.background.hover;
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (option.value !== selectedPeriod) {
+                          e.currentTarget.style.backgroundColor = "transparent";
+                        }
+                      }}
                     >
                       {option.label}
                     </button>
@@ -171,12 +260,22 @@ export function PerformanceChart({
       {/* Legend */}
       <div className="flex items-center gap-6 mb-4">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-[#3B82F6]" />
-          <span className="text-xs text-gray-600">{currentLabel}</span>
+          <div
+            className="w-3 h-3 rounded-full"
+            style={{ backgroundColor: tokens.colors.chart.primary }}
+          />
+          <span className="text-xs" style={{ color: tokens.colors.text.secondary }}>
+            {currentLabel}
+          </span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-[#F59E0B]" />
-          <span className="text-xs text-gray-600">{previousLabel}</span>
+          <div
+            className="w-3 h-3 rounded-full"
+            style={{ backgroundColor: tokens.colors.chart.secondary }}
+          />
+          <span className="text-xs" style={{ color: tokens.colors.text.secondary }}>
+            {previousLabel}
+          </span>
         </div>
       </div>
 
@@ -186,19 +285,19 @@ export function PerformanceChart({
           <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id={currentGradientId} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.15} />
-                <stop offset="100%" stopColor="#3B82F6" stopOpacity={0} />
+                <stop offset="0%" stopColor={tokens.colors.chart.primary} stopOpacity={0.15} />
+                <stop offset="100%" stopColor={tokens.colors.chart.primary} stopOpacity={0} />
               </linearGradient>
               <linearGradient id={previousGradientId} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#F59E0B" stopOpacity={0.1} />
-                <stop offset="100%" stopColor="#F59E0B" stopOpacity={0} />
+                <stop offset="0%" stopColor={tokens.colors.chart.secondary} stopOpacity={0.1} />
+                <stop offset="100%" stopColor={tokens.colors.chart.secondary} stopOpacity={0} />
               </linearGradient>
             </defs>
 
             <CartesianGrid
               strokeDasharray="4 4"
               vertical={false}
-              stroke="#E5E7EB"
+              stroke={tokens.colors.chart.grid}
               strokeOpacity={0.8}
             />
 
@@ -207,7 +306,7 @@ export function PerformanceChart({
             <YAxis
               axisLine={false}
               tickLine={false}
-              tick={{ fill: "#9CA3AF", fontSize: 12 }}
+              tick={{ fill: tokens.colors.text.tertiary, fontSize: 12 }}
               tickFormatter={(value) => value.toLocaleString()}
               domain={[0, "auto"]}
               width={40}
@@ -222,7 +321,7 @@ export function PerformanceChart({
                 />
               }
               cursor={{
-                stroke: "#9CA3AF",
+                stroke: tokens.colors.text.tertiary,
                 strokeWidth: 1,
                 strokeDasharray: "4 4",
               }}
@@ -232,14 +331,14 @@ export function PerformanceChart({
             <Area
               type="monotone"
               dataKey="previous"
-              stroke="#F59E0B"
+              stroke={tokens.colors.chart.secondary}
               strokeWidth={2}
               fill={`url(#${previousGradientId})`}
               dot={false}
               activeDot={{
                 r: 5,
-                fill: "#F59E0B",
-                stroke: "#FFFFFF",
+                fill: tokens.colors.chart.secondary,
+                stroke: tokens.colors.background.card,
                 strokeWidth: 2,
               }}
             />
@@ -248,14 +347,14 @@ export function PerformanceChart({
             <Area
               type="monotone"
               dataKey="current"
-              stroke="#3B82F6"
+              stroke={tokens.colors.chart.primary}
               strokeWidth={2}
               fill={`url(#${currentGradientId})`}
               dot={false}
               activeDot={{
                 r: 5,
-                fill: "#3B82F6",
-                stroke: "#FFFFFF",
+                fill: tokens.colors.chart.primary,
+                stroke: tokens.colors.background.card,
                 strokeWidth: 2,
               }}
             />

@@ -8,6 +8,7 @@ import { PerformanceChart } from "../components/ui/charts/PerformanceChart";
 import { ShipmentsOverview, TopEstados, TopClientes } from "../components/dashboard";
 import { dashboardService } from "../services/dashboard.service";
 import { deliveryService } from "../services/delivery.service";
+import { tokens } from "@/styles/tokens";
 
 export function DashboardPage() {
   const user = useUser();
@@ -38,12 +39,19 @@ export function DashboardPage() {
   } = useQuery({
     queryKey: ["dashboard", "stats"],
     queryFn: () => dashboardService.getStats(),
+    staleTime: 5 * 60 * 1000, // 5 minutos - dados de dashboard são relativamente estáveis
+    cacheTime: 10 * 60 * 1000, // 10 minutos em cache
+    refetchOnWindowFocus: false, // Evitar refetches desnecessários
   });
 
   // 2. Performance Data
   const { data: performanceData, isLoading: isLoadingChart } = useQuery({
     queryKey: ["dashboard", "performance", selectedPeriod],
     queryFn: () => dashboardService.getPerformanceData(parseInt(selectedPeriod)),
+    staleTime: 5 * 60 * 1000,
+    cacheTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    enabled: !!selectedPeriod, // Só busca quando tiver período selecionado
   });
 
   // 3. Recent Deliveries
@@ -57,17 +65,26 @@ export function DashboardPage() {
       });
       return response.data;
     },
+    staleTime: 3 * 60 * 1000, // 3 minutos - dados recentes mudam mais rápido
+    cacheTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   // 4. Top Cards (Estados & Clientes)
   const { data: topEstados, isLoading: isLoadingTopEstados } = useQuery({
     queryKey: ["dashboard", "top-estados"],
     queryFn: () => dashboardService.getTopEstados(),
+    staleTime: 10 * 60 * 1000, // 10 minutos - dados de ranking mudam lentamente
+    cacheTime: 15 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: topClientes, isLoading: isLoadingTopClientes } = useQuery({
     queryKey: ["dashboard", "top-clientes"],
     queryFn: () => dashboardService.getTopClientes(),
+    staleTime: 10 * 60 * 1000,
+    cacheTime: 15 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   // Derived state for formatted date
@@ -119,9 +136,10 @@ export function DashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
           label="Entregas Hoje"
-          value={isLoadingStats ? "..." : stats?.deliveries.today.toLocaleString() || "0"}
+          value={stats?.deliveries.today.toLocaleString() || "0"}
           icon={Truck}
           variant="primary"
+          isLoading={isLoadingStats}
           trend={
             stats
               ? {
@@ -133,9 +151,10 @@ export function DashboardPage() {
         />
         <MetricCard
           label="Em Trânsito"
-          value={isLoadingStats ? "..." : stats?.deliveries.inTransit.toLocaleString() || "0"}
+          value={stats?.deliveries.inTransit.toLocaleString() || "0"}
           icon={Clock}
           variant="secondary"
+          isLoading={isLoadingStats}
           trend={
             stats
               ? {
@@ -147,9 +166,10 @@ export function DashboardPage() {
         />
         <MetricCard
           label="Concluídas"
-          value={isLoadingStats ? "..." : stats?.deliveries.delivered.toLocaleString() || "0"}
+          value={stats?.deliveries.delivered.toLocaleString() || "0"}
           icon={CheckCircle}
           variant="success"
+          isLoading={isLoadingStats}
           trend={
             stats
               ? {
@@ -161,9 +181,10 @@ export function DashboardPage() {
         />
         <MetricCard
           label="Pendentes"
-          value={isLoadingStats ? "..." : stats?.deliveries.pending.toLocaleString() || "0"}
+          value={stats?.deliveries.pending.toLocaleString() || "0"}
           icon={AlertCircle}
           variant="warning"
+          isLoading={isLoadingStats}
           trend={
             stats
               ? {
@@ -198,27 +219,59 @@ export function DashboardPage() {
 
       {/* Row 3: Quick Stats Footer */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl p-4 border border-[#E5E7EB]">
-          <p className="text-xs text-gray-500 mb-1">Rotas Ativas</p>
-          <p className="text-xl font-bold text-[#1A1A1A]">
+        <div
+          className="rounded-xl p-4"
+          style={{
+            backgroundColor: tokens.colors.background.card,
+            border: `1px solid ${tokens.colors.border.default}`,
+          }}
+        >
+          <p className="text-xs mb-1" style={{ color: tokens.colors.text.secondary }}>
+            Rotas Ativas
+          </p>
+          <p className="text-xl font-bold" style={{ color: tokens.colors.text.primary }}>
             {isLoadingStats ? "..." : stats?.routes.active || 0}
           </p>
         </div>
-        <div className="bg-white rounded-xl p-4 border border-[#E5E7EB]">
-          <p className="text-xs text-gray-500 mb-1">Rotas Concluídas</p>
-          <p className="text-xl font-bold text-[#1A1A1A]">
+        <div
+          className="rounded-xl p-4"
+          style={{
+            backgroundColor: tokens.colors.background.card,
+            border: `1px solid ${tokens.colors.border.default}`,
+          }}
+        >
+          <p className="text-xs mb-1" style={{ color: tokens.colors.text.secondary }}>
+            Rotas Concluídas
+          </p>
+          <p className="text-xl font-bold" style={{ color: tokens.colors.text.primary }}>
             {isLoadingStats ? "..." : stats?.routes.completed || 0}
           </p>
         </div>
-        <div className="bg-white rounded-xl p-4 border border-[#E5E7EB]">
-          <p className="text-xs text-gray-500 mb-1">Motoristas</p>
-          <p className="text-xl font-bold text-[#1A1A1A]">
+        <div
+          className="rounded-xl p-4"
+          style={{
+            backgroundColor: tokens.colors.background.card,
+            border: `1px solid ${tokens.colors.border.default}`,
+          }}
+        >
+          <p className="text-xs mb-1" style={{ color: tokens.colors.text.secondary }}>
+            Motoristas
+          </p>
+          <p className="text-xl font-bold" style={{ color: tokens.colors.text.primary }}>
             {isLoadingStats ? "..." : stats?.drivers.total || 0}
           </p>
         </div>
-        <div className="bg-white rounded-xl p-4 border border-[#E5E7EB]">
-          <p className="text-xs text-gray-500 mb-1">Veículos</p>
-          <p className="text-xl font-bold text-[#1A1A1A]">
+        <div
+          className="rounded-xl p-4"
+          style={{
+            backgroundColor: tokens.colors.background.card,
+            border: `1px solid ${tokens.colors.border.default}`,
+          }}
+        >
+          <p className="text-xs mb-1" style={{ color: tokens.colors.text.secondary }}>
+            Veículos
+          </p>
+          <p className="text-xl font-bold" style={{ color: tokens.colors.text.primary }}>
             {isLoadingStats ? "..." : stats?.vehicles.total || 0}
           </p>
         </div>
