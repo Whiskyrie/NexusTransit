@@ -5,12 +5,13 @@ import { Customer } from './entities/customer.entity';
 import { CustomerAddress } from './entities/customer-address.entity';
 import { CustomerContact } from './entities/customer-contact.entity';
 import { CustomerPreferences } from './entities/customer-preferences.entity';
-import { ViaCepService } from './services/viacep.service';
+import { CepFallbackService } from '@nexus/geo-services';
 import { GeocodingService } from './services/geocoding.service';
 import { DataSource } from 'typeorm';
 
 describe('CustomersService', () => {
   let service: CustomersService;
+  let module: TestingModule;
 
   const mockRepository = {
     create: jest.fn(),
@@ -22,8 +23,8 @@ describe('CustomersService', () => {
     softDelete: jest.fn(),
   };
 
-  const mockViaCepService = {
-    getAddressByCep: jest.fn(),
+  const mockCepFallbackService = {
+    getAddressByZipCode: jest.fn(),
   };
 
   const mockGeocodingService = {
@@ -57,8 +58,8 @@ describe('CustomersService', () => {
           useValue: mockRepository,
         },
         {
-          provide: ViaCepService,
-          useValue: mockViaCepService,
+          provide: CepFallbackService,
+          useValue: mockCepFallbackService,
         },
         {
           provide: GeocodingService,

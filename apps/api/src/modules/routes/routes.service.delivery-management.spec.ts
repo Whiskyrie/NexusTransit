@@ -10,9 +10,13 @@ import { RouteStatus } from './enums/route-status';
 import { AuditService } from '@nexus/audit';
 import { RouteValidatorService } from './validators/route.validator';
 import { DistanceCalculatorService } from '@nexus/common';
+import { VehiclesService } from '../vehicles/vehicles.service';
+import { DriversService } from '../drivers/drivers.service';
+import { GoogleMapsService } from '@nexus/geo-services';
 
 describe('RoutesService - Delivery Management', () => {
   let service: RoutesService;
+  let module: TestingModule;
 
   const mockRoute: Partial<Route> = {
     id: 'route-1',
@@ -30,17 +34,24 @@ describe('RoutesService - Delivery Management', () => {
     status: 'PENDING',
   };
 
-  const mockQueryBuilder = {
-    update: jest.fn().mockReturnThis(),
-    set: jest.fn().mockReturnThis(),
-    where: jest.fn().mockReturnThis(),
-    andWhere: jest.fn().mockReturnThis(),
-    execute: jest.fn().mockResolvedValue(undefined),
-    innerJoin: jest.fn().mockReturnThis(),
-    select: jest.fn().mockReturnThis(),
-    getRawOne: jest.fn().mockResolvedValue({ max: 2 }),
-    getOne: jest.fn().mockResolvedValue(null),
-  } as unknown as SelectQueryBuilder<any>;
+  // Factory para criar novo QueryBuilder a cada chamada
+  const createMockQueryBuilder = () => {
+    const qb = {
+      update: jest.fn().mockReturnThis(),
+      set: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      execute: jest.fn().mockResolvedValue(undefined),
+      innerJoin: jest.fn().mockReturnThis(),
+      select: jest.fn().mockReturnThis(),
+      getRawOne: jest.fn().mockResolvedValue({ max: 2 }),
+      getOne: jest.fn().mockResolvedValue(null),
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      getMany: jest.fn().mockResolvedValue([]),
+    };
+    return qb as unknown as SelectQueryBuilder<any>;
+  };
 
   const mockRouteRepository = {
     findOne: jest.fn(),
@@ -57,7 +68,7 @@ describe('RoutesService - Delivery Management', () => {
     create: jest.fn(),
     update: jest.fn(),
     softRemove: jest.fn(),
-    createQueryBuilder: jest.fn(() => mockQueryBuilder),
+    createQueryBuilder: jest.fn(() => createMockQueryBuilder()),
   };
 
   const mockRouteHistoryRepository = {
@@ -75,13 +86,30 @@ describe('RoutesService - Delivery Management', () => {
     calculateRouteDistance: jest.fn().mockReturnValue(5000),
   };
 
+  const mockDeliveryRepository = {
+    findOne: jest.fn().mockResolvedValue({
+      id: 'delivery-1',
+      customer_id: 'customer-1',
+      status: 'PENDING',
+    }),
+  };
+
+  const mockCustomerAddressRepository = {
+    findOne: jest.fn().mockResolvedValue({
+      id: 'address-1',
+      customer_id: 'customer-1',
+      full_address: 'Rua Teste, 123',
+      coordinates: { lat: -23.5505, lng: -46.6333 },
+    }),
+  };
+
   const mockEntityManager = {
     getRepository: jest.fn((entityName: string) => {
       if (entityName === 'deliveries') {
-        return { findOne: jest.fn() };
+        return mockDeliveryRepository;
       }
       if (entityName === 'customer_addresses') {
-        return { findOne: jest.fn() };
+        return mockCustomerAddressRepository;
       }
       return mockRouteStopRepository;
     }),
@@ -92,8 +120,25 @@ describe('RoutesService - Delivery Management', () => {
     createEntry: jest.fn(),
   };
 
+  const mockVehiclesService = {
+    findOne: jest.fn(),
+    update: jest.fn().mockResolvedValue(undefined),
+    checkAvailability: jest.fn().mockResolvedValue(true),
+  };
+
+  const mockDriversService = {
+    findOne: jest.fn(),
+    update: jest.fn().mockResolvedValue(undefined),
+    checkAvailability: jest.fn().mockResolvedValue(true),
+  };
+
+  const mockGoogleMapsService = {
+    calculateRoute: jest.fn().mockResolvedValue({ distance: 1000, duration: 600 }),
+    geocode: jest.fn().mockResolvedValue({ lat: -23.5505, lng: -46.6333 }),
+  };
+
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       providers: [
         RoutesService,
         {
@@ -124,12 +169,32 @@ describe('RoutesService - Delivery Management', () => {
           provide: DistanceCalculatorService,
           useValue: mockDistanceCalculatorService,
         },
+        {
+          provide: VehiclesService,
+          useValue: mockVehiclesService,
+        },
+        {
+          provide: DriversService,
+          useValue: mockDriversService,
+        },
+        {
+          provide: GoogleMapsService,
+          useValue: mockGoogleMapsService,
+        },
       ],
     }).compile();
 
     service = module.get<RoutesService>(RoutesService);
 
     jest.clearAllMocks();
+    // Restaurar o mock do createQueryBuilder após clearAllMocks
+    mockRouteStopRepository.createQueryBuilder.mockImplementation(() => createMockQueryBuilder());
+  });
+
+  afterAll(async () => {
+    if (module) {
+      await module.close();
+    }
   });
 
   describe('getRouteDeliveries', () => {
@@ -198,6 +263,7 @@ describe('RoutesService - Delivery Management', () => {
       });
 
       mockRouteStopRepository.findOne.mockResolvedValue(null);
+      mockRouteStopRepository.find.mockResolvedValue([mockStop]);
       mockRouteStopRepository.create.mockReturnValue(mockStop);
       mockRouteStopRepository.save.mockResolvedValue(mockStop);
 
@@ -257,6 +323,7 @@ describe('RoutesService - Delivery Management', () => {
       mockRouteRepository.findOne.mockResolvedValue(routePlanned);
       mockRouteStopRepository.findOne.mockResolvedValue(stopToRemove);
       mockRouteStopRepository.softRemove.mockResolvedValue(stopToRemove);
+      mockRouteStopRepository.find.mockResolvedValue([]);
 
       await service.removeDeliveryFromRoute('route-1', 'delivery-1');
 

@@ -362,6 +362,10 @@ describe('DeliveryValidationService', () => {
 
   describe('validateDeliveryCreation', () => {
     it('deve validar criação de entrega completa', async () => {
+      // Usar data bem no futuro para garantir que não será considerada passado
+      const futureDate = new Date();
+      futureDate.setFullYear(futureDate.getFullYear() + 1);
+
       const deliveryData = {
         weight: 50,
         driverId: 'driver-123',
@@ -382,7 +386,7 @@ describe('DeliveryValidationService', () => {
           state: 'PR',
           postal_code: '80420-000',
         },
-        scheduled_delivery_at: new Date('2025-12-20T18:00:00Z'),
+        scheduled_delivery_at: futureDate,
       };
 
       const mockDriver = {
