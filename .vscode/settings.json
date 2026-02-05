@@ -5,6 +5,11 @@
   "rust-analyzer.cargo.allTargets": false,
   "rust-analyzer.checkOnSave": true,
   "rust-analyzer.workspace.discoverConfig": {
-    "projects": ["./apps/desktop/src-tauri"]
-  }
+    "projects": [
+      "./apps/desktop/src-tauri"
+    ]
+  },
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "typescript.preferences.includePackageJsonAutoImports": "on"
 }
