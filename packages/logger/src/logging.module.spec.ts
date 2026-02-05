@@ -1,4 +1,3 @@
-import { Test, TestingModule } from "@nestjs/testing";
 import { MetricsService } from "./services/metrics.service";
 import { CorrelationIdInterceptor } from "./interceptors/correlation-id.interceptor";
 import { PerformanceInterceptor } from "./interceptors/performance.interceptor";
