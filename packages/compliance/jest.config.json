@@ -1,0 +1,34 @@
+{
+    "moduleFileExtensions": [
+        "js",
+        "json",
+        "ts"
+    ],
+    "rootDir": ".",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+        "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "collectCoverageFrom": [
+        "src/**/*.(t|j)s",
+        "!src/**/*.d.ts",
+        "!src/**/index.ts",
+        "!src/**/*.module.ts"
+    ],
+    "coverageDirectory": "./coverage",
+    "coverageThreshold": {
+        "global": {
+            "branches": 85,
+            "functions": 85,
+            "lines": 85,
+            "statements": 85
+        }
+    },
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+        "^@nexus/(.*)$": "<rootDir>/../$1/src"
+    },
+    "setupFilesAfterEnv": [
+        "<rootDir>/jest.setup.ts"
+    ]
+}
