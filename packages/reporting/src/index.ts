@@ -7,6 +7,17 @@ export { ReportingModule } from "./reports.module";
 // Service
 export * from "./reports.service";
 
+// Services
+export * from "./services/pdf-generator.service";
+export * from "./services/excel-generator.service";
+export * from "./services/csv-generator.service";
+export * from "./services/report-builder.service";
+
+// Templates
+export * from "./templates/delivery-report.template";
+export * from "./templates/route-report.template";
+export * from "./templates/incident-report.template";
+
 // Entities
 export * from "./entities/report.entity";
 
