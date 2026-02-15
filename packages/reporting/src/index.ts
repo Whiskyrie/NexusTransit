@@ -18,6 +18,10 @@ export * from "./dto/report-response.dto";
 
 // Enums
 export * from "./enums/report-type.enum";
+
+// Interfaces
+export * from "./interfaces/reporting.interfaces";
+export * from "./interfaces/auditable.interface";
 export * from "./enums/index";
 
 // Decorators
