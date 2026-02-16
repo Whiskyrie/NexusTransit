@@ -34,9 +34,9 @@ describe("AuditableUtils", () => {
 
     it("deve detectar campos adicionados", () => {
       const original = { id: "1", name: "João" };
-      const updated = { email: "joao@example.com" };
+      const updated = { email: "joao@example.com" } as Record<string, unknown>;
 
-      const changed = AuditableUtils.getChangedFields(original, updated);
+      const changed = AuditableUtils.getChangedFields(original as Record<string, unknown>, updated);
 
       expect(changed).toContainEqual({
         field_name: "email",

@@ -46,9 +46,9 @@ describe("ClsAuditUtils", () => {
         method: "POST",
       };
 
-      clsService.get.mockImplementation((key: string) => {
-        const map: Record<string, unknown> = mockContext;
-        return map[key];
+      clsService.get.mockImplementation((key?: string | symbol) => {
+        const map = mockContext as unknown as Record<string, unknown>;
+        return map[key as string];
       });
 
       const context = utils.getAuditContext();
@@ -66,7 +66,7 @@ describe("ClsAuditUtils", () => {
     });
 
     it("deve usar valores padrão para timestamp e path", () => {
-      clsService.get.mockImplementation((key: string) => {
+      clsService.get.mockImplementation((key?: string | symbol) => {
         if (key === "requestId") return "req-123";
         if (key === "method") return "GET";
         return undefined;
@@ -130,13 +130,13 @@ describe("ClsAuditUtils", () => {
 
   describe("getCurrentUser", () => {
     it("deve retornar informações do usuário atual", () => {
-      clsService.get.mockImplementation((key: string) => {
+      clsService.get.mockImplementation((key?: string | symbol) => {
         const map: Record<string, string> = {
           userId: "user-456",
           userEmail: "user@example.com",
           userRole: "ADMIN",
         };
-        return map[key];
+        return map[key as string];
       });
 
       const user = utils.getCurrentUser();
@@ -219,7 +219,7 @@ describe("ClsAuditUtils", () => {
     });
 
     it("deve retornar false quando não há contexto ativo", () => {
-      clsService.getId.mockReturnValue(undefined);
+      clsService.getId.mockReturnValue(undefined as unknown as string);
 
       const isActive = utils.isContextActive();
 
