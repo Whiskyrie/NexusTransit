@@ -34,7 +34,7 @@ enum AddressType {
 /**
  * Interface para Customer Entity no seed
  */
-interface CustomerEntity {
+export interface CustomerEntity {
   id?: string;
   taxId: string;
   name: string;
@@ -49,7 +49,7 @@ interface CustomerEntity {
 /**
  * Interface para CustomerAddress Entity no seed
  */
-interface CustomerAddressEntity {
+export interface CustomerAddressEntity {
   id?: string;
   customerId: string;
   street: string;

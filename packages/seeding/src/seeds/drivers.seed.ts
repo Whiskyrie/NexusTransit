@@ -1,11 +1,11 @@
 import { Injectable, Logger, Inject } from "@nestjs/common";
-import { Repository } from "typeorm";
+import { Repository, DeepPartial } from "typeorm";
 import { ISeed } from "../interfaces/seed.interface";
 
 /**
  * Interface para Driver Entity no seed
  */
-interface DriverEntity {
+export interface DriverEntity {
   id?: string;
   full_name: string;
   cpf: string;
@@ -20,7 +20,7 @@ interface DriverEntity {
 /**
  * Interface para DriverLicense Entity no seed
  */
-interface DriverLicenseEntity {
+export interface DriverLicenseEntity {
   id?: string;
   driver_id?: string;
   driver?: DriverEntity;
@@ -78,7 +78,7 @@ export class DriversSeed implements ISeed {
           const license = this.driverLicenseRepository.create({
             ...driverData.license,
             driver: savedDriver,
-          } as any);
+          } as DeepPartial<DriverLicenseEntity>);
           await this.driverLicenseRepository.save(license);
           this.logger.log(`CNH criada para motorista ${savedDriver.full_name}`);
         }

@@ -36,7 +36,7 @@ enum IncidentStatus {
 /**
  * Interface para Incident Entity no seed
  */
-interface IncidentEntity {
+export interface IncidentEntity {
   id?: string;
   incident_number: string;
   delivery_id?: string;
@@ -64,7 +64,7 @@ interface IncidentEntity {
 /**
  * Interface para IncidentComment Entity no seed
  */
-interface IncidentCommentEntity {
+export interface IncidentCommentEntity {
   id?: string;
   incident_id: string;
   user_id: string;
@@ -75,7 +75,7 @@ interface IncidentCommentEntity {
 /**
  * Interface para Delivery Entity no seed
  */
-interface DeliveryEntity {
+export interface DeliveryEntity {
   id: string;
   tracking_code: string;
   status: string;
@@ -85,7 +85,7 @@ interface DeliveryEntity {
 /**
  * Interface para Driver Entity no seed
  */
-interface DriverEntity {
+export interface DriverEntity {
   id: string;
   full_name: string;
 }
@@ -93,7 +93,7 @@ interface DriverEntity {
 /**
  * Interface para Vehicle Entity no seed
  */
-interface VehicleEntity {
+export interface VehicleEntity {
   id: string;
   license_plate: string;
 }
@@ -101,7 +101,7 @@ interface VehicleEntity {
 /**
  * Interface para User Entity no seed
  */
-interface UserEntity {
+export interface UserEntity {
   id: string;
   name: string;
 }

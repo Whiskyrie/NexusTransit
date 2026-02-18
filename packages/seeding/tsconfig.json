@@ -3,15 +3,19 @@
     "compilerOptions": {
         "outDir": "./dist",
         "rootDir": "./src",
+        "composite": true,
         "declaration": true,
-        "declarationMap": true
+        "declarationMap": true,
+        "types": [
+            "jest",
+            "node"
+        ]
     },
     "include": [
         "src/**/*"
     ],
     "exclude": [
         "node_modules",
-        "dist",
-        "**/*.spec.ts"
+        "dist"
     ]
 }

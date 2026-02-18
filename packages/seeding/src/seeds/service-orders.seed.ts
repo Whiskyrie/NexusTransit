@@ -5,7 +5,7 @@ import { ISeed } from "../interfaces/seed.interface";
 /**
  * Interface para ServiceOrder Entity
  */
-interface ServiceOrderEntity {
+export interface ServiceOrderEntity {
   id: string;
   order_number: string;
   status: string;
@@ -45,7 +45,7 @@ interface ServiceOrderEntity {
 /**
  * Interface para Customer Entity
  */
-interface CustomerEntity {
+export interface CustomerEntity {
   id: string;
   name: string;
   category: string;
@@ -54,7 +54,7 @@ interface CustomerEntity {
 /**
  * Interface para CustomerAddress Entity
  */
-interface CustomerAddressEntity {
+export interface CustomerAddressEntity {
   id: string;
   customerId: string;
   street: string;
@@ -65,7 +65,7 @@ interface CustomerAddressEntity {
 /**
  * Interface para Vehicle Entity
  */
-interface VehicleEntity {
+export interface VehicleEntity {
   id: string;
   license_plate: string;
 }
@@ -73,7 +73,7 @@ interface VehicleEntity {
 /**
  * Interface para Driver Entity
  */
-interface DriverEntity {
+export interface DriverEntity {
   id: string;
   name: string;
 }

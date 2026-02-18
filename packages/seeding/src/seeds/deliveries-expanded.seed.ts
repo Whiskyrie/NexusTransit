@@ -26,7 +26,7 @@ enum DeliveryPriority {
 /**
  * Interface para Delivery Entity no seed
  */
-interface DeliveryEntity {
+export interface DeliveryEntity {
   id?: string;
   tracking_code: string;
   status: DeliveryStatus;
@@ -47,19 +47,19 @@ interface DeliveryEntity {
 }
 
 // Interface para Customer Entity
-interface CustomerEntity {
+export interface CustomerEntity {
   id: string;
   name: string;
 }
 
 // Interface para Driver Entity
-interface DriverEntity {
+export interface DriverEntity {
   id: string;
   full_name: string;
 }
 
 // Interface para Vehicle Entity
-interface VehicleEntity {
+export interface VehicleEntity {
   id: string;
   license_plate: string;
 }
