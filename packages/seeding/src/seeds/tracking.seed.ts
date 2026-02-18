@@ -31,7 +31,7 @@ enum EventStatus {
 /**
  * Interface para TrackingEvent Entity no seed
  */
-interface TrackingEventEntity {
+export interface TrackingEventEntity {
   event_id: string;
   delivery_id: string;
   driver_id: string;
@@ -46,7 +46,7 @@ interface TrackingEventEntity {
 /**
  * Interface para Delivery Entity no seed
  */
-interface DeliveryEntity {
+export interface DeliveryEntity {
   id: string;
   tracking_code: string;
   status: string;
@@ -56,7 +56,7 @@ interface DeliveryEntity {
 /**
  * Interface para Driver Entity no seed
  */
-interface DriverEntity {
+export interface DriverEntity {
   id: string;
   full_name: string;
 }
