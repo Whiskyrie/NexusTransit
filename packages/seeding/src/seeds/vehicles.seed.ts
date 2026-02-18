@@ -5,7 +5,7 @@ import { ISeed } from "../interfaces/seed.interface";
 /**
  * Interface para Vehicle Entity no seed
  */
-interface VehicleEntity {
+export interface VehicleEntity {
   id?: string;
   license_plate: string;
   license_plate_type?: string;

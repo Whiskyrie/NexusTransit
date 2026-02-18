@@ -5,7 +5,7 @@ import { ISeed } from "../interfaces/seed.interface";
 /**
  * Interface para Route Entity no seed
  */
-interface RouteEntity {
+export interface RouteEntity {
   id?: string;
   route_code: string;
   name: string;
@@ -37,7 +37,7 @@ interface RouteEntity {
 /**
  * Interface para RouteStop Entity no seed
  */
-interface RouteStopEntity {
+export interface RouteStopEntity {
   id?: string;
   route_id: string;
   sequence_order: number;
@@ -52,7 +52,7 @@ interface RouteStopEntity {
 /**
  * Interface para Driver Entity no seed
  */
-interface DriverEntity {
+export interface DriverEntity {
   id: string;
   full_name: string;
   status: string;
@@ -61,7 +61,7 @@ interface DriverEntity {
 /**
  * Interface para Vehicle Entity no seed
  */
-interface VehicleEntity {
+export interface VehicleEntity {
   id: string;
   license_plate: string;
   status: string;
