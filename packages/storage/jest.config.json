@@ -1,0 +1,45 @@
+{
+    "moduleFileExtensions": [
+        "js",
+        "json",
+        "ts"
+    ],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+        "^.+\\.(t|j)s$": [
+            "ts-jest",
+            {
+                "tsconfig": {
+                    "types": [
+                        "jest",
+                        "node"
+                    ]
+                }
+            }
+        ]
+    },
+    "collectCoverageFrom": [
+        "**/*.(t|j)s",
+        "!**/*.spec.(t|j)s",
+        "!**/*.interface.(t|j)s",
+        "!**/index.ts",
+        "!**/interfaces/**",
+        "!**/dto/**",
+        "!**/enums/**",
+        "!**/pipes/**"
+    ],
+    "coverageDirectory": "../coverage",
+    "testEnvironment": "node",
+    "coverageThreshold": {
+        "global": {
+            "branches": 80,
+            "functions": 80,
+            "lines": 80,
+            "statements": 80
+        }
+    },
+    "moduleNameMapper": {
+        "^@nexus/(.*)$": "<rootDir>/../../$1/src"
+    }
+}

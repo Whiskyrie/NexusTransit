@@ -1,0 +1,15 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "types": [
+            "jest",
+            "node"
+        ],
+        "strictNullChecks": false,
+        "noUnusedLocals": false
+    },
+    "include": [
+        "src/**/*.spec.ts",
+        "src/**/*.ts"
+    ]
+}
