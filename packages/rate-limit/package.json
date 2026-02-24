@@ -15,9 +15,12 @@
     "scripts": {
         "build": "tsc -p tsconfig.build.json",
         "dev": "tsc -p tsconfig.build.json --watch",
-        "clean": "rm -rf dist tsconfig.tsbuildinfo",
+        "clean": "rm -rf dist tsconfig.tsbuildinfo coverage",
         "lint": "eslint . --ext .ts",
-        "test": "echo \"No tests configured for rate-limit\" && exit 0"
+        "test": "jest",
+        "test:watch": "jest --watch",
+        "test:cov": "jest --coverage",
+        "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand"
     },
     "keywords": [
         "nexus",
@@ -54,6 +57,9 @@
         "@types/node": "^22.0.0",
         "class-transformer": "^0.5.1",
         "class-validator": "^0.14.3",
+        "reflect-metadata": "^0.2.0",
+        "ts-jest": "^29.2.5",
+        "ts-node": "^10.9.0",
         "typeorm": "^0.3.28",
         "typescript": "^5.3.0"
     }
